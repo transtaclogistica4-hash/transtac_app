@@ -38,8 +38,14 @@
   .shield{width:34px;height:34px;flex-shrink:0;}
   .brand h1{font-size:18px;margin:0;letter-spacing:.3px;}
   .brand-text small{display:block;color:var(--orange);font-size:10px;font-weight:700;letter-spacing:1.5px;margin-top:1px;}
-  .back-link{color:var(--orange);text-decoration:none;font-size:12.5px;align-self:flex-start;margin-top:4px;}
-  .back-link:hover{text-decoration:underline;}
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;
+    color:var(--text);font-size:13px;text-decoration:none;
+    cursor:pointer;background:var(--panel);
+    border:1px solid var(--border);border-radius:6px;padding:8px 14px;
+    font-family:inherit;align-self:flex-start;margin-top:4px;
+  }
+  .back-link:hover{border-color:var(--orange);color:var(--orange);}
 
   .titlebar{margin-bottom:18px;}
   .titlebar h2{font-size:20px;margin:0 0 4px;}
@@ -148,16 +154,32 @@
   }
 
   /* ---- Login ---- */
-  .login-bg{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;}
-  .login-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:36px 34px;width:360px;max-width:92vw;}
-  .login-card .brand{justify-content:center;margin-bottom:22px;}
-  .login-card h3{margin:0 0 6px;font-size:17px;text-align:center;}
-  .login-card p.sub{margin:0 0 22px;color:var(--text-dim);font-size:12.5px;text-align:center;}
-  .login-card label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:600;margin-bottom:5px;}
-  .login-card input{width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:10px 12px;font-size:14px;margin-bottom:14px;}
-  .login-card input:focus{outline:1px solid var(--orange);}
-  .login-card .btn{width:100%;padding:11px;font-size:14px;margin-top:4px;}
-  .login-error{color:var(--red);font-size:12.5px;text-align:center;margin:0 0 10px;display:none;}
+  /* ===== Login — mesmo padrao visual do Sistema de Gestao (index.html) ===== */
+  .login-bg{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;
+    padding:24px 16px;z-index:100;overflow-y:auto;}
+  .login-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+    padding:26px;width:420px;max-width:100%;}
+  .login-logo{display:block;height:62px;width:auto;margin:0 auto 16px;}
+  .login-head{text-align:center;margin-bottom:18px;}
+  .login-head .lk{display:inline-block;background:rgba(245,130,31,.12);border:1px solid rgba(245,130,31,.5);
+    color:var(--orange);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:10px;}
+  .login-head h2{margin:0;font-size:18px;color:var(--text);}
+  .login-head p{margin:4px 0 0;font-size:12.5px;color:var(--text-dim);}
+  .login-card .field{margin-bottom:14px;}
+  .login-card .field label{display:block;font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:5px;
+    text-transform:none;letter-spacing:0;}
+  .login-card .field label.req::after{content:" *";color:var(--red);}
+  .login-card .field input{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;
+    font-size:13.5px;font-family:inherit;background:var(--panel-2);color:var(--text);}
+  .login-card .field input:focus{outline:none;border-color:var(--orange);}
+  .login-card .submit-btn{background:var(--orange);color:#14171A;border:none;border-radius:8px;
+    padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;width:100%;font-family:inherit;}
+  .login-card .submit-btn:hover{background:var(--orange-2);}
+  .login-error{border-radius:8px;padding:10px 14px;font-size:12.5px;margin:0 0 16px;display:none;text-align:center;
+    background:rgba(224,82,74,.12);color:var(--red);border:1px solid rgba(224,82,74,.4);}
+  .login-voltar{text-align:center;margin-top:16px;}
+  .login-voltar .back-link{margin-top:0;align-self:center;}
+  @media(max-width:520px){ .login-logo{height:50px;} .login-card{padding:22px 18px;} }
   .logout-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;}
   .logout-btn:hover{border-color:var(--red);color:var(--red);}
   body.locked .wrap{display:none;}
@@ -256,26 +278,27 @@
 </div>
 <div class="login-bg" id="loginBg" style="display:none;">
   <div class="login-card">
-    <div class="brand">
-      <svg class="shield" viewBox="0 0 40 44" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 1 L38 8 V21 C38 32 30 40 20 43 C10 40 2 32 2 21 V8 Z" fill="none" stroke="#f5821f" stroke-width="2.4"/>
-        <text x="20" y="27" font-size="16" font-weight="700" fill="#f5821f" text-anchor="middle" font-family="Arial">T</text>
-      </svg>
-      <div class="brand-text">
-        <h1>TRANSTAC</h1>
-        <small>TRANSPORTES</small>
-      </div>
+    <img src="logo-transtac.png" alt="TRANSTAC Transportes" class="login-logo">
+    <div class="login-head">
+      <span class="lk">ACESSO RESTRITO</span>
+      <h2>Recursos Humanos</h2>
+      <p>Entre com seu usu&aacute;rio e senha para acessar o m&oacute;dulo.</p>
     </div>
-    <h3>Recursos Humanos</h3>
-    <p class="sub">Acesso restrito. Identifique-se para continuar.</p>
+    <p class="login-error" id="loginError">Usu&aacute;rio ou senha incorretos.</p>
     <form id="loginForm">
-      <label>Usu&aacute;rio</label>
-      <input type="text" id="loginUser" autocomplete="username" required>
-      <label>Senha</label>
-      <input type="password" id="loginPass" autocomplete="current-password" required>
-      <p class="login-error" id="loginError">Usu&aacute;rio ou senha incorretos.</p>
-      <button type="submit" class="btn">Entrar</button>
+      <div class="field">
+        <label class="req">Usu&aacute;rio</label>
+        <input type="text" id="loginUser" autocomplete="username" placeholder="Seu usu&aacute;rio" required>
+      </div>
+      <div class="field">
+        <label class="req">Senha</label>
+        <input type="password" id="loginPass" autocomplete="current-password" placeholder="Sua senha" required>
+      </div>
+      <button type="submit" class="submit-btn">Entrar</button>
     </form>
+    <div class="login-voltar">
+      <a class="back-link" href="index.html">&larr; Voltar para o Sistema de Gest&atilde;o</a>
+    </div>
   </div>
 </div>
 <div class="wrap">
