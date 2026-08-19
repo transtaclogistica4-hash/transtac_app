@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0b0b0c">
 <title>Indicação de Condutor · TRANSTAC</title>
 <link rel="icon" type="image/png" href="icon-192.png">
-<link rel="stylesheet" href="multas.css?v=9">
+<link rel="stylesheet" href="multas.css?v=10">
 <style>
   /* a tabela de indicacao tem 12 colunas — o min-width padrao (860px) espremia tudo */
   #tabIndicacao{min-width:1400px;}
@@ -123,12 +123,20 @@
   </div>
 </div>
 
-<script src="multas-app.js?v=9"></script>
+<script src="multas-app.js?v=10"></script>
 <script>
 montarHeader('INDICAÇÃO DE CONDUTOR', 'Controle do prazo legal e da situação de cada processo.', 'multas.html');
 montarSubnav('multas-indicacao.html');
 
 let dados = [], atual = null;
+
+/* se o multas-app.js vier de cache antigo, avisa em vez de travar a tela */
+if (typeof SETORES_RESP === 'undefined') {
+  document.getElementById('resumo').textContent =
+    'Versão desatualizada em cache. Recarregue com Ctrl+Shift+R.';
+  throw new Error('multas-app.js desatualizado');
+}
+
 STATUS_INDICACAO.forEach(s => { fsit.add(new Option(s.label, s.v)); i_situacao.add(new Option(s.label, s.v)); });
 GRAVIDADES.forEach(g => i_gravidade.add(new Option(GRAV_LABEL[g], g)));
 SETORES_RESP.forEach(r => { fresp.add(new Option(r, r)); i_responsavel.add(new Option(r, r)); });

@@ -57,8 +57,42 @@ const CAMPOS = [
   'codigoInfracao', 'descricaoInfracao', 'gravidade', 'pontos',
   'valor', 'valorComDesconto', 'vencimento', 'prazoIndicacao',
   'statusIndicacao', 'status', 'responsavel', 'dataPagamento',
-  'observacoes', 'anexoUrl', 'anexoNome', 'criadoEm', 'atualizadoEm'
+  'observacoes', 'anexoUrl', 'anexoNome',
+  'indicacaoUrl', 'indicacaoNome', 'criadoEm', 'atualizadoEm'
 ];
+
+/* ---------- 2b. SETOR RESPONSAVEL PELA PLACA ----------
+   Mesma base de placas do checklist da frota (index.html).
+   Serve para pre-preencher o responsavel na multa e para o filtro. */
+const SETORES_RESP = ['PASSEIO', 'FROTA', 'EXPEDIÇÃO', 'LOGISTICA', 'CD IÇARA', 'CD RS'];
+
+const PLACA_SETOR = {
+  /* LOGISTICA (MATRIZ) */
+  'RBD9A22':'LOGISTICA','RDS7B12':'LOGISTICA','PLU4G47':'LOGISTICA','GDD4J40':'LOGISTICA',
+  'MMB6D44':'LOGISTICA','QJV4E36':'LOGISTICA','QRM9C65':'LOGISTICA','RAA2E77':'LOGISTICA',
+  'RAJ7B50':'LOGISTICA','RLB6E83':'LOGISTICA','RLD2B13':'LOGISTICA','MMB7I20':'LOGISTICA',
+  'RXU3I20':'LOGISTICA','RXU6H46':'LOGISTICA','RXV6D60':'LOGISTICA','RYF4J27':'LOGISTICA',
+  'RYF5E77':'LOGISTICA','TPW6J49':'LOGISTICA',
+  /* EXPEDIÇÃO TUB */
+  'MHX9E42':'EXPEDIÇÃO','RFR0J72':'EXPEDIÇÃO','EFX8F56':'EXPEDIÇÃO','QHO5J49':'EXPEDIÇÃO',
+  'ISH2A69':'EXPEDIÇÃO','MIS5H27':'EXPEDIÇÃO','RMD6G25':'EXPEDIÇÃO','RMS1B82':'EXPEDIÇÃO',
+  'RMZ0D07':'EXPEDIÇÃO','RMZ0D10':'EXPEDIÇÃO',
+  /* CD IÇARA */
+  'MLZ0E33':'CD IÇARA','QID7F05':'CD IÇARA','QIR4A73':'CD IÇARA','MLW7H26':'CD IÇARA','TPS0D14':'CD IÇARA',
+  /* CD RS */
+  'RMZ0C93':'CD RS','TQC4A61':'CD RS',
+  /* veiculos de passeio */
+  'MEK8F00':'PASSEIO','SXJ7H57':'PASSEIO',
+  /* demais veiculos da frota sem operacao fixa */
+  'REA6G65':'FROTA','RDV3G15':'FROTA'
+};
+
+/** Setor responsavel pela placa; placa da frota sem vinculo cai em FROTA. */
+function setorDaPlaca(placa) {
+  const p = normPlaca(placa);
+  if (!p) return '';
+  return PLACA_SETOR[p] || '';
+}
 
 /* ---------- 3. HELPERS ---------- */
 const $  = (s, r) => (r || document).querySelector(s);
@@ -424,11 +458,21 @@ async function sincronizarMotoristas() {
 
 /** Completa o motorista pela placa quando a notificacao nao traz o condutor. */
 function completarMotorista(campos) {
-  if (!campos || campos.motorista || !campos.placa) return campos;
-  const m = motoristaDaPlaca(campos.placa);
-  if (m) {
-    campos.motorista = m;
-    campos._guessed = (campos._guessed || []).concat('motorista');
+  if (!campos || !campos.placa) return campos;
+  if (!campos.motorista) {
+    const m = motoristaDaPlaca(campos.placa);
+    if (m) {
+      campos.motorista = m;
+      campos._guessed = (campos._guessed || []).concat('motorista');
+    }
+  }
+  /* setor responsavel vem da base de placas do checklist */
+  if (!campos.responsavel) {
+    const s = setorDaPlaca(campos.placa);
+    if (s) {
+      campos.responsavel = s;
+      campos._guessed = (campos._guessed || []).concat('responsavel');
+    }
   }
   return campos;
 }
