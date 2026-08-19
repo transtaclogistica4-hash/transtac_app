@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TRANSTAC - Programação Diária de Embarques</title>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #14171a;
+  color: #f1f1f1;
+}
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 20px 50px;
+}
+header.hdr {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0 20px;
+  border-bottom: 1px solid #2b2f34;
+  margin-bottom: 20px;
+}
+.brand-mark {
+  width: 34px;
+  height: 40px;
+  color: #f5821f;
+  flex-shrink: 0;
+}
+.brand-word {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  line-height: 1.1;
+}
+.brand-word small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #f5821f;
+}
+.hdr-sub {
+  margin-left: 10px;
+}
+.hdr-sub .title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+.hdr-sub .subtitle {
+  font-size: 12.5px;
+  color: #9ca3af;
+  font-style: italic;
+  margin-top: 2px;
+}
+.home-link {
+  margin-left: auto;
+  color: #9ca3af;
+  text-decoration: none;
+  font-size: 13px;
+}
+.home-link:hover { color: #f1f1f1; }
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  background: #1c2024;
+  border: 1px solid #2b2f34;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
+}
+.date-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.date-box button {
+  background: #2b2f34;
+  border: none;
+  color: #f1f1f1;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.date-box button:hover { background: #3a3f45; }
+.date-pill {
+  background: #f5c518;
+  color: #14171a;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  min-width: 118px;
+  text-align: center;
+}
+.date-weekday {
+  font-style: italic;
+  font-size: 13px;
+  color: #d1d5db;
+  text-transform: capitalize;
+}
+input[type="date"] {
+  background: #2b2f34;
+  border: 1px solid #3a3f45;
+  color: #f1f1f1;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  font-family: inherit;
+}
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+}
+select {
+  background: #2b2f34;
+  border: 1px solid #3a3f45;
+  color: #f1f1f1;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.total-box {
+  margin-left: auto;
+  text-align: right;
+}
+.total-box .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+}
+.total-box .value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #f5821f;
+}
+table.manifest {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1c2024;
+  border: 1px solid #2b2f34;
+  border-radius: 12px;
+  overflow: hidden;
+}
+table.manifest th {
+  background: #24282d;
+  color: #f5821f;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-align: left;
+  padding: 11px 14px;
+  border-bottom: 1px solid #2b2f34;
+}
+table.manifest td {
+  padding: 10px 14px;
+  font-size: 13.5px;
+  border-bottom: 1px solid #24282d;
+  color: #e5e7eb;
+}
+table.manifest tbody tr:nth-child(even) { background: #1a1e22; }
+table.manifest tbody tr:hover { background: #24282d; }
+.badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  color: #14171a;
+}
+.status-msg {
+  text-align: center;
+  color: #9ca3af;
+  padding: 50px 0;
+  font-size: 14px;
+}
+.error-msg {
+  text-align: center;
+  color: #f87171;
+  padding: 50px 0;
+  font-size: 14px;
+}
+.updated {
+  text-align: right;
+  font-size: 11.5px;
+  color: #6b7280;
+  margin-top: 14px;
+}
+.col-num { color: #9ca3af; width: 34px; }
+.del-btn {
+  background: #3a1c1c;
+  border: 1px solid #7f1d1d;
+  color: #fca5a5;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.del-btn:hover { background: #7f1d1d; color: #fff; }
+.del-btn:disabled { opacity: 0.5; cursor: default; }
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(20px);
+  background: #24282d;
+  color: #f1f1f1;
+  border: 1px solid #3a3f45;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 50;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png" />
+<style>
+/* --- Identidade TRANSTAC: fundo e logo oficiais --- */
+body {
+  background-color: #14171a;
+  background-image: linear-gradient(rgba(18, 20, 23, 0.90), rgba(18, 20, 23, 0.94)), url("fundo-transtac.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+.brand-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) { .brand-logo { height: 32px; } }
+</style>
+</head>
+<body>
+<!-- TRANSTAC | efeito de carregamento (padrao do app) -->
+<style>
+#tt-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;background-color:#14171a;
+  background-image:linear-gradient(180deg,rgba(14,16,18,.90) 0%,rgba(14,16,18,.96) 100%),url('fundo-transtac.jpg');
+  background-size:cover;background-position:center center;
+  transition:opacity .45s ease,visibility .45s ease;}
+#tt-splash::before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,112,13,.20),transparent 62%);
+  animation:ttPulse 2.4s ease-in-out infinite;}
+#tt-splash.hide{opacity:0;visibility:hidden;}
+#tt-splash .tt-logo{position:relative;width:min(280px,62vw);height:auto;opacity:0;
+  transform:translateY(10px) scale(.96);
+  animation:ttIn .7s cubic-bezier(.2,.8,.25,1) forwards;
+  filter:drop-shadow(0 8px 26px rgba(0,0,0,.6));}
+#tt-splash .tt-bar{position:relative;width:min(230px,52vw);height:3px;border-radius:999px;
+  background:rgba(255,255,255,.09);overflow:hidden;}
+#tt-splash .tt-bar i{position:absolute;top:0;left:-40%;width:40%;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,transparent,#F2700D,transparent);
+  animation:ttSlide 1.15s ease-in-out infinite;}
+#tt-splash .tt-txt{position:relative;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;
+  font-weight:700;color:#8A939E;opacity:0;animation:ttIn .7s ease .25s forwards;}
+@keyframes ttIn{to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes ttSlide{0%{left:-40%;}100%{left:100%;}}
+@keyframes ttPulse{0%,100%{transform:scale(.92);opacity:.55;}50%{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){#tt-splash *,#tt-splash::before{animation:none !important;}}
+</style>
+<div id="tt-splash">
+  <img class="tt-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="tt-bar"><i></i></div>
+  <div class="tt-txt">Carregando</div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('tt-splash');
+  if(!s) return;
+  var fechado=false;
+  function fim(){
+    if(fechado) return; fechado=true;
+    s.classList.add('hide');
+    setTimeout(function(){ if(s&&s.parentNode) s.parentNode.removeChild(s); },600);
+  }
+  if(document.readyState==='complete'){ setTimeout(fim,450); }
+  else{ window.addEventListener('load',function(){ setTimeout(fim,450); }); }
+  setTimeout(fim,6000);   /* trava de seguranca */
+})();
+</script>
+
+<div class="wrap">
+<header class="hdr">
+<img class="brand-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES" />
+<div class="hdr-sub">
+<div class="title">Programação Diária de Embarques</div>
+<div class="subtitle">Mapa de carregamentos por operação</div>
+</div>
+<a class="home-link" href="index.html">&larr; Voltar ao menu</a>
+</header>
+
+<div id="main">
+<div class="status-msg">Carregando dados da planilha...</div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA_URL = "https://script.google.com/macros/s/AKfycbwJdAE53zoBxym1kVDZOpWpka2aQKruHe9Y8krz-aQZYyzAybnpRw-bSV5jH_k2GIGa9w/exec?data=all";
+
+const CATEGORY_COLORS = {
+  "GAM": "#f5821f",
+  "JadLog": "#0ea5e9",
+  "Cargas Terceiros": "#34d399",
+  "Transferências": "#c084fc",
+};
+const CATEGORY_ORDER = ["GAM", "JadLog", "Cargas Terceiros", "Transferências"];
+const CATEGORY_KEY = {
+  "GAM": "gam",
+  "JadLog": "jadlog",
+  "Cargas Terceiros": "terceiros",
+  "Transferências": "transferencias",
+};
+
+const toastEl = document.getElementById("toast");
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  setTimeout(() => toastEl.classList.remove("show"), 2500);
+}
+
+function categoryColor(name) {
+  return CATEGORY_COLORS[name] || "#f5c518";
+}
+
+const WEEKDAYS_PT = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+
+function formatDateBR(iso) {
+  if (!iso || iso.indexOf("-") === -1) return iso || "-";
+  const [y, m, d] = iso.split("-");
+  return d + "/" + m + "/" + y;
+}
+
+function weekdayName(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return WEEKDAYS_PT[dt.getUTCDay()];
+}
+
+function addDays(iso, delta) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + delta);
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getUTCDate()).padStart(2, "0");
+  return yy + "-" + mm + "-" + dd;
+}
+
+let ALL_ROWS = [];
+let selectedDate = "";
+
+async function withRetry(fn, tentativas = 4) {
+  let ultimoErro;
+  for (let i = 1; i <= tentativas; i++) {
+    try {
+      return await Promise.race([
+        fn(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("Tempo esgotado ao carregar dados.")), 25000))
+      ]);
+    } catch (e) {
+      ultimoErro = e;
+      if (i < tentativas) await new Promise((r) => setTimeout(r, 1500 * i));
+    }
+  }
+  throw ultimoErro;
+}
+
+async function fetchRows() {
+  const res = await fetch(DATA_URL);
+  if (!res.ok) throw new Error("Falha ao contatar o serviço de dados (" + res.status + ").");
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "Falha ao carregar dados.");
+  return data.rows || [];
+}
+
+function render() {
+  const main = document.getElementById("main");
+  const cat = document.getElementById("filterCat") ? document.getElementById("filterCat").value : "";
+
+  const rowsForDate = ALL_ROWS.filter((r) => (r["Data do Embarque"] || "") === selectedDate);
+  const rows = cat ? rowsForDate.filter((r) => (r["Categoria"] || "GAM") === cat) : rowsForDate;
+
+  const tableRows = rows
+    .slice()
+    .sort((a, b) => {
+      const catA = a["Categoria"] || "GAM";
+      const catB = b["Categoria"] || "GAM";
+      const idxA = CATEGORY_ORDER.indexOf(catA);
+      const idxB = CATEGORY_ORDER.indexOf(catB);
+      const orderA = idxA === -1 ? CATEGORY_ORDER.length : idxA;
+      const orderB = idxB === -1 ? CATEGORY_ORDER.length : idxB;
+      if (orderA !== orderB) return orderA - orderB;
+      return (a["Rota"] || "").localeCompare(b["Rota"] || "");
+    })
+    .map((r, idx) => {
+      const catName = r["Categoria"] || "GAM";
+      const routeId = r["ID Rota"] || "";
+      const dataEmbarque = r["Data do Embarque"] || "";
+      const catKey = CATEGORY_KEY[catName] || "";
+      const canDelete = Boolean(routeId && dataEmbarque);
+      const delBtn = canDelete
+        ? `<button type="button" class="del-btn" data-date="${dataEmbarque}" data-route="${routeId}" data-cat="${catKey}" data-label="${(r["Rota"] || "embarque").replace(/"/g, "&quot;")}">Excluir</button>`
+        : `<button type="button" class="del-btn" disabled title="Sem ID da rota">Excluir</button>`;
+      return `
+        <tr>
+          <td class="col-num">${idx + 1}</td>
+          <td>${r["Rota"] || "-"}</td>
+          <td><span class="badge" style="background:${categoryColor(catName)}">${catName}</span></td>
+          <td>${r["Nome do Motorista"] || "-"}</td>
+          <td>${r["Placa"] || "-"}</td>
+          <td>${r["Tipo do Veiculo"] || "-"}</td>
+          <td>${r["Quantidade de Paletes"] || "-"}</td>
+          <td>${delBtn}</td>
+        </tr>
+      `;
+    }).join("");
+
+  const controlsHtml = `
+    <div class="controls">
+      <div class="date-box">
+        <button id="prevDay" title="Dia anterior">&larr;</button>
+        <div>
+          <div class="date-pill">${formatDateBR(selectedDate)}</div>
+          <div class="date-weekday">${weekdayName(selectedDate)}</div>
+        </div>
+        <button id="nextDay" title="Próximo dia">&rarr;</button>
+      </div>
+      <div class="field">
+        <label>Escolher data</label>
+        <input type="date" id="datePicker" value="${selectedDate}" />
+      </div>
+      <div class="field">
+        <label>Operação</label>
+        <select id="filterCat">
+          <option value="">Todas as operações</option>
+          ${CATEGORY_ORDER.map((c) => `<option value="${c}" ${cat === c ? "selected" : ""}>${c}</option>`).join("")}
+        </select>
+      </div>
+      <div class="total-box">
+        <div class="label">Total de carregamentos</div>
+        <div class="value">${rows.length}</div>
+      </div>
+    </div>
+  `;
+
+  const tableHtml = rows.length ? `
+    <table class="manifest">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Rota</th>
+          <th>Operação</th>
+          <th>Motorista</th>
+          <th>Placa</th>
+          <th>Tipo</th>
+          <th>Paletes</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+  ` : `<div class="status-msg">Nenhum carregamento registrado para esta data${cat ? " na operação " + cat : ""}.</div>`;
+
+  main.innerHTML = controlsHtml + tableHtml + '<div class="updated" id="updatedAt"></div>';
+
+  main.querySelectorAll(".del-btn[data-route]").forEach((btn) => {
+    btn.addEventListener("click", () => handleDelete(btn));
+  });
+
+  document.getElementById("prevDay").addEventListener("click", () => {
+    selectedDate = addDays(selectedDate, -1);
+    render();
+  });
+  document.getElementById("nextDay").addEventListener("click", () => {
+    selectedDate = addDays(selectedDate, 1);
+    render();
+  });
+  document.getElementById("datePicker").addEventListener("change", (e) => {
+    if (e.target.value) {
+      selectedDate = e.target.value;
+      render();
+    }
+  });
+  document.getElementById("filterCat").addEventListener("change", render);
+
+  setUpdatedAt();
+}
+
+async function handleDelete(btn) {
+  const date = btn.dataset.date;
+  const routeId = btn.dataset.route;
+  const category = btn.dataset.cat;
+  const label = btn.dataset.label || "este embarque";
+
+  const ok = window.confirm(
+    'Excluir "' + label + '" (' + formatDateBR(date) + ')?\n\nEsta ação remove a linha também na planilha base e não pode ser desfeita.'
+  );
+  if (!ok) return;
+
+  btn.disabled = true;
+  btn.textContent = "Excluindo...";
+  try {
+    const res = await fetch("/api/delete-embarque", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category, date, routeId }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error((data && data.error) || "Falha ao excluir");
+    }
+    ALL_ROWS = ALL_ROWS.filter(
+      (r) => !((r["Data do Embarque"] || "") === date && (r["ID Rota"] || "") === routeId)
+    );
+    showToast('Embarque "' + label + '" excluído.');
+    render();
+  } catch (err) {
+    showToast("Erro ao excluir: " + (err && err.message ? err.message : "erro desconhecido"));
+    btn.disabled = false;
+    btn.textContent = "Excluir";
+  }
+}
+
+function setUpdatedAt() {
+  const el = document.getElementById("updatedAt");
+  if (!el) return;
+  const now = new Date();
+  const formatted = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(now);
+  el.textContent = "Atualizado em " + formatted;
+}
+
+async function init() {
+  try {
+    ALL_ROWS = await withRetry(fetchRows);
+    const datas = Array.from(new Set(ALL_ROWS.map((r) => r["Data do Embarque"]).filter(Boolean))).sort();
+    selectedDate = datas.length ? datas[datas.length - 1] : new Date().toISOString().slice(0, 10);
+    render();
+  } catch (err) {
+    document.getElementById("main").innerHTML =
+      '<div class="error-msg">Erro ao carregar dados da planilha: ' + (err && err.message ? err.message : "erro desconhecido") + '</div>';
+  }
+}
+
+init();
+</script>
+</body>
+</html>

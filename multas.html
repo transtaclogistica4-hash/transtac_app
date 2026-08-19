@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<!-- TRANSTAC MULTAS | build v9-2026-08-17 | pagina=index -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0c">
+<title>Controle de Multas TRANSTAC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="multas.css?v=9">
+</head>
+<body>
+<div id="splash">
+  <img class="splash-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="splash-bar"><i></i></div>
+  <div class="splash-txt">Carregando</div>
+</div>
+<script>setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove();},6000);</script>
+<header></header>
+
+<main>
+  <nav class="subnav" id="subnav"></nav>
+
+  <div class="kpi-grid" id="kpis" style="margin-top:22px"></div>
+
+  <div class="section-title">Operação</div>
+  <div class="hub-grid" style="margin-top:0">
+    <a class="hub-card" href="multas-cadastro.html">
+      <span class="tag">Cadastro</span>
+      <h2>Nova multa</h2>
+      <p>Anexe a notificação (PDF ou foto) e o sistema preenche a tabela automaticamente.</p>
+    </a>
+    <a class="hub-card" href="multas-lista.html">
+      <span class="tag">Consulta</span>
+      <h2>Multas</h2>
+      <p>Todas as autuações com filtro por placa, motorista, órgão, período e status.</p>
+    </a>
+    <a class="hub-card" href="multas-indicacao.html">
+      <span class="tag">Prazos</span>
+      <h2>Indicação de condutor</h2>
+      <p>Controle do prazo legal de indicação e situação de cada processo.</p>
+    </a>
+  </div>
+
+  <div class="section-title">Relatórios</div>
+  <div class="hub-grid" style="margin-top:0">
+    <a class="hub-card" href="multas-dashboard.html">
+      <span class="tag">Relatório</span>
+      <h2>Dashboard de Multas</h2>
+      <p>Valores, reincidência por motorista e veículo, vencimentos e status da carteira.</p>
+    </a>
+    <a class="hub-card" href="#" id="linkPlanilha">
+      <span class="tag">Planilha</span>
+      <h2>Base no Google Sheets</h2>
+      <p>Planilha com todos os registros, anexos e histórico do controle de multas.</p>
+    </a>
+  </div>
+
+  <div class="hint" id="avisoDemo" style="display:none">
+    <b>Modo demonstração.</b> A URL do Web App do Apps Script ainda não foi configurada em
+    <b>app.js</b>. Os dados ficam salvos apenas neste navegador. A leitura das notificações (PDF, JPG e PNG) roda no próprio navegador.
+  </div>
+</main>
+
+<script src="multas-app.js?v=9"></script>
+<script>
+montarHeader('CONTROLE DE MULTAS TRANSTAC', 'Escolha a operação.', 'index.html');
+montarSubnav('multas.html');
+
+if (modoDemo()) document.getElementById('avisoDemo').style.display = 'block';
+
+(async function () {
+  let lista = [];
+  try { lista = await api('listar'); } catch (e) { toast('Falha ao carregar: ' + e.message); }
+
+  const abertas = lista.filter(m => ['RECEBIDA', 'INDICACAO', 'RECURSO', 'A_PAGAR'].includes(m.status));
+  const aPagar  = lista.filter(m => m.status === 'A_PAGAR');
+  const vencidas = aPagar.filter(m => diasAte(m.vencimento) !== null && diasAte(m.vencimento) < 0);
+  const indPend = lista.filter(m => m.statusIndicacao === 'PENDENTE');
+  const indUrg  = indPend.filter(m => { const d = diasAte(m.prazoIndicacao); return d !== null && d <= 7; });
+  const total   = aPagar.reduce((s, m) => s + numero(m.valor), 0);
+
+  document.getElementById('kpis').innerHTML = [
+    kpi('accent', 'Multas em aberto', abertas.length, lista.length + ' registros no total'),
+    kpi('warn',   'Valor a pagar', brl(total), aPagar.length + ' multa(s) aguardando pagamento'),
+    kpi('danger', 'Vencidas', vencidas.length, 'pagamento em atraso'),
+    kpi('ok',     'Indicações pendentes', indPend.length, indUrg.length + ' com prazo em até 7 dias')
+  ].join('');
+
+  function kpi(cls, label, valor, sub) {
+    return '<div class="kpi ' + cls + '"><div class="kpi-label">' + label + '</div>' +
+           '<div class="kpi-value">' + valor + '</div><div class="kpi-sub">' + sub + '</div></div>';
+  }
+})();
+</script>
+</body>
+</html>

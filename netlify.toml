@@ -1,0 +1,49 @@
+# ============================================================
+# SISTEMA DE GESTAO TRANSTAC — pacote unificado (PRODUCAO)
+# Raiz .................. portal + modulo Logistica (Controle de Embarque)
+# inventario-icara.html . Controle de Estoque — unidade Icara
+# multas*.html .......... Controle de Multas
+# rh.html ............... Recursos Humanos (horas extras)
+#
+# Deploy manual (arrastar o zip), sem etapa de build.
+# APP_ENV vai em: Site configuration > Environment variables.
+# Sem ela, o codigo assume PRODUCAO e grava normalmente.
+# ============================================================
+
+[functions]
+  node_bundler = "esbuild"
+
+# Sistema interno, com login: fica fora dos buscadores.
+# Se algum dia precisar ser indexado, apague este bloco e o robots.txt.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# HTML sempre revalidado: o deploy novo aparece sem precisar de Ctrl+F5
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# CSS e JS dos modulos tambem sem cache (multas usa arquivos externos)
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+# Imagens da identidade visual podem ficar em cache
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

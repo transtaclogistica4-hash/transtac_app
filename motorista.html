@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle de Embarque TRANSTAC - Assistente - Motorista por Rota</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --bg: #14171a;
+  --card: #1c2024;
+  --card-alt: #1a1e22;
+  --field: #24282d;
+  --accent: #f5821f;
+  --accent-dark: #c2590f;
+  --text: #f1f1f1;
+  --muted: #9ca3af;
+  --border: #2b2f34;
+  --border-2: #3a3f45;
+  --ok: #34d399;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+header {
+  padding: 18px 20px 20px;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+header h1 {
+  color: #fff;
+  font-size: 18px;
+  margin: 0 0 2px;
+  font-weight: 700;
+}
+header p {
+  color: var(--muted);
+  margin: 0;
+  font-size: 12.5px;
+  font-style: italic;
+}
+header a.home-link {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+header a.home-link:hover { color: var(--text); }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-mark {
+  width: 34px;
+  height: 40px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.brand-word {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  line-height: 1.1;
+}
+.brand-word small {
+  display: block;
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  margin-top: 2px;
+}
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 20px 60px;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.toolbar .status {
+  font-size: 13px;
+  color: var(--muted);
+}
+button.reload {
+  background: var(--field);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text);
+  font-family: inherit;
+}
+button.reload:hover { background: var(--border-2); }
+.grid {
+  display: grid;
+  gap: 14px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.card .route-name {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: #fff;
+}
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.row .field {
+  flex: 1 1 200px;
+  min-width: 160px;
+}
+.row label {
+  display: block;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.row input,
+.row select,
+.row textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border-2);
+  font-size: 13.5px;
+  font-family: inherit;
+  background: var(--field);
+  color: var(--text);
+}
+.row input:focus,
+.row select:focus,
+.row textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(245, 130, 31, 0.22);
+}
+.row input::placeholder, .row textarea::placeholder { color: #6b7280; }
+.save-btn {
+  background: var(--accent);
+  color: #14171a;
+  border: none;
+  border-radius: 9px;
+  padding: 11px 22px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: flex-end;
+  margin-top: 18px;
+  font-family: inherit;
+}
+.save-btn:hover { background: var(--accent-dark); color: #fff; }
+.save-btn:disabled { background: #7c4a1c; color: #d1d5db; cursor: default; }
+.meta {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.meta.saved { color: var(--ok); }
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--field);
+  color: var(--text);
+  border: 1px solid var(--border-2);
+  padding: 11px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 60;
+  max-width: 88vw;
+  text-align: center;
+}
+.toast.show { opacity: 1; }
+
+/* Hub / modulos */
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.hub-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 20px;
+  text-decoration: none;
+  color: var(--text);
+  display: block;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.hub-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.hub-card .tag {
+  display: inline-block;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.hub-card h2 {
+  font-size: 18px;
+  margin: 0 0 6px;
+  color: #fff;
+}
+.hub-card p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  header a.home-link { margin-left: 0; flex-basis: 100%; }
+}
+</style>
+    <style>
+      .whatsapp-btn {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        background: #25d366;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        white-space: nowrap;
+        margin-top: 10px;
+      }
+      .whatsapp-btn:hover { background: #1ebd5a; }
+      .whatsapp-btn.show { display: inline-flex; }
+      .whatsapp-btn svg { width: 15px; height: 15px; fill: #fff; }
+      .whatsapp-unavailable {
+        display: none;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      .whatsapp-unavailable.show { display: block; }
+    </style>
+  <link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png" />
+<style>
+/* --- Identidade TRANSTAC: fundo e logo oficiais --- */
+body {
+  background-color: #14171a;
+  background-image: linear-gradient(rgba(18, 20, 23, 0.90), rgba(18, 20, 23, 0.94)), url("fundo-transtac.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+.brand-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) { .brand-logo { height: 32px; } }
+</style>
+</head>
+  <body>
+<!-- TRANSTAC | efeito de carregamento (padrao do app) -->
+<style>
+#tt-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;background-color:#14171a;
+  background-image:linear-gradient(180deg,rgba(14,16,18,.90) 0%,rgba(14,16,18,.96) 100%),url('fundo-transtac.jpg');
+  background-size:cover;background-position:center center;
+  transition:opacity .45s ease,visibility .45s ease;}
+#tt-splash::before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,112,13,.20),transparent 62%);
+  animation:ttPulse 2.4s ease-in-out infinite;}
+#tt-splash.hide{opacity:0;visibility:hidden;}
+#tt-splash .tt-logo{position:relative;width:min(280px,62vw);height:auto;opacity:0;
+  transform:translateY(10px) scale(.96);
+  animation:ttIn .7s cubic-bezier(.2,.8,.25,1) forwards;
+  filter:drop-shadow(0 8px 26px rgba(0,0,0,.6));}
+#tt-splash .tt-bar{position:relative;width:min(230px,52vw);height:3px;border-radius:999px;
+  background:rgba(255,255,255,.09);overflow:hidden;}
+#tt-splash .tt-bar i{position:absolute;top:0;left:-40%;width:40%;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,transparent,#F2700D,transparent);
+  animation:ttSlide 1.15s ease-in-out infinite;}
+#tt-splash .tt-txt{position:relative;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;
+  font-weight:700;color:#8A939E;opacity:0;animation:ttIn .7s ease .25s forwards;}
+@keyframes ttIn{to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes ttSlide{0%{left:-40%;}100%{left:100%;}}
+@keyframes ttPulse{0%,100%{transform:scale(.92);opacity:.55;}50%{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){#tt-splash *,#tt-splash::before{animation:none !important;}}
+</style>
+<div id="tt-splash">
+  <img class="tt-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="tt-bar"><i></i></div>
+  <div class="tt-txt">Carregando</div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('tt-splash');
+  if(!s) return;
+  var fechado=false;
+  function fim(){
+    if(fechado) return; fechado=true;
+    s.classList.add('hide');
+    setTimeout(function(){ if(s&&s.parentNode) s.parentNode.removeChild(s); },600);
+  }
+  if(document.readyState==='complete'){ setTimeout(fim,450); }
+  else{ window.addEventListener('load',function(){ setTimeout(fim,450); }); }
+  setTimeout(fim,6000);   /* trava de seguranca */
+})();
+</script>
+
+    <header>
+      <div class="brand">
+        <img class="brand-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES" />
+        </div>
+      <div>
+        <h1>TRANSTAC &middot; Assistente</h1>
+        <p>Selecione o motorista responsavel por cada rota. <strong id="catLabel"></strong></p>
+      </div>
+      <a class="home-link" id="backLink" href="index.html">&larr; Voltar ao menu</a>
+    </header>
+    <main>
+      <div class="toolbar">
+        <span class="status" id="status">Carregando rotas...</span>
+        <button class="reload" id="addTerceiroBtn" style="display:none;">+ Carga Terceiro</button>
+        <button class="reload" id="addTransferenciaBtn" style="display:none;">+ Transferência</button>
+        <button class="reload" id="addExtraBtn" style="display:none;">+ Adicionar rota extra</button>
+        <button class="reload" id="reloadBtn">Recarregar</button>
+      </div>
+      <div class="grid" id="grid"></div>
+    </main>
+    <div class="toast" id="toast"></div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const VALID_CATS = ["gam", "jadlog", "terceiros", "transferencias"];
+      const CAT = VALID_CATS.includes(params.get("cat")) ? params.get("cat") : "gam";
+      const LABELS = { gam: "GAM", jadlog: "JadLog", terceiros: "Cargas Terceiros", transferencias: "Transferências" };
+
+      document.getElementById("catLabel").textContent = "(Operação: " + LABELS[CAT] + ")";
+      document.getElementById("backLink").href = "menu.html?cat=" + CAT;
+
+      const ROUTES_WEEKDAY = [
+        { id: "r1", name: "TUB X BIGUAÇU" },
+        { id: "r2", name: "TUB X BLUMENAU X TROMBUDO" },
+        { id: "r3", name: "TUB X BOM JARDIM X LAGES X ERVAL" },
+        { id: "r4", name: "TUB X CHAPECÓ" },
+        { id: "r5", name: "TUB X IÇARA" },
+        { id: "r6", name: "TUB X JOINVILLE" },
+        { id: "r7", name: "TUB X TIJUCAS X ITAJAÍ" },
+        { id: "r9", name: "TUB X SÃO JOSÉ DOS PINHAIS" },
+        { id: "r15", name: "TUB X DISTRITO FEDERAL" },
+        { id: "r16", name: "TUB X ESPIRITO SANTO" },
+        { id: "r10", name: "ROTA EXTRA", extra: true },
+      ];
+
+      // Rotas que rodam apenas aos domingos
+      const ROUTES_SUNDAY = [
+        { id: "r11", name: "BIGUAÇU / BLUMENAU / AGRONÔMICA" },
+        { id: "r12", name: "IÇARA / TUBARÃO" },
+        { id: "r13", name: "LAGES / ERVAL VELHO / CHAPECÓ" },
+        { id: "r14", name: "TIJUCAS / ITAJAÍ / JOINVILLE" },
+        { id: "r10", name: "ROTA EXTRA", extra: true },
+      ];
+
+      // Rotas do cliente JadLog — rodam todos os dias
+      const ROUTES_JADLOG = [
+        { id: "rj1", name: "JP X COLOMBO X BOTICÁRIO" },
+        { id: "rj2", name: "ITAJAÍ X VIDA BOA X GASPAR" },
+        { id: "rj3", name: "JP X COLOMBO X CAMPINA GRANDE" },
+        { id: "rj4", name: "ITAJAÍ X GASPAR X BRUSQUE" },
+      ];
+
+      // Transferencias fixas — rodam todos os dias
+      const ROUTES_TRANSFERENCIAS = [
+        { id: "rt1", name: "GARUVA X ITAJAÍ X TUBARÃO" },
+        { id: "rt2", name: "TUBARÃO X PORTO ALEGRE" },
+        { id: "rt3", name: "ITAJÁI X TUBARÃO" },
+        { id: "rt4", name: "PORTO BELO X TUBARÃO" },
+      ];
+
+      function isSundayBR() {
+        const weekday = new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Sao_Paulo",
+          weekday: "short",
+        }).format(new Date());
+        return weekday === "Sun";
+      }
+
+      function getBaseRoutes() {
+        if (CAT === "jadlog") return ROUTES_JADLOG;
+        if (CAT === "terceiros") return [];
+        if (CAT === "transferencias") return ROUTES_TRANSFERENCIAS;
+        return isSundayBR() ? ROUTES_SUNDAY : ROUTES_WEEKDAY;
+      }
+
+      const BASE_ROUTES = getBaseRoutes();
+
+      // Cargas Terceiros sao cadastradas dinamicamente (Cliente + Destino) e ficam
+      // salvas no mesmo armazenamento do dia, identificadas pelo prefixo "terceiro-"
+      function terceirosRoutesFromAssignments(assignments) {
+        return Object.keys(assignments)
+          .filter((id) => id.startsWith("terceiro-"))
+          .map((id) => ({ id, name: (assignments[id] && assignments[id].name) || "CARGA TERCEIRO" }))
+          .sort((a, b) => a.id.localeCompare(b.id));
+      }
+
+      // Transferencias sao cadastradas dinamicamente (Origem + Destino) e ficam
+      // salvas no mesmo armazenamento do dia, identificadas pelo prefixo "transferencia-"
+      function transferenciasRoutesFromAssignments(assignments) {
+        return Object.keys(assignments)
+          .filter((id) => id.startsWith("transferencia-"))
+          .map((id) => ({ id, name: (assignments[id] && assignments[id].name) || "TRANSFERÊNCIA" }))
+          .sort((a, b) => a.id.localeCompare(b.id));
+      }
+
+      // Rotas extras da JadLog sao cadastradas dinamicamente pelo botao
+      // "+ Adicionar rota extra" e ficam salvas no armazenamento do dia,
+      // identificadas pelo prefixo "rj-extra-" (o prefixo "rj" faz a
+      function extrasJadlogRoutesFromAssignments(assignments) {
+        return Object.keys(assignments)
+          .filter((id) => id.startsWith("rj-extra-") || id.startsWith("extra-jadlog-"))
+          .map((id) => ({ id, name: (assignments[id] && assignments[id].name) || "ROTA EXTRA" }))
+          .sort((a, b) => a.id.localeCompare(b.id));
+      }
+
+      function dynamicRoutesFromAssignments(assignments) {
+        if (CAT === "terceiros") return terceirosRoutesFromAssignments(assignments);
+        if (CAT === "transferencias") return transferenciasRoutesFromAssignments(assignments);
+        if (CAT === "jadlog") return extrasJadlogRoutesFromAssignments(assignments);
+        return [];
+      }
+
+      const DRIVERS = [
+        "ALCEU MAZZUCHETTI",
+        "ALEXANDRE LUCIO ALVES",
+        "BRENO ANTONIO DA ROSA",
+        "CASSIO FERNANDO SENA",
+        "DANIEL CLASEN MACHADO",
+        "DIKSON SOARES DE BONA",
+        "EVANDRO VIEIRA RODRIGUES",
+        "FARIDES TEIXEIRA GOMES",
+        "GERALDO JULIO AVILA",
+        "HELIO ALEX GONCALVES GRECO",
+        "HIGOR DOMINGOS RUFINO TEXEIRA",
+        "ISRAEL OLIVEIRA MARTINS ROCHA",
+        "JAIR QUERINO DA COSTA",
+        "LEANDRO FERNANDES",
+        "LEANDRO FLAVIO DE ANDRADE",
+        "LEONARDO ALVES THRONICKE",
+        "LILIAN CRISTIAN SANSONOWICZ",
+        "LUCAS DE SOUZA",
+        "LUCIANO MENDES DA LUZ",
+        "LUCINARA VARELA BORGES",
+        "LUIZ EDUARDO LEAL PEREIRA",
+        "MARCIO MACHETTI RAMBO",
+        "MARCOS CLASEN MACHADO",
+        "MESSIAS GARCIA DA SILVA",
+        "OTAVIO EUCLIDES NASCIMENTO",
+        "RICARDO NUNES MARTINS",
+        "VALDECIR VOLKMER",
+        "ERIC CARDOSO KERBER",
+      ];
+
+      const OUTRO = "__outro__";
+
+      let CURRENT_DATE_KEY = "";
+
+      // O numero de WhatsApp do motorista NAO fica no codigo da pagina (visivel a
+      // qualquer um que abra o "ver codigo fonte"). Em vez disso, pedimos o link
+      // pronto para a funcao /api/whatsapp-link, que guarda os numeros so no servidor
+      // e devolve apenas o link "wa.me" do motorista da rota.
+      async function fetchWhatsAppUrl(driver, displayName, dateValue) {
+        try {
+          const res = await fetch("/api/whatsapp-link", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ driver, routeName: displayName, date: dateValue }),
+          });
+          const data = await res.json();
+          return data && data.ok ? data.url : "";
+        } catch (err) {
+          return "";
+        }
+      }
+
+      const grid = document.getElementById("grid");
+      const statusEl = document.getElementById("status");
+      const toastEl = document.getElementById("toast");
+      const reloadBtn = document.getElementById("reloadBtn");
+      const addTerceiroBtn = document.getElementById("addTerceiroBtn");
+      const addTransferenciaBtn = document.getElementById("addTransferenciaBtn");
+      const addExtraBtn = document.getElementById("addExtraBtn");
+
+      if (CAT === "terceiros") {
+        addTerceiroBtn.style.display = "inline-block";
+      }
+      if (CAT === "transferencias") {
+        addTransferenciaBtn.style.display = "inline-block";
+      }
+      if (CAT === "jadlog") {
+        addExtraBtn.style.display = "inline-block";
+      }
+
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add("show");
+        setTimeout(() => toastEl.classList.remove("show"), 2200);
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "";
+        const d = new Date(iso);
+        return d.toLocaleString("pt-BR");
+      }
+
+      function driverOptions(selected) {
+        const known = DRIVERS.includes(selected);
+        let html = '<option value="">Selecione o motorista</option>';
+        DRIVERS.forEach((d) => {
+          html += `<option value="${d}" ${selected === d ? "selected" : ""}>${d}</option>`;
+        });
+        html += `<option value="${OUTRO}" ${selected && !known ? "selected" : ""}>Outro (digitar nome)</option>`;
+        return html;
+      }
+
+      function renderCard(route, assignment) {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.id = route.id;
+
+        let driver = assignment && assignment.driver ? assignment.driver : "";
+        const extraRoute = assignment && assignment.extraRoute ? assignment.extraRoute : "";
+        const updatedAt = assignment && assignment.updatedAtDriver ? assignment.updatedAtDriver : "";
+        const driverKnown = driver === "" || DRIVERS.includes(driver);
+        const displayName = route.extra && extraRoute ? route.name + " — " + extraRoute : route.name;
+
+        card.innerHTML = `
+          <div class="route-name">${route.name}</div>
+          <div class="row">
+            ${route.extra ? `
+            <div class="field">
+              <label>Rota</label>
+              <input type="text" class="extra-input" maxlength="120" placeholder="Descreva a rota extra" value="${extraRoute.replace(/"/g, "&quot;")}" />
+            </div>
+            ` : ""}
+            <div class="field">
+              <label>Motorista</label>
+              <select class="driver-select">${driverOptions(driver)}</select>
+              <input type="text" class="driver-custom" placeholder="Nome completo do motorista" value="${driverKnown ? "" : driver.replace(/"/g, "&quot;")}" style="margin-top:6px; display:${driverKnown ? "none" : "block"};" />
+            </div>
+            <button class="save-btn">Salvar</button>
+          </div>
+          <div class="meta ${updatedAt ? "saved" : ""}">${updatedAt ? "Motorista salvo em " + formatDate(updatedAt) : "Motorista ainda nao definido"}</div>
+          <button type="button" class="whatsapp-btn">
+            <svg viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.9 4.44-9.9 9.9 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.9-4.44 9.9-9.9 0-2.64-1.03-5.13-2.9-7-1.87-1.87-4.35-2.9-7-2.94zm0 18.1a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 1 1 6.98 3.86zm4.5-6.15c-.25-.12-1.47-.72-1.7-.8-.23-.08-.4-.12-.56.13-.17.25-.65.8-.79.96-.15.17-.29.19-.54.06-.25-.12-1.04-.38-1.98-1.22-.73-.65-1.23-1.46-1.37-1.7-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.42.08-.17.04-.31-.02-.44-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.42h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.55.1.47-.07 1.47-.6 1.68-1.18.2-.58.2-1.08.14-1.18-.06-.1-.23-.16-.48-.28z"/></svg>
+            <span>Enviar WhatsApp</span>
+          </button>
+          <div class="whatsapp-unavailable">Sem número de WhatsApp cadastrado para este motorista.</div>
+        `;
+
+        const saveBtn = card.querySelector(".save-btn");
+        const driverSelect = card.querySelector(".driver-select");
+        const driverCustom = card.querySelector(".driver-custom");
+        const extraInput = card.querySelector(".extra-input");
+        const metaEl = card.querySelector(".meta");
+        const whatsappBtn = card.querySelector(".whatsapp-btn");
+        const whatsappUnavailable = card.querySelector(".whatsapp-unavailable");
+        let whatsappUrl = "";
+
+        async function refreshWhatsappLink() {
+          if (!driver) {
+            whatsappBtn.classList.remove("show");
+            whatsappUnavailable.classList.remove("show");
+            return;
+          }
+          whatsappUrl = await fetchWhatsAppUrl(driver, displayName, CURRENT_DATE_KEY);
+          if (whatsappUrl) {
+            whatsappBtn.classList.add("show");
+            whatsappUnavailable.classList.remove("show");
+          } else {
+            whatsappBtn.classList.remove("show");
+            whatsappUnavailable.classList.add("show");
+          }
+        }
+
+        whatsappBtn.addEventListener("click", () => {
+          if (whatsappUrl) window.location.href = whatsappUrl;
+        });
+
+        if (driver) {
+          refreshWhatsappLink();
+        }
+
+        driverSelect.addEventListener("change", () => {
+          driverCustom.style.display = driverSelect.value === OUTRO ? "block" : "none";
+          if (driverSelect.value === OUTRO) driverCustom.focus();
+        });
+
+        saveBtn.addEventListener("click", async () => {
+          const finalDriver = driverSelect.value === OUTRO ? driverCustom.value.trim() : driverSelect.value;
+          if (!finalDriver) {
+            showToast("Selecione ou digite o nome do motorista.");
+            return;
+          }
+          saveBtn.disabled = true;
+          saveBtn.textContent = "Salvando...";
+          try {
+            const res = await fetch("/api/routes", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: route.id,
+                name: route.name,
+                driver: finalDriver,
+                extraRoute: extraInput ? extraInput.value.trim() : undefined,
+              }),
+            });
+            if (!res.ok) throw new Error("Falha ao salvar");
+            const data = await res.json();
+            const ts = (data.record && data.record.updatedAtDriver) || data.updatedAt;
+            metaEl.textContent = "Motorista salvo em " + formatDate(ts);
+            metaEl.classList.add("saved");
+            driver = finalDriver;
+            refreshWhatsappLink();
+            showToast("Motorista da rota \"" + route.name + "\" salvo.");
+          } catch (err) {
+            showToast("Erro ao salvar. Tente novamente.");
+          } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Salvar";
+          }
+        });
+
+        return card;
+      }
+
+      function formatDateBR(dateKey) {
+        if (!dateKey) return "";
+        const [y, m, d] = dateKey.split("-");
+        return d + "/" + m + "/" + y;
+      }
+
+      async function withRetryFetch(url, opts, tentativas = 4) {
+        let ultimoErro;
+        for (let i = 1; i <= tentativas; i++) {
+          try {
+            const ctrl = new AbortController();
+            const _t = setTimeout(() => ctrl.abort(), 25000);
+            try { return await fetch(url, Object.assign({}, opts, { signal: ctrl.signal })); }
+            finally { clearTimeout(_t); }
+          } catch (e) {
+            ultimoErro = e;
+            if (i < tentativas) await new Promise((r) => setTimeout(r, 1500 * i));
+          }
+        }
+        throw ultimoErro;
+      }
+
+      async function loadData() {
+        statusEl.textContent = "Carregando rotas...";
+        grid.innerHTML = "";
+        try {
+          const res = await withRetryFetch("/api/routes");
+          const data = await res.json();
+          const assignments = data.assignments || {};
+          CURRENT_DATE_KEY = data.date || "";
+          const ROUTES = [...BASE_ROUTES, ...dynamicRoutesFromAssignments(assignments)];
+          ROUTES.forEach((route) => {
+            grid.appendChild(renderCard(route, assignments[route.id]));
+          });
+          if (ROUTES.length === 0 && CAT === "terceiros") {
+            statusEl.textContent = 'Nenhuma carga terceiro cadastrada ainda. Clique em "+ Carga Terceiro" para adicionar.';
+          } else if (ROUTES.length === 0 && CAT === "transferencias") {
+            statusEl.textContent = 'Nenhuma transferência cadastrada ainda. Clique em "+ Transferência" para adicionar.';
+          } else {
+            statusEl.textContent = ROUTES.length + " rotas carregadas — carga do dia " + formatDateBR(data.date) + ".";
+          }
+        } catch (err) {
+          statusEl.textContent = "Erro ao carregar rotas.";
+          BASE_ROUTES.forEach((route) => {
+            grid.appendChild(renderCard(route, null));
+          });
+        }
+      }
+
+      addTerceiroBtn.addEventListener("click", async () => {
+        const cliente = window.prompt("Nome do Cliente:");
+        if (!cliente || !cliente.trim()) return;
+        const destino = window.prompt("Destino:");
+        if (!destino || !destino.trim()) return;
+        const name = (cliente.trim() + " - " + destino.trim()).toUpperCase();
+        const id = "terceiro-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+        try {
+          const res = await fetch("/api/routes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, name }),
+          });
+          if (!res.ok) throw new Error("Falha ao criar carga terceiro");
+          showToast("Carga terceiro \"" + name + "\" adicionada.");
+          loadData();
+        } catch (err) {
+          showToast("Erro ao adicionar carga terceiro.");
+        }
+      });
+
+      addTransferenciaBtn.addEventListener("click", async () => {
+        const origem = window.prompt("Origem da transferência:");
+        if (!origem || !origem.trim()) return;
+        const destino = window.prompt("Destino da transferência:");
+        if (!destino || !destino.trim()) return;
+        const name = (origem.trim() + " X " + destino.trim()).toUpperCase();
+        const id = "transferencia-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+        try {
+          const res = await fetch("/api/routes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, name }),
+          });
+          if (!res.ok) throw new Error("Falha ao criar transferência");
+          showToast("Transferência \"" + name + "\" adicionada.");
+          loadData();
+        } catch (err) {
+          showToast("Erro ao adicionar transferência.");
+        }
+      });
+
+      addExtraBtn.addEventListener("click", async () => {
+        const descricao = window.prompt("Descreva a rota extra (ex.: ORIGEM X DESTINO):");
+        if (!descricao || !descricao.trim()) return;
+        const name = ("ROTA EXTRA - " + descricao.trim()).toUpperCase();
+        const id = "rj-extra-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+        try {
+          const res = await fetch("/api/routes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, name }),
+          });
+          if (!res.ok) throw new Error("Falha ao criar rota extra");
+          showToast("Rota extra \"" + name + "\" adicionada.");
+          loadData();
+        } catch (err) {
+          showToast("Erro ao adicionar rota extra.");
+        }
+      });
+
+      reloadBtn.addEventListener("click", loadData);
+      loadData();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Controle de Embarque TRANSTAC - Dashboard Logística</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #14171a;
+  --card: #1c2024;
+  --card-alt: #1a1e22;
+  --field: #24282d;
+  --accent: #f5821f;
+  --accent-dark: #c2590f;
+  --text: #f1f1f1;
+  --muted: #9ca3af;
+  --border: #2b2f34;
+  --border-2: #3a3f45;
+  --ok: #34d399;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+header {
+  padding: 18px 20px 20px;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+header h1 {
+  color: #fff;
+  font-size: 18px;
+  margin: 0 0 2px;
+  font-weight: 700;
+}
+header p {
+  color: var(--muted);
+  margin: 0;
+  font-size: 12.5px;
+  font-style: italic;
+}
+header a.home-link {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+header a.home-link:hover { color: var(--text); }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-mark {
+  width: 34px;
+  height: 40px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.brand-word {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  line-height: 1.1;
+}
+.brand-word small {
+  display: block;
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  margin-top: 2px;
+}
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 20px 60px;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.toolbar .status {
+  font-size: 13px;
+  color: var(--muted);
+}
+button.reload {
+  background: var(--field);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text);
+  font-family: inherit;
+}
+button.reload:hover { background: var(--border-2); }
+.grid {
+  display: grid;
+  gap: 14px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.card .route-name {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: #fff;
+}
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.row .field {
+  flex: 1 1 200px;
+  min-width: 160px;
+}
+.row label {
+  display: block;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.row input,
+.row select,
+.row textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border-2);
+  font-size: 13.5px;
+  font-family: inherit;
+  background: var(--field);
+  color: var(--text);
+}
+.row input:focus,
+.row select:focus,
+.row textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(245, 130, 31, 0.22);
+}
+.row input::placeholder, .row textarea::placeholder { color: #6b7280; }
+.save-btn {
+  background: var(--accent);
+  color: #14171a;
+  border: none;
+  border-radius: 9px;
+  padding: 11px 22px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: flex-end;
+  margin-top: 18px;
+  font-family: inherit;
+}
+.save-btn:hover { background: var(--accent-dark); color: #fff; }
+.save-btn:disabled { background: #7c4a1c; color: #d1d5db; cursor: default; }
+.meta {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.meta.saved { color: var(--ok); }
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--field);
+  color: var(--text);
+  border: 1px solid var(--border-2);
+  padding: 11px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 60;
+  max-width: 88vw;
+  text-align: center;
+}
+.toast.show { opacity: 1; }
+
+/* Hub / modulos */
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.hub-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 20px;
+  text-decoration: none;
+  color: var(--text);
+  display: block;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.hub-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.hub-card .tag {
+  display: inline-block;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.hub-card h2 {
+  font-size: 18px;
+  margin: 0 0 6px;
+  color: #fff;
+}
+.hub-card p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  header a.home-link { margin-left: 0; flex-basis: 100%; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridjs@5.0.2/dist/gridjs.umd.js" integrity="sha384-/XXDzxe4FsGiAe50i/u9pY/Vy/uX654MHB1xoc1BJNnH1WXHhqHga9g3q5tF4gj7" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs@5.0.2/dist/theme/mermaid.min.css" integrity="sha384-jZvDSsmGB9oGGT/4l9bHXGoAv1OxvG/cFmSo0dZaSqmBgvQTKDBFAMftlXTmMbNW" crossorigin="anonymous" />
+<style>
+:root {
+  --dash-bg: #14171a;
+  --dash-card: #1c2024;
+  --dash-card-alt: #191d21;
+  --dash-accent: #f5821f;
+  --dash-accent-dark: #ffab5c;
+  --dash-text: #f1f1f1;
+  --dash-muted: #9ca3af;
+  --dash-border: #2b2f34;
+}
+body { background: var(--dash-bg); }
+main.dash {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 20px 60px;
+}
+.filter-bar {
+  background: var(--dash-card);
+  border: 1px solid var(--dash-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.filter-bar .field { display: flex; flex-direction: column; gap: 4px; }
+.filter-bar label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--dash-muted);
+}
+.filter-bar select, .filter-bar input {
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--dash-text);
+  background: #24282d;
+  color-scheme: dark;
+}
+.filter-bar .btn-clear {
+  border: 1px solid var(--dash-border);
+  background: #24282d;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--dash-muted);
+  cursor: pointer;
+}
+.filter-bar .btn-clear:hover { background: #2b2f34; color: var(--dash-text); }
+.filter-count { margin-left: auto; font-size: 12.5px; color: var(--dash-muted); align-self: center; }
+h2.section-title {
+  font-size: 15px;
+  margin: 26px 0 12px;
+  color: var(--dash-text);
+  display: flex; align-items: center; gap: 8px;
+}
+h2.section-title .tag {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dash-accent-dark);
+  background: rgba(245, 130, 31, 0.15);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-weight: 700;
+}
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 8px; }
+.kpi-card { background: var(--dash-card); border: 1px solid var(--dash-border); border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.kpi-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--dash-muted); margin-bottom: 6px; }
+.kpi-card .value { font-size: 26px; font-weight: 700; color: var(--dash-text); }
+.kpi-card .value.accent { color: var(--dash-accent-dark); }
+.op-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.op-card { background: var(--dash-card); border: 1px solid var(--dash-border); border-left: 5px solid var(--op-color, var(--dash-accent)); border-radius: 10px; padding: 13px 16px; }
+.op-card .op-name { font-size: 12px; font-weight: 700; color: var(--op-color, var(--dash-accent-dark)); text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 4px; }
+.op-card .op-count { font-size: 22px; font-weight: 700; color: var(--dash-text); }
+.op-card .op-pct { font-size: 12px; color: var(--dash-muted); margin-top: 2px; }
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; margin-bottom: 8px; }
+.chart-card { background: var(--dash-card); border: 1px solid var(--dash-border); border-radius: 12px; padding: 18px; }
+.chart-card.wide { grid-column: 1 / -1; }
+.chart-card h3 { font-size: 14px; margin: 0 0 12px; color: var(--dash-text); }
+.chart-wrap { position: relative; height: 260px; }
+.chart-wrap.tall { height: 300px; }
+.table-card { background: var(--dash-card); border: 1px solid var(--dash-border); border-radius: 12px; padding: 18px; margin-top: 22px; }
+.table-card h3 { font-size: 14px; margin: 0 0 12px; color: var(--dash-text); }
+#grid { font-size: 13px; }
+.status-msg { text-align: center; color: var(--dash-muted); padding: 40px 0; font-size: 14px; }
+.error-msg { text-align: center; color: #f87171; padding: 40px 0; font-size: 14px; }
+.updated { text-align: right; font-size: 11.5px; color: var(--dash-muted); margin-top: 14px; }
+
+/* Grid.js dark override */
+.gridjs-wrapper { background: transparent; border: 1px solid var(--dash-border); border-radius: 8px; }
+.gridjs-table { background: var(--dash-card); color: var(--dash-text); }
+th.gridjs-th { background: #24282d; color: var(--dash-accent-dark); border-color: var(--dash-border); text-transform: uppercase; font-size: 11px; letter-spacing: 0.03em; }
+th.gridjs-th-sort:hover { background: #2b2f34; }
+td.gridjs-td { background: var(--dash-card); color: #e5e7eb; border-color: var(--dash-border); }
+tr:nth-child(even) td.gridjs-td { background: var(--dash-card-alt); }
+.gridjs-footer { background: var(--dash-card); border-color: var(--dash-border); }
+.gridjs-pagination { color: var(--dash-text); }
+.gridjs-pagination .gridjs-pages button { background: #24282d; border-color: var(--dash-border); color: var(--dash-text); }
+.gridjs-pagination .gridjs-pages button:disabled { background: var(--dash-card); color: var(--dash-muted); }
+.gridjs-pagination .gridjs-pages button:hover:not(:disabled) { background: #2b2f34; }
+.gridjs-pagination .gridjs-pages button.gridjs-currentPage { background: var(--dash-accent); color: #14171a; font-weight: 700; }
+input.gridjs-input.gridjs-search-input { background: #24282d !important; border-color: var(--dash-border) !important; color: var(--dash-text) !important; }
+input.gridjs-input.gridjs-search-input::placeholder { color: var(--dash-muted); }
+.gridjs-head { background: transparent; border: none; padding-bottom: 10px; }
+</style>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png" />
+<style>
+/* --- Identidade TRANSTAC: fundo e logo oficiais --- */
+body {
+  background-color: #14171a;
+  background-image: linear-gradient(rgba(18, 20, 23, 0.90), rgba(18, 20, 23, 0.94)), url("fundo-transtac.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+.brand-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) { .brand-logo { height: 32px; } }
+</style>
+</head>
+<body>
+<!-- TRANSTAC | efeito de carregamento (padrao do app) -->
+<style>
+#tt-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;background-color:#14171a;
+  background-image:linear-gradient(180deg,rgba(14,16,18,.90) 0%,rgba(14,16,18,.96) 100%),url('fundo-transtac.jpg');
+  background-size:cover;background-position:center center;
+  transition:opacity .45s ease,visibility .45s ease;}
+#tt-splash::before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,112,13,.20),transparent 62%);
+  animation:ttPulse 2.4s ease-in-out infinite;}
+#tt-splash.hide{opacity:0;visibility:hidden;}
+#tt-splash .tt-logo{position:relative;width:min(280px,62vw);height:auto;opacity:0;
+  transform:translateY(10px) scale(.96);
+  animation:ttIn .7s cubic-bezier(.2,.8,.25,1) forwards;
+  filter:drop-shadow(0 8px 26px rgba(0,0,0,.6));}
+#tt-splash .tt-bar{position:relative;width:min(230px,52vw);height:3px;border-radius:999px;
+  background:rgba(255,255,255,.09);overflow:hidden;}
+#tt-splash .tt-bar i{position:absolute;top:0;left:-40%;width:40%;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,transparent,#F2700D,transparent);
+  animation:ttSlide 1.15s ease-in-out infinite;}
+#tt-splash .tt-txt{position:relative;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;
+  font-weight:700;color:#8A939E;opacity:0;animation:ttIn .7s ease .25s forwards;}
+@keyframes ttIn{to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes ttSlide{0%{left:-40%;}100%{left:100%;}}
+@keyframes ttPulse{0%,100%{transform:scale(.92);opacity:.55;}50%{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){#tt-splash *,#tt-splash::before{animation:none !important;}}
+</style>
+<div id="tt-splash">
+  <img class="tt-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="tt-bar"><i></i></div>
+  <div class="tt-txt">Carregando</div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('tt-splash');
+  if(!s) return;
+  var fechado=false;
+  function fim(){
+    if(fechado) return; fechado=true;
+    s.classList.add('hide');
+    setTimeout(function(){ if(s&&s.parentNode) s.parentNode.removeChild(s); },600);
+  }
+  if(document.readyState==='complete'){ setTimeout(fim,450); }
+  else{ window.addEventListener('load',function(){ setTimeout(fim,450); }); }
+  setTimeout(fim,6000);   /* trava de seguranca */
+})();
+</script>
+
+<header>
+<div class="brand">
+<img class="brand-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES" />
+<div>
+<h1>TRANSTAC &middot; Dashboard Logística</h1>
+<p>Coletas por opera&ccedil;&atilde;o e indicadores gerais</p>
+</div>
+</div>
+<a class="home-link" href="index.html">&larr; Voltar ao menu</a>
+</header>
+
+<main class="dash" id="main">
+<div class="status-msg">Carregando dados da planilha...</div>
+</main>
+
+<script>
+Chart.defaults.color = "#9ca3af";
+Chart.defaults.borderColor = "rgba(255,255,255,0.08)";
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif";
+
+const DATA_URL = "https://script.google.com/macros/s/AKfycbwJdAE53zoBxym1kVDZOpWpka2aQKruHe9Y8krz-aQZYyzAybnpRw-bSV5jH_k2GIGa9w/exec?data=all";
+
+const CATEGORY_COLORS = {
+  "GAM": "#f5821f",
+  "JadLog": "#0ea5e9",
+  "Cargas Terceiros": "#059669",
+  "Transferências": "#a855f7",
+};
+const CATEGORY_ORDER = ["GAM", "JadLog", "Cargas Terceiros", "Transferências"];
+const FALLBACK_PALETTE = ["#e11d48", "#ca8a04", "#0891b2", "#7c3aed", "#65a30d"];
+
+function categoryColor(name, idx) {
+  return CATEGORY_COLORS[name] || FALLBACK_PALETTE[idx % FALLBACK_PALETTE.length];
+}
+
+function formatDateBR(iso) {
+  if (!iso || iso.indexOf("-") === -1) return iso || "-";
+  const [y, m, d] = iso.split("-");
+  return d + "/" + m + "/" + y;
+}
+
+function groupCount(rows, key) {
+  const map = new Map();
+  rows.forEach((r) => {
+    const k = r[key] || "(vazio)";
+    map.set(k, (map.get(k) || 0) + 1);
+  });
+  return map;
+}
+
+function sortedEntries(map, desc) {
+  const arr = Array.from(map.entries());
+  arr.sort((a, b) => (desc ? b[1] - a[1] : a[1] - b[1]));
+  return arr;
+}
+
+const PALETTE = ["#f5821f", "#0ea5e9", "#059669", "#a855f7", "#e11d48", "#ca8a04", "#0891b2", "#7c3aed"];
+
+let ALL_ROWS = [];
+const activeCharts = [];
+
+function destroyCharts() {
+  activeCharts.forEach((c) => c.destroy());
+  activeCharts.length = 0;
+}
+
+async function withRetry(fn, tentativas = 4) {
+  let ultimoErro;
+  for (let i = 1; i <= tentativas; i++) {
+    try {
+      return await Promise.race([
+        fn(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("Tempo esgotado ao carregar dados.")), 25000))
+      ]);
+    } catch (e) {
+      ultimoErro = e;
+      if (i < tentativas) await new Promise((r) => setTimeout(r, 1500 * i));
+    }
+  }
+  throw ultimoErro;
+}
+
+async function fetchRows() {
+  const res = await fetch(DATA_URL);
+  if (!res.ok) throw new Error("Falha ao contatar o serviço de dados (" + res.status + ").");
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "Falha ao carregar dados.");
+  return data.rows || [];
+}
+
+function getFilteredRows() {
+  const cat = document.getElementById("filterCat") ? document.getElementById("filterCat").value : "";
+  const from = document.getElementById("filterFrom") ? document.getElementById("filterFrom").value : "";
+  const to = document.getElementById("filterTo") ? document.getElementById("filterTo").value : "";
+  return ALL_ROWS.filter((r) => {
+    if (cat && (r["Categoria"] || "GAM") !== cat) return false;
+    const d = r["Data do Embarque"] || "";
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  });
+}
+
+function buildFilterBar() {
+  const cats = Array.from(new Set(ALL_ROWS.map((r) => r["Categoria"] || "GAM")));
+  cats.sort((a, b) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b));
+  const options = ['<option value="">Todas as operações</option>']
+    .concat(cats.map((c) => `<option value="${c}">${c}</option>`))
+    .join("");
+  return `
+    <div class="filter-bar">
+      <div class="field"><label>Operação</label><select id="filterCat">${options}</select></div>
+      <div class="field"><label>De</label><input type="date" id="filterFrom" /></div>
+      <div class="field"><label>Até</label><input type="date" id="filterTo" /></div>
+      <button class="btn-clear" id="clearFilters">Limpar filtros</button>
+      <span class="filter-count" id="filterCount"></span>
+    </div>
+  `;
+}
+
+function render() {
+  destroyCharts();
+  const rows = getFilteredRows();
+  const countEl = document.getElementById("filterCount");
+  if (countEl) countEl.textContent = rows.length + " de " + ALL_ROWS.length + " embarques exibidos";
+
+  const body = document.getElementById("dashboardBody");
+  if (ALL_ROWS.length === 0) {
+    body.innerHTML = '<div class="status-msg">Nenhum embarque finalizado encontrado ainda.</div>';
+    return;
+  }
+
+  const totalEmbarques = rows.length;
+  const motoristasAtivos = new Set(rows.map((r) => r["Nome do Motorista"]).filter(Boolean)).size;
+  const placasAtivas = new Set(rows.map((r) => r["Placa"]).filter(Boolean)).size;
+  const rotasAtivas = new Set(rows.map((r) => r["Rota"]).filter(Boolean)).size;
+  const datas = rows.map((r) => r["Data do Embarque"]).filter(Boolean).sort();
+  const periodo = datas.length ? formatDateBR(datas[0]) + " – " + formatDateBR(datas[datas.length - 1]) : "-";
+
+  const opMap = groupCount(rows, "Categoria");
+  const opEntries = sortedEntries(opMap, true);
+  const opCardsHtml = opEntries.map(([name, count], idx) => {
+    const color = categoryColor(name, idx);
+    const pct = totalEmbarques ? ((count / totalEmbarques) * 100).toFixed(0) : 0;
+    return `
+      <div class="op-card" style="--op-color:${color}">
+        <div class="op-name">${name}</div>
+        <div class="op-count">${count}</div>
+        <div class="op-pct">${pct}% dos embarques no período</div>
+      </div>
+    `;
+  }).join("");
+
+  body.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="label">Total de Embarques</div><div class="value accent">${totalEmbarques}</div></div>
+      <div class="kpi-card"><div class="label">Motoristas Ativos</div><div class="value">${motoristasAtivos}</div></div>
+      <div class="kpi-card"><div class="label">Placas Ativas</div><div class="value">${placasAtivas}</div></div>
+      <div class="kpi-card"><div class="label">Rotas Ativas</div><div class="value">${rotasAtivas}</div></div>
+      <div class="kpi-card"><div class="label">Período Coberto</div><div class="value" style="font-size:16px;">${periodo}</div></div>
+    </div>
+
+    <h2 class="section-title"><span class="tag">Coletas por operação</span></h2>
+    <div class="op-grid">${opCardsHtml}</div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>Participação por Operação</h3><div class="chart-wrap"><canvas id="chartOpDonut"></canvas></div></div>
+      <div class="chart-card"><h3>Embarques por Operação</h3><div class="chart-wrap"><canvas id="chartOpBar"></canvas></div></div>
+      <div class="chart-card wide"><h3>Embarques por Dia, por Operação</h3><div class="chart-wrap tall"><canvas id="chartPorDiaOp"></canvas></div></div>
+    </div>
+
+    <h2 class="section-title"><span class="tag">Detalhamento operacional</span></h2>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>Top Rotas por Nº de Embarques</h3><div class="chart-wrap"><canvas id="chartRotas"></canvas></div></div>
+      <div class="chart-card"><h3>Ranking de Motoristas</h3><div class="chart-wrap"><canvas id="chartMotoristas"></canvas></div></div>
+      <div class="chart-card"><h3>Embarques por Tipo de Veículo</h3><div class="chart-wrap"><canvas id="chartVeiculo"></canvas></div></div>
+    </div>
+
+    <div class="table-card"><h3>Embarques Detalhados</h3><div id="grid"></div></div>
+  `;
+
+  if (rows.length === 0) {
+    body.insertAdjacentHTML("beforeend", '<div class="status-msg">Nenhum embarque para os filtros selecionados.</div>');
+    return;
+  }
+
+  activeCharts.push(new Chart(document.getElementById("chartOpDonut"), {
+    type: "doughnut",
+    data: { labels: opEntries.map((e) => e[0]), datasets: [{ data: opEntries.map((e) => e[1]), backgroundColor: opEntries.map((e, idx) => categoryColor(e[0], idx)), borderColor: "#1c2024", borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } } },
+  }));
+
+  activeCharts.push(new Chart(document.getElementById("chartOpBar"), {
+    type: "bar",
+    data: { labels: opEntries.map((e) => e[0]), datasets: [{ label: "Embarques", data: opEntries.map((e) => e[1]), backgroundColor: opEntries.map((e, idx) => categoryColor(e[0], idx)), borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+  }));
+
+  const diasOrdenados = Array.from(new Set(rows.map((r) => r["Data do Embarque"]).filter(Boolean))).sort();
+  const opsForStack = opEntries.map((e) => e[0]);
+  const stackDatasets = opsForStack.map((op, idx) => {
+    const perDay = diasOrdenados.map((d) => rows.filter((r) => r["Data do Embarque"] === d && (r["Categoria"] || "GAM") === op).length);
+    return { label: op, data: perDay, backgroundColor: categoryColor(op, idx), borderRadius: 4 };
+  });
+  activeCharts.push(new Chart(document.getElementById("chartPorDiaOp"), {
+    type: "bar",
+    data: { labels: diasOrdenados.map(formatDateBR), datasets: stackDatasets },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } } },
+  }));
+
+  const rotasMap = groupCount(rows, "Rota");
+  const rotasTop = sortedEntries(rotasMap, true).slice(0, 8);
+  activeCharts.push(new Chart(document.getElementById("chartRotas"), {
+    type: "bar",
+    data: { labels: rotasTop.map((e) => e[0]), datasets: [{ label: "Embarques", data: rotasTop.map((e) => e[1]), backgroundColor: "#0ea5e9", borderRadius: 6 }] },
+    options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } },
+  }));
+
+  const motoristasMap = groupCount(rows, "Nome do Motorista");
+  const motoristasTop = sortedEntries(motoristasMap, true).slice(0, 10);
+  activeCharts.push(new Chart(document.getElementById("chartMotoristas"), {
+    type: "bar",
+    data: { labels: motoristasTop.map((e) => e[0]), datasets: [{ label: "Embarques", data: motoristasTop.map((e) => e[1]), backgroundColor: "#059669", borderRadius: 6 }] },
+    options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } },
+  }));
+
+  const veiculoMap = groupCount(rows, "Tipo do Veiculo");
+  const veiculoEntries = sortedEntries(veiculoMap, true);
+  activeCharts.push(new Chart(document.getElementById("chartVeiculo"), {
+    type: "doughnut",
+    data: { labels: veiculoEntries.map((e) => e[0]), datasets: [{ data: veiculoEntries.map((e) => e[1]), backgroundColor: PALETTE, borderColor: "#1c2024", borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } } },
+  }));
+
+  const tableRows = rows
+    .slice()
+    .sort((a, b) => (b["Data do Embarque"] || "").localeCompare(a["Data do Embarque"] || ""))
+    .map((r) => [formatDateBR(r["Data do Embarque"]), r["Categoria"] || "GAM", r["Rota"] || "-", r["Nome do Motorista"] || "-", r["Placa"] || "-", r["Tipo do Veiculo"] || "-"]);
+
+  new gridjs.Grid({
+    columns: ["Data", "Operação", "Rota", "Motorista", "Placa", "Tipo de Veículo"],
+    data: tableRows,
+    sort: true,
+    search: true,
+    pagination: { limit: 10 },
+    className: { table: "gridjs-table" },
+  }).render(document.getElementById("grid"));
+}
+
+function buildShell() {
+  const main = document.getElementById("main");
+  main.innerHTML = buildFilterBar() + '<div id="dashboardBody"></div><div class="updated" id="updatedAt"></div>';
+  document.getElementById("filterCat").addEventListener("change", render);
+  document.getElementById("filterFrom").addEventListener("change", render);
+  document.getElementById("filterTo").addEventListener("change", render);
+  document.getElementById("clearFilters").addEventListener("click", () => {
+    document.getElementById("filterCat").value = "";
+    document.getElementById("filterFrom").value = "";
+    document.getElementById("filterTo").value = "";
+    render();
+  });
+  render();
+  setUpdatedAt();
+}
+
+function setUpdatedAt() {
+  const el = document.getElementById("updatedAt");
+  if (!el) return;
+  const now = new Date();
+  el.textContent = "Atualizado em " + new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(now);
+}
+
+async function init() {
+  try {
+    ALL_ROWS = await withRetry(fetchRows);
+    buildShell();
+  } catch (err) {
+    document.getElementById("main").innerHTML = '<div class="error-msg">Erro ao carregar dados: ' + (err && err.message ? err.message : "erro desconhecido") + '</div>';
+  }
+}
+
+init();
+</script>
+</body>
+</html>

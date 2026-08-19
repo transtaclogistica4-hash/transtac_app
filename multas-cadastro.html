@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<!-- TRANSTAC MULTAS | build v9-2026-08-17 | pagina=cadastro -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0c">
+<title>Nova Multa · TRANSTAC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="multas.css?v=9">
+</head>
+<body>
+<div id="splash">
+  <img class="splash-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="splash-bar"><i></i></div>
+  <div class="splash-txt">Carregando</div>
+</div>
+<script>setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove();},6000);</script>
+<header></header>
+
+<main>
+  <nav class="subnav" id="subnav"></nav>
+
+  <div class="card" style="margin-top:16px">
+    <div class="route-name">1. Anexe a notificação</div>
+    <div class="dropzone" id="dz">
+      <div class="dz-icon">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+      </div>
+      <div class="dz-main">Solte aqui os arquivos ou clique para selecionar</div>
+      <div class="dz-sub">PDF, JPG ou PNG · vários arquivos de uma vez · cada notificação vira uma linha na tabela · PDF escaneado passa por OCR automaticamente</div>
+      <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,image/*,application/pdf">
+    </div>
+    <div class="progress" id="prog" style="display:none"><i></i></div>
+    <div class="meta" id="progTxt"></div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <div class="toolbar">
+    <div>
+      <div class="section-title" style="margin:0">2. Confira os dados extraídos</div>
+      <div class="status" id="resumo">Nenhuma multa na fila.</div>
+    </div>
+    <div class="row" style="gap:8px">
+      <button class="ghost-btn" id="btnLinha">+ Linha manual</button>
+      <button class="ghost-btn" id="btnLimpar">Limpar fila</button>
+      <button class="save-btn" id="btnSalvar" disabled>Salvar na base</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="data" id="tabela">
+      <thead>
+        <tr>
+          <th style="width:34px"></th>
+          <th style="min-width:130px">AIT</th>
+          <th style="min-width:100px">Placa</th>
+          <th style="min-width:160px">Motorista</th>
+          <th style="min-width:120px">Órgão</th>
+          <th style="min-width:130px">Data infração</th>
+          <th style="min-width:100px">Código</th>
+          <th style="min-width:230px">Infração</th>
+          <th style="min-width:130px">Gravidade</th>
+          <th style="min-width:120px">Valor</th>
+          <th style="min-width:130px">Vencimento</th>
+          <th style="min-width:140px">Prazo indicação</th>
+          <th style="min-width:150px">Status</th>
+          <th style="min-width:110px">Anexo</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="vazio">Anexe uma notificação — os campos aparecem aqui prontos para conferência.</div>
+  </div>
+
+  <div class="hint">
+    Campos com <b>fundo laranja</b> foram preenchidos automaticamente pela leitura do documento.
+    Revise antes de salvar: a extração é uma sugestão, não substitui a conferência.
+  </div>
+
+  <details class="card" style="margin-top:14px">
+    <summary style="cursor:pointer;font-weight:600;font-size:14px">Ver texto lido do último anexo</summary>
+    <pre id="rawText" style="white-space:pre-wrap;font-size:12px;color:var(--muted);margin:12px 0 0;max-height:280px;overflow:auto"></pre>
+  </details>
+</main>
+
+<datalist id="listaMotoristas"></datalist>
+<script src="multas-app.js?v=9"></script>
+<script>
+montarHeader('NOVA MULTA', 'Anexe a notificação e confira os dados extraídos.', 'multas.html');
+montarSubnav('multas-cadastro.html');
+
+let fila = [];   // linhas em edicao
+let anexos = []; // arquivos processados
+
+const tbody = document.getElementById('tbody');
+const vazio = document.getElementById('vazio');
+const dz = document.getElementById('dz');
+const fileInput = document.getElementById('fileInput');
+const prog = document.getElementById('prog');
+const progTxt = document.getElementById('progTxt');
+
+/* ---------- dropzone ---------- */
+dz.addEventListener('click', () => fileInput.click());
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  processar(Array.from(e.dataTransfer.files));
+});
+fileInput.addEventListener('change', e => { processar(Array.from(e.target.files)); fileInput.value = ''; });
+
+function lerArquivo(f) {
+  return new Promise((ok, err) => {
+    const r = new FileReader();
+    r.onload = () => ok(r.result);
+    r.onerror = () => err(new Error('Não foi possível ler ' + f.name));
+    r.readAsDataURL(f);
+  });
+}
+function setProgresso(p, txt) {
+  prog.style.display = p === null ? 'none' : 'block';
+  if (p !== null) prog.firstElementChild.style.width = Math.round(p * 100) + '%';
+  progTxt.textContent = txt || '';
+}
+
+async function processar(arquivos) {
+  if (!arquivos.length) return;
+  for (let i = 0; i < arquivos.length; i++) {
+    const f = arquivos[i];
+    const rotulo = '(' + (i + 1) + '/' + arquivos.length + ') ' + f.name;
+    setProgresso(0.05, 'Lendo ' + rotulo + '…');
+    try {
+      const dataUrl = await lerArquivo(f);
+      setProgresso(0.25, 'Extraindo dados de ' + rotulo + '…');
+      // A leitura do PDF/imagem roda sempre no navegador (pdf.js + OCR).
+      // O arquivo em si sobe para o Drive junto com o "Salvar na base".
+      const texto = await ocrLocal(dataUrl, f.name, f.type,
+        p => setProgresso(0.25 + p * 0.7, 'Extraindo dados de ' + rotulo + '…'));
+      document.getElementById('rawText').textContent = texto || '(sem texto)';
+      const campos = completarMotorista(parseMulta(texto));
+      campos.anexoNome = f.name;
+      campos.anexoUrl = '';
+      campos._arquivo = dataUrl;   // base64 enviado a API no salvamento
+      addLinha(campos);
+      anexos.push({ nome: f.name, tamanho: f.size });
+      toast('Dados extraídos de ' + f.name);
+    } catch (e) {
+      toast('Falha em ' + f.name + ': ' + e.message, 5000);
+      addLinha({ anexoNome: f.name, _guessed: [] });
+    }
+  }
+  setProgresso(null, '');
+  renderAnexos();
+}
+
+function renderAnexos() {
+  document.getElementById('fileList').innerHTML = anexos.map((a, i) =>
+    '<div class="file-item"><span class="fname">' + esc(a.nome) + '</span>' +
+    '<span class="fsize">' + (a.tamanho / 1024).toFixed(0) + ' KB</span>' +
+    '<button class="fdel" data-i="' + i + '" title="Remover da lista">&times;</button></div>'
+  ).join('');
+  $$('#fileList .fdel').forEach(b => b.onclick = () => { anexos.splice(+b.dataset.i, 1); renderAnexos(); });
+}
+
+/* ---------- tabela ---------- */
+function addLinha(campos) {
+  const base = {
+    id: '', ait: '', placa: '', motorista: '', orgao: '', dataInfracao: '', horaInfracao: '',
+    codigoInfracao: '', descricaoInfracao: '', gravidade: '', pontos: '', valor: '',
+    vencimento: '', prazoIndicacao: '', statusIndicacao: 'NAO_APLICA', status: 'RECEBIDA',
+    local: '', municipio: '', uf: '', observacoes: '', anexoNome: '', anexoUrl: '', _guessed: []
+  };
+  fila.push(Object.assign(base, campos));
+  render();
+}
+
+function opt(lista, sel, mapa) {
+  return lista.map(o => {
+    const v = mapa ? o.v : o, t = mapa ? o.label : o;
+    return '<option value="' + esc(v) + '"' + (String(sel) === String(v) ? ' selected' : '') + '>' + esc(t) + '</option>';
+  }).join('');
+}
+
+function render() {
+  vazio.style.display = fila.length ? 'none' : 'block';
+  document.getElementById('btnSalvar').disabled = !fila.length;
+  document.getElementById('resumo').textContent = fila.length
+    ? fila.length + ' multa(s) na fila · total ' + brl(fila.reduce((s, m) => s + numero(m.valor), 0))
+    : 'Nenhuma multa na fila.';
+
+  tbody.innerHTML = fila.map((m, i) => {
+    const g = k => (m._guessed || []).includes(k) ? ' class="guessed"' : '';
+    const inp = (k, tipo, extra) => '<input data-i="' + i + '" data-k="' + k + '" type="' + (tipo || 'text') +
+      '" value="' + esc(tipo === 'date' ? iso(m[k]) : m[k]) + '" ' + (extra || '') + '>';
+    return '<tr>' +
+      '<td class="center"><button class="fdel" data-del="' + i + '" title="Remover linha">&times;</button></td>' +
+      '<td' + g('ait') + '>' + inp('ait') + '</td>' +
+      '<td' + g('placa') + '>' + inp('placa', 'text', 'style="text-transform:uppercase"') + '</td>' +
+      '<td' + g('motorista') + '>' + inp('motorista', 'text', 'list="listaMotoristas"') + '</td>' +
+      '<td' + g('orgao') + '><select data-i="' + i + '" data-k="orgao"><option value=""></option>' + opt(ORGAOS, m.orgao) + '</select></td>' +
+      '<td' + g('dataInfracao') + '>' + inp('dataInfracao', 'date') + '</td>' +
+      '<td' + g('codigoInfracao') + '>' + inp('codigoInfracao') + '</td>' +
+      '<td' + g('descricaoInfracao') + '>' + inp('descricaoInfracao') + '</td>' +
+      '<td' + g('gravidade') + '><select data-i="' + i + '" data-k="gravidade"><option value=""></option>' +
+        GRAVIDADES.map(x => '<option value="' + x + '"' + (m.gravidade === x ? ' selected' : '') + '>' + GRAV_LABEL[x] + '</option>').join('') +
+      '</select></td>' +
+      '<td' + g('valor') + '>' + inp('valor', 'number', 'step="0.01" min="0"') + '</td>' +
+      '<td' + g('vencimento') + '>' + inp('vencimento', 'date') + '</td>' +
+      '<td' + g('prazoIndicacao') + '>' + inp('prazoIndicacao', 'date') + '</td>' +
+      '<td><select data-i="' + i + '" data-k="status">' + opt(STATUS, m.status, true) + '</select></td>' +
+      '<td class="mono" style="font-size:12px">' + (m.anexoNome ? esc(m.anexoNome).slice(0, 18) : '—') + '</td>' +
+    '</tr>';
+  }).join('');
+
+  $$('#tbody input, #tbody select').forEach(el => {
+    el.addEventListener('input', () => {
+      const m = fila[+el.dataset.i], k = el.dataset.k;
+      m[k] = el.type === 'date' ? el.value : el.value;
+      if (k === 'placa') {
+        m.placa = el.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (!m.motorista) {
+          const auto = motoristaDaPlaca(m.placa);
+          if (auto) {
+            m.motorista = auto;
+            const campo = document.querySelector('#tbody input[data-i="' + el.dataset.i + '"][data-k="motorista"]');
+            if (campo) campo.value = auto;
+          }
+        }
+      }
+      if (k === 'motorista') lembrarMotorista(m.placa, el.value);
+      if (k === 'valor') document.getElementById('resumo').textContent =
+        fila.length + ' multa(s) na fila · total ' + brl(fila.reduce((s, x) => s + numero(x.valor), 0));
+    });
+  });
+  $$('#tbody [data-del]').forEach(b => b.onclick = () => { fila.splice(+b.dataset.del, 1); render(); });
+}
+
+/* ---------- acoes ---------- */
+document.getElementById('btnLinha').onclick = () => addLinha({});
+document.getElementById('btnLimpar').onclick = () => {
+  if (fila.length && !confirm('Descartar as ' + fila.length + ' linha(s) da fila?')) return;
+  fila = []; anexos = []; renderAnexos(); render();
+};
+document.getElementById('btnSalvar').onclick = async () => {
+  const faltando = fila.filter(m => !m.placa || !m.dataInfracao);
+  if (faltando.length && !confirm(faltando.length + ' linha(s) sem placa ou data da infração. Salvar assim mesmo?')) return;
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  try {
+    const itens = fila.map(m => {
+      const o = {}; CAMPOS.forEach(k => { if (m[k] !== undefined) o[k] = m[k]; });
+      o.valor = numero(m.valor);
+      o._arquivo = m._arquivo || '';
+      return o;
+    });
+    fila.forEach(m => lembrarMotorista(m.placa, m.motorista));
+    await api('salvar', { itens });
+    toast('Salvo: ' + itens.length + ' multa(s).');
+    fila = []; anexos = []; renderAnexos(); render();
+  } catch (e) {
+    toast('Erro ao salvar: ' + e.message, 5000);
+  } finally {
+    btn.textContent = 'Salvar na base'; btn.disabled = !fila.length;
+  }
+};
+
+function atualizarListaMotoristas() {
+  const nomes = Array.from(new Set(Object.values(vinculosPlaca()))).sort();
+  document.getElementById('listaMotoristas').innerHTML =
+    nomes.map(n => '<option value="' + esc(n) + '">').join('');
+}
+atualizarListaMotoristas();
+sincronizarMotoristas().then(atualizarListaMotoristas);
+
+render();
+</script>
+</body>
+</html>

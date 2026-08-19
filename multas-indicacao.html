@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<!-- TRANSTAC MULTAS | build v9-2026-08-17 | pagina=indicacao -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0c">
+<title>Indicação de Condutor · TRANSTAC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="multas.css?v=9">
+</head>
+<body>
+<div id="splash">
+  <img class="splash-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="splash-bar"><i></i></div>
+  <div class="splash-txt">Carregando</div>
+</div>
+<script>setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove();},6000);</script>
+<header></header>
+
+<main>
+  <nav class="subnav" id="subnav"></nav>
+
+  <div class="kpi-grid" style="margin-top:20px" id="kpis"></div>
+
+  <div class="toolbar">
+    <div>
+      <div class="section-title" style="margin:0">Processos de indicação</div>
+      <div class="status" id="resumo">Carregando…</div>
+    </div>
+    <div class="row" style="gap:8px">
+      <div class="field sm" style="min-width:170px">
+        <select id="fsit">
+          <option value="">Todas as situações</option>
+        </select>
+      </div>
+      <button class="reload" id="btnReload">Atualizar</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>AIT</th><th>Placa</th><th>Data infração</th><th>Infração</th>
+          <th>Prazo legal</th><th>Situação</th><th>Motorista indicado</th><th>CNH</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="vazio" style="display:none">Nenhum processo de indicação nesta situação.</div>
+  </div>
+
+  <div class="hint">
+    O prazo de indicação do condutor infrator é contado a partir da <b>notificação da autuação</b>
+    (art. 257, §7º do CTB — em regra 30 dias, podendo variar conforme o órgão autuador).
+    Perdido o prazo, a multa e a pontuação recaem sobre a empresa proprietária do veículo.
+  </div>
+</main>
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal" style="max-width:560px">
+    <h3 id="mTitulo">Indicar condutor</h3>
+    <p class="modal-sub" id="mSub"></p>
+    <div class="row">
+      <div class="field"><label>Motorista</label><input id="i_motorista" placeholder="Nome completo"></div>
+      <div class="field sm"><label>CNH</label><input id="i_cnh"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field sm"><label>Situação</label><select id="i_situacao"></select></div>
+      <div class="field sm"><label>Prazo legal</label><input type="date" id="i_prazo"></div>
+      <div class="field"><label>Responsável</label><input id="i_responsavel"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field lg"><label>Observações</label><textarea id="i_obs"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="ghost-btn" id="mCancelar">Cancelar</button>
+      <button class="save-btn" id="mSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script src="multas-app.js?v=9"></script>
+<script>
+montarHeader('INDICAÇÃO DE CONDUTOR', 'Controle do prazo legal e da situação de cada processo.', 'multas.html');
+montarSubnav('multas-indicacao.html');
+
+let dados = [], atual = null;
+STATUS_INDICACAO.forEach(s => { fsit.add(new Option(s.label, s.v)); i_situacao.add(new Option(s.label, s.v)); });
+
+async function carregar() {
+  try { dados = await api('listar'); } catch (e) { toast('Erro: ' + e.message); dados = []; }
+  render();
+}
+
+function elegiveis() {
+  return dados.filter(m => m.statusIndicacao && m.statusIndicacao !== 'NAO_APLICA');
+}
+
+function render() {
+  const base = elegiveis();
+  const pend = base.filter(m => m.statusIndicacao === 'PENDENTE');
+  const urg = pend.filter(m => { const d = diasAte(m.prazoIndicacao); return d !== null && d >= 0 && d <= 7; });
+  const venc = pend.filter(m => { const d = diasAte(m.prazoIndicacao); return d !== null && d < 0; });
+  const perdidos = base.filter(m => m.statusIndicacao === 'PERDIDO');
+
+  document.getElementById('kpis').innerHTML = [
+    ['accent', 'Pendentes', pend.length, 'aguardando indicação'],
+    ['warn', 'Vencem em 7 dias', urg.length, 'ação imediata'],
+    ['danger', 'Prazo estourado', venc.length + perdidos.length, 'risco de pontuação na empresa'],
+    ['ok', 'Aceitas', base.filter(m => m.statusIndicacao === 'ACEITA').length, 'condutor transferido']
+  ].map(([c, l, v, s]) =>
+    '<div class="kpi ' + c + '"><div class="kpi-label">' + l + '</div><div class="kpi-value">' + v + '</div><div class="kpi-sub">' + s + '</div></div>'
+  ).join('');
+
+  const lista = base
+    .filter(m => !fsit.value || m.statusIndicacao === fsit.value)
+    .sort((a, b) => {
+      const da = diasAte(a.prazoIndicacao), db = diasAte(b.prazoIndicacao);
+      if (da === null) return 1; if (db === null) return -1;
+      return da - db;
+    });
+
+  document.getElementById('resumo').textContent = lista.length + ' processo(s) listado(s).';
+  document.getElementById('vazio').style.display = lista.length ? 'none' : 'block';
+
+  document.getElementById('tbody').innerHTML = lista.map(m => {
+    const sit = STATUS_INDICACAO.find(s => s.v === m.statusIndicacao) || {};
+    const cls = { PENDENTE: 'indicacao', ENVIADA: 'recurso', ACEITA: 'paga', RECUSADA: 'vencida', PERDIDO: 'vencida' }[m.statusIndicacao] || 'cancelada';
+    return '<tr>' +
+      '<td class="mono">' + esc(m.ait || '—') + '</td>' +
+      '<td class="mono"><b>' + esc(m.placa || '—') + '</b></td>' +
+      '<td class="mono">' + br(m.dataInfracao) + '</td>' +
+      '<td>' + esc(m.descricaoInfracao || '—').slice(0, 70) + '</td>' +
+      '<td class="mono">' + br(m.prazoIndicacao) + '<br>' + (m.statusIndicacao === 'PENDENTE' ? pillPrazo(m.prazoIndicacao) : '') + '</td>' +
+      '<td><span class="badge ' + cls + '">' + esc(sit.label || m.statusIndicacao) + '</span></td>' +
+      '<td>' + esc(m.motorista || '—') + '</td>' +
+      '<td class="mono">' + esc(m.cnhMotorista || '—') + '</td>' +
+      '<td class="center"><button class="linkish" style="background:none;border:none;cursor:pointer" data-id="' + esc(m.id) + '">Indicar</button></td>' +
+    '</tr>';
+  }).join('');
+
+  $$('#tbody [data-id]').forEach(b => b.onclick = () => abrir(b.dataset.id));
+}
+
+function abrir(id) {
+  atual = dados.find(m => String(m.id) === String(id));
+  if (!atual) return;
+  mTitulo.textContent = 'Indicação · ' + (atual.ait || atual.id);
+  mSub.textContent = (atual.placa || '') + ' · infração em ' + br(atual.dataInfracao) + ' · prazo ' + br(atual.prazoIndicacao);
+  i_motorista.value = atual.motorista || '';
+  i_cnh.value = atual.cnhMotorista || '';
+  i_situacao.value = atual.statusIndicacao || 'PENDENTE';
+  i_prazo.value = iso(atual.prazoIndicacao);
+  i_responsavel.value = atual.responsavel || '';
+  i_obs.value = atual.observacoes || '';
+  modal.classList.add('show');
+}
+
+mCancelar.onclick = () => modal.classList.remove('show');
+modal.onclick = e => { if (e.target === modal) modal.classList.remove('show'); };
+
+mSalvar.onclick = async () => {
+  const item = {
+    id: atual.id,
+    motorista: i_motorista.value,
+    cnhMotorista: i_cnh.value,
+    statusIndicacao: i_situacao.value,
+    prazoIndicacao: i_prazo.value,
+    responsavel: i_responsavel.value,
+    observacoes: i_obs.value
+  };
+  if (['ACEITA', 'RECUSADA', 'PERDIDO'].includes(item.statusIndicacao) && atual.status === 'INDICACAO') {
+    item.status = 'A_PAGAR';
+  }
+  mSalvar.disabled = true;
+  try {
+    await api('salvar', { itens: [item] });
+    modal.classList.remove('show');
+    toast('Indicação atualizada.');
+    await carregar();
+  } catch (e) { toast('Erro: ' + e.message, 5000); }
+  finally { mSalvar.disabled = false; }
+};
+
+fsit.addEventListener('input', render);
+btnReload.onclick = carregar;
+carregar();
+</script>
+</body>
+</html>

@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TRANSTAC &middot; Devolucoes &middot; Nova Devolucao</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png" />
+<style>
+/* ============================================================
+   TRANSTAC - Identidade visual padrao (preto / cinza / laranja)
+   Usada nas telas do modulo WOW - Inglesa
+   ============================================================ */
+:root {
+  color-scheme: dark;
+  --tt-bg: #14171a;
+  --tt-panel: #1c2024;
+  --tt-panel-alt: #1a1e22;
+  --tt-head: #24282d;
+  --tt-line: #2b2f34;
+  --tt-line-2: #3a3f45;
+  --tt-orange: #f5821f;
+  --tt-orange-dark: #c2590f;
+  --tt-yellow: #f5c518;
+  --tt-text: #f1f1f1;
+  --tt-muted: #9ca3af;
+  --tt-soft: #e5e7eb;
+  --tt-ok: #34d399;
+  --tt-err: #f87171;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--tt-bg);
+  color: var(--tt-text);
+  min-height: 100vh;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; }
+.wrap.wide { max-width: 1360px; }
+
+/* ---------- Cabecalho / marca ---------- */
+header.hdr {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0 20px;
+  border-bottom: 1px solid var(--tt-line);
+  margin-bottom: 22px;
+}
+.brand-mark { width: 34px; height: 40px; color: var(--tt-orange); flex-shrink: 0; }
+.brand-word {
+  font-size: 20px; font-weight: 800; letter-spacing: 0.02em;
+  color: #fff; line-height: 1.1;
+}
+.brand-word small {
+  display: block; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.14em; color: var(--tt-orange);
+}
+.hdr-sub { margin-left: 10px; }
+.hdr-sub .title { font-size: 18px; font-weight: 700; color: #fff; }
+.hdr-sub .subtitle { font-size: 12.5px; color: var(--tt-muted); font-style: italic; margin-top: 2px; }
+.home-link { margin-left: auto; color: var(--tt-muted); text-decoration: none; font-size: 13px; }
+.home-link:hover { color: var(--tt-text); }
+
+/* ---------- Cartoes de modulo ---------- */
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 6px;
+}
+.hub-card {
+  background: var(--tt-panel);
+  border: 1px solid var(--tt-line);
+  border-radius: 14px;
+  padding: 24px 20px;
+  text-decoration: none;
+  color: var(--tt-text);
+  display: block;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.hub-card:hover { transform: translateY(-2px); border-color: var(--tt-orange); }
+.hub-card .tag {
+  display: inline-block; font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--tt-orange); font-weight: 800; margin-bottom: 8px;
+}
+.hub-card h2 { font-size: 18px; margin: 0 0 6px; color: #fff; }
+.hub-card p { font-size: 13px; color: var(--tt-muted); margin: 0; line-height: 1.45; }
+
+/* ---------- Painel / formulario ---------- */
+.panel {
+  background: var(--tt-panel);
+  border: 1px solid var(--tt-line);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+}
+.panel-title {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--tt-orange); font-weight: 800; margin: 0 0 16px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px 16px;
+}
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field.span-2 { grid-column: span 2; }
+.field label {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--tt-muted); font-weight: 700;
+}
+.field input,
+.field select,
+.field textarea {
+  background: var(--tt-head);
+  border: 1px solid var(--tt-line-2);
+  color: var(--tt-text);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 13.5px;
+  font-family: inherit;
+  width: 100%;
+}
+.field textarea { resize: vertical; min-height: 66px; }
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--tt-orange);
+  box-shadow: 0 0 0 2px rgba(245, 130, 31, 0.22);
+}
+.field input::placeholder, .field textarea::placeholder { color: #6b7280; }
+
+/* ---------- Botoes ---------- */
+.actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.btn-confirm {
+  background: var(--tt-orange);
+  color: #14171a;
+  border: none;
+  border-radius: 9px;
+  padding: 12px 30px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-confirm:hover { background: var(--tt-orange-dark); color: #fff; }
+.btn-confirm:disabled { background: #7c4a1c; color: #d1d5db; cursor: default; }
+.btn-ghost {
+  background: var(--tt-head);
+  border: 1px solid var(--tt-line-2);
+  color: var(--tt-text);
+  border-radius: 9px;
+  padding: 11px 18px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-ghost:hover { background: var(--tt-line-2); }
+
+/* ---------- Mensagens ---------- */
+.status-msg { text-align: center; color: var(--tt-muted); padding: 46px 0; font-size: 14px; }
+.error-msg { text-align: center; color: var(--tt-err); padding: 46px 0; font-size: 14px; }
+.hint { font-size: 12px; color: var(--tt-muted); margin-top: 10px; line-height: 1.5; }
+.toast {
+  position: fixed; left: 50%; bottom: 28px;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--tt-head); color: var(--tt-text);
+  border: 1px solid var(--tt-line-2);
+  padding: 11px 20px; border-radius: 8px; font-size: 13px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s; z-index: 60;
+  max-width: 88vw; text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.ok { border-color: var(--tt-ok); }
+.toast.err { border-color: var(--tt-err); }
+
+/* ---------- Controles (filtros) ---------- */
+.controls {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 14px;
+  background: var(--tt-panel);
+  border: 1px solid var(--tt-line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
+}
+.date-box { display: flex; align-items: center; gap: 10px; }
+.date-box button {
+  background: var(--tt-line); border: none; color: var(--tt-text);
+  width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 14px;
+}
+.date-box button:hover { background: var(--tt-line-2); }
+.date-pill {
+  background: var(--tt-yellow); color: var(--tt-bg); font-weight: 800; font-size: 15px;
+  padding: 7px 16px; border-radius: 8px; min-width: 118px; text-align: center;
+}
+.date-weekday { font-style: italic; font-size: 13px; color: #d1d5db; text-transform: capitalize; }
+input[type="date"] {
+  background: var(--tt-head); border: 1px solid var(--tt-line-2); color: var(--tt-text);
+  border-radius: 8px; padding: 6px 8px; font-size: 12.5px; font-family: inherit;
+}
+.check-inline { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--tt-muted); }
+.check-inline input { accent-color: var(--tt-orange); width: 15px; height: 15px; }
+.total-box { margin-left: auto; text-align: right; }
+.total-box .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--tt-muted); }
+.total-box .value { font-size: 26px; font-weight: 800; color: var(--tt-orange); }
+
+/* ---------- Tabela ---------- */
+.table-scroll { overflow-x: auto; border-radius: 12px; border: 1px solid var(--tt-line); }
+table.manifest { width: 100%; border-collapse: collapse; background: var(--tt-panel); }
+table.manifest th {
+  background: var(--tt-head); color: var(--tt-orange);
+  text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em;
+  text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--tt-line);
+  white-space: nowrap;
+}
+table.manifest td {
+  padding: 10px 14px; font-size: 13.5px;
+  border-bottom: 1px solid var(--tt-head); color: var(--tt-soft);
+}
+table.manifest tbody tr:nth-child(even) { background: var(--tt-panel-alt); }
+table.manifest tbody tr:hover { background: var(--tt-head); }
+.col-num { color: var(--tt-muted); width: 34px; }
+.badge {
+  display: inline-block; font-size: 10.5px; font-weight: 800;
+  padding: 2px 9px; border-radius: 999px; color: var(--tt-bg); white-space: nowrap;
+}
+.updated { text-align: right; font-size: 11.5px; color: #6b7280; margin-top: 14px; }
+
+@media (max-width: 640px) {
+  header.hdr { flex-wrap: wrap; }
+  .home-link { margin-left: 0; flex-basis: 100%; }
+  .field.span-2 { grid-column: span 1; }
+}
+
+/* --- Devolucoes --- */
+.id-badge { display:inline-block; background:var(--tt-orange); color:#14171a; font-weight:800;
+  padding:4px 12px; border-radius:999px; font-size:13px; letter-spacing:.02em; }
+.btn-wa { background:#25d366; color:#0b2e18; border:none; border-radius:8px; padding:7px 14px;
+  font-size:12.5px; font-weight:800; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.btn-wa:hover { background:#1da851; color:#fff; }
+.btn-wa:disabled { background:#2b5c3d; color:#cbd5e1; cursor:default; }
+.enviado { color:var(--tt-ok); font-size:12px; font-weight:700; white-space:nowrap; }
+.pendente { color:var(--tt-muted); font-size:12px; }
+
+body {
+  background-color:#14171a;
+  background-image: linear-gradient(rgba(18,20,23,.90), rgba(18,20,23,.94)), url("fundo-transtac.jpg");
+  background-size:cover; background-position:center center;
+  background-attachment:fixed; background-repeat:no-repeat;
+}
+.brand-logo { height:40px; width:auto; display:block; flex-shrink:0; }
+@media (max-width:640px) { .brand-logo { height:32px; } }
+</style>
+</head>
+<body>
+<!-- TRANSTAC | efeito de carregamento (padrao do app) -->
+<style>
+#tt-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;background-color:#14171a;
+  background-image:linear-gradient(180deg,rgba(14,16,18,.90) 0%,rgba(14,16,18,.96) 100%),url('fundo-transtac.jpg');
+  background-size:cover;background-position:center center;
+  transition:opacity .45s ease,visibility .45s ease;}
+#tt-splash::before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,112,13,.20),transparent 62%);
+  animation:ttPulse 2.4s ease-in-out infinite;}
+#tt-splash.hide{opacity:0;visibility:hidden;}
+#tt-splash .tt-logo{position:relative;width:min(280px,62vw);height:auto;opacity:0;
+  transform:translateY(10px) scale(.96);
+  animation:ttIn .7s cubic-bezier(.2,.8,.25,1) forwards;
+  filter:drop-shadow(0 8px 26px rgba(0,0,0,.6));}
+#tt-splash .tt-bar{position:relative;width:min(230px,52vw);height:3px;border-radius:999px;
+  background:rgba(255,255,255,.09);overflow:hidden;}
+#tt-splash .tt-bar i{position:absolute;top:0;left:-40%;width:40%;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,transparent,#F2700D,transparent);
+  animation:ttSlide 1.15s ease-in-out infinite;}
+#tt-splash .tt-txt{position:relative;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;
+  font-weight:700;color:#8A939E;opacity:0;animation:ttIn .7s ease .25s forwards;}
+@keyframes ttIn{to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes ttSlide{0%{left:-40%;}100%{left:100%;}}
+@keyframes ttPulse{0%,100%{transform:scale(.92);opacity:.55;}50%{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){#tt-splash *,#tt-splash::before{animation:none !important;}}
+</style>
+<div id="tt-splash">
+  <img class="tt-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="tt-bar"><i></i></div>
+  <div class="tt-txt">Carregando</div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('tt-splash');
+  if(!s) return;
+  var fechado=false;
+  function fim(){
+    if(fechado) return; fechado=true;
+    s.classList.add('hide');
+    setTimeout(function(){ if(s&&s.parentNode) s.parentNode.removeChild(s); },600);
+  }
+  if(document.readyState==='complete'){ setTimeout(fim,450); }
+  else{ window.addEventListener('load',function(){ setTimeout(fim,450); }); }
+  setTimeout(fim,6000);   /* trava de seguranca */
+})();
+</script>
+
+<div class="wrap">
+<header class="hdr">
+<img class="brand-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES" />
+<div class="hdr-sub">
+<div class="title">Devolucoes &middot; Nova Devolucao</div>
+<div class="subtitle">Cadastro da devolucao gerada</div>
+</div>
+<a class="home-link" href="devolucoes.html">&larr; Voltar para Devolucoes</a>
+</header>
+<form id="form" autocomplete="off">
+<div class="panel">
+  <p class="panel-title">Dados da devolucao</p>
+  <div class="form-grid">
+    <div class="field">
+      <label for="id">ID da Devolucao</label>
+      <input type="text" id="id" value="Gerado automaticamente" disabled />
+    </div>
+    <div class="field">
+      <label for="cliente">Cliente</label>
+      <input type="text" id="cliente" name="Cliente" />
+    </div>
+    <div class="field">
+      <label for="nf">NF Origem</label>
+      <input type="text" id="nf" name="NF Origem" placeholder="Ex.: 1001" />
+    </div>
+    <div class="field">
+      <label for="peso">Peso</label>
+      <input type="text" id="peso" name="Peso" inputmode="decimal" placeholder="Ex.: 850" />
+    </div>
+    <div class="field">
+      <label for="destino">Destino Final</label>
+      <input type="text" id="destino" name="Destino Final" placeholder="Ex.: Criciuma/SC" />
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="submit" class="btn-confirm" id="btnConfirm">Confirmar</button>
+    <button type="button" class="btn-ghost" id="btnClear">Limpar</button>
+    <span class="hint" id="feedback"></span>
+  </div>
+  <p class="hint">O ID e gerado na hora de salvar, na sequencia da planilha (DEV-0001, DEV-0002...).</p>
+</div>
+</form>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function showToast(msg, kind) {
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show " + (kind || "");
+  setTimeout(function () { t.className = "toast"; }, kind === "err" ? 12000 : 3500);
+}
+
+var form = document.getElementById("form");
+var btn = document.getElementById("btnConfirm");
+var feedback = document.getElementById("feedback");
+
+document.getElementById("btnClear").addEventListener("click", function () {
+  form.reset();
+  document.getElementById("id").value = "Gerado automaticamente";
+  feedback.textContent = "";
+});
+
+form.addEventListener("submit", async function (e) {
+  e.preventDefault();
+  var dados = {};
+  form.querySelectorAll("input[name]").forEach(function (el) {
+    dados[el.name] = (el.value || "").trim();
+  });
+
+  if (!dados["Cliente"]) { showToast("Informe ao menos o cliente.", "err"); return; }
+
+  btn.disabled = true;
+  btn.textContent = "Gravando...";
+  try {
+    var res = await fetch("/api/devolucoes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ acao: "nova", dados: dados })
+    });
+    var out = await res.json().catch(function () { return {}; });
+    if (!res.ok || !out.ok) {
+      var msg = (out && out.error) || "Falha ao gravar na planilha.";
+      if (out && out.detail) msg += " [" + out.detail + "]";
+      throw new Error(msg);
+    }
+    document.getElementById("id").value = out.id || "-";
+    feedback.textContent = "Devolucao " + (out.id || "") + " registrada.";
+    showToast("Devolucao " + (out.id || "") + " registrada.", "ok");
+    form.querySelectorAll("input[name]").forEach(function (el) { el.value = ""; });
+  } catch (err) {
+    showToast("Erro: " + (err && err.message ? err.message : "erro desconhecido"), "err");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Confirmar";
+  }
+});
+
+</script>
+</body>
+</html>

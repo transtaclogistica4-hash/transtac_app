@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Controle de Embarque TRANSTAC - Dados Comerciais - Cargas Terceiros</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #14171a;
+  --card: #1c2024;
+  --card-alt: #1a1e22;
+  --field: #24282d;
+  --accent: #f5821f;
+  --accent-dark: #c2590f;
+  --text: #f1f1f1;
+  --muted: #9ca3af;
+  --border: #2b2f34;
+  --border-2: #3a3f45;
+  --ok: #34d399;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+header {
+  padding: 18px 20px 20px;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+header h1 {
+  color: #fff;
+  font-size: 18px;
+  margin: 0 0 2px;
+  font-weight: 700;
+}
+header p {
+  color: var(--muted);
+  margin: 0;
+  font-size: 12.5px;
+  font-style: italic;
+}
+header a.home-link {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+header a.home-link:hover { color: var(--text); }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-mark {
+  width: 34px;
+  height: 40px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.brand-word {
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  line-height: 1.1;
+}
+.brand-word small {
+  display: block;
+  font-weight: 700;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  margin-top: 2px;
+}
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 20px 60px;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.toolbar .status {
+  font-size: 13px;
+  color: var(--muted);
+}
+button.reload {
+  background: var(--field);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text);
+  font-family: inherit;
+}
+button.reload:hover { background: var(--border-2); }
+.grid {
+  display: grid;
+  gap: 14px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.card .route-name {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: #fff;
+}
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.row .field {
+  flex: 1 1 200px;
+  min-width: 160px;
+}
+.row label {
+  display: block;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.row input,
+.row select,
+.row textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border-2);
+  font-size: 13.5px;
+  font-family: inherit;
+  background: var(--field);
+  color: var(--text);
+}
+.row input:focus,
+.row select:focus,
+.row textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(245, 130, 31, 0.22);
+}
+.row input::placeholder, .row textarea::placeholder { color: #6b7280; }
+.save-btn {
+  background: var(--accent);
+  color: #14171a;
+  border: none;
+  border-radius: 9px;
+  padding: 11px 22px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: flex-end;
+  margin-top: 18px;
+  font-family: inherit;
+}
+.save-btn:hover { background: var(--accent-dark); color: #fff; }
+.save-btn:disabled { background: #7c4a1c; color: #d1d5db; cursor: default; }
+.meta {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.meta.saved { color: var(--ok); }
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--field);
+  color: var(--text);
+  border: 1px solid var(--border-2);
+  padding: 11px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 60;
+  max-width: 88vw;
+  text-align: center;
+}
+.toast.show { opacity: 1; }
+
+/* Hub / modulos */
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.hub-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 20px;
+  text-decoration: none;
+  color: var(--text);
+  display: block;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.hub-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.hub-card .tag {
+  display: inline-block;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.hub-card h2 {
+  font-size: 18px;
+  margin: 0 0 6px;
+  color: #fff;
+}
+.hub-card p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  header a.home-link { margin-left: 0; flex-basis: 100%; }
+}
+</style>
+<style>
+.card.disabled { opacity: 0.55; }
+.card .sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.card .sub b { color: var(--text); }
+.finalize-btn { background: var(--ok); }
+.finalize-btn:hover { background: #047857; }
+.row .field.wide { flex: 1 1 100%; }
+.custo-box {
+  display: none;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+.custo-box.show { display: flex; }
+.liquido-box {
+  flex: 1 1 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--field);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+.liquido-box b { color: var(--text); }
+.liquido-box .valor { font-size: 17px; font-weight: 700; color: var(--accent); }
+.hist-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-top: 28px;
+}
+.hist-card h2 { font-size: 15px; margin: 0 0 4px; color: #fff; }
+.hist-card .hist-sub { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; }
+.hist-status { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; }
+.hist-wrap { overflow-x: auto; }
+table.hist { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.hist th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+table.hist td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+table.hist tbody tr:hover { background: var(--field); }
+</style>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png" />
+<style>
+/* --- Identidade TRANSTAC: fundo e logo oficiais --- */
+body {
+  background-color: #14171a;
+  background-image: linear-gradient(rgba(18, 20, 23, 0.90), rgba(18, 20, 23, 0.94)), url("fundo-transtac.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+.brand-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) { .brand-logo { height: 32px; } }
+</style>
+</head>
+<body>
+<!-- TRANSTAC | efeito de carregamento (padrao do app) -->
+<style>
+#tt-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;background-color:#14171a;
+  background-image:linear-gradient(180deg,rgba(14,16,18,.90) 0%,rgba(14,16,18,.96) 100%),url('fundo-transtac.jpg');
+  background-size:cover;background-position:center center;
+  transition:opacity .45s ease,visibility .45s ease;}
+#tt-splash::before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,112,13,.20),transparent 62%);
+  animation:ttPulse 2.4s ease-in-out infinite;}
+#tt-splash.hide{opacity:0;visibility:hidden;}
+#tt-splash .tt-logo{position:relative;width:min(280px,62vw);height:auto;opacity:0;
+  transform:translateY(10px) scale(.96);
+  animation:ttIn .7s cubic-bezier(.2,.8,.25,1) forwards;
+  filter:drop-shadow(0 8px 26px rgba(0,0,0,.6));}
+#tt-splash .tt-bar{position:relative;width:min(230px,52vw);height:3px;border-radius:999px;
+  background:rgba(255,255,255,.09);overflow:hidden;}
+#tt-splash .tt-bar i{position:absolute;top:0;left:-40%;width:40%;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,transparent,#F2700D,transparent);
+  animation:ttSlide 1.15s ease-in-out infinite;}
+#tt-splash .tt-txt{position:relative;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;
+  font-weight:700;color:#8A939E;opacity:0;animation:ttIn .7s ease .25s forwards;}
+@keyframes ttIn{to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes ttSlide{0%{left:-40%;}100%{left:100%;}}
+@keyframes ttPulse{0%,100%{transform:scale(.92);opacity:.55;}50%{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){#tt-splash *,#tt-splash::before{animation:none !important;}}
+</style>
+<div id="tt-splash">
+  <img class="tt-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="tt-bar"><i></i></div>
+  <div class="tt-txt">Carregando</div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('tt-splash');
+  if(!s) return;
+  var fechado=false;
+  function fim(){
+    if(fechado) return; fechado=true;
+    s.classList.add('hide');
+    setTimeout(function(){ if(s&&s.parentNode) s.parentNode.removeChild(s); },600);
+  }
+  if(document.readyState==='complete'){ setTimeout(fim,450); }
+  else{ window.addEventListener('load',function(){ setTimeout(fim,450); }); }
+  setTimeout(fim,6000);   /* trava de seguranca */
+})();
+</script>
+
+<header>
+<div class="brand">
+<img class="brand-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES" />
+</div>
+<div>
+<h1>TRANSTAC &middot; Dados Comerciais</h1>
+<p>Preencha ordem de coleta, status, valores e custos de cada carga de Terceiros.</p>
+</div>
+<a class="home-link" id="backLink" href="menu.html?cat=terceiros">&larr; Voltar ao menu</a>
+</header>
+<main>
+<div class="toolbar">
+<span class="status" id="status">Carregando cargas...</span>
+<button class="reload" id="reloadBtn">Recarregar</button>
+</div>
+<div class="grid" id="grid"></div>
+
+<div class="hist-card">
+<h2>Histórico de Embarques &middot; Cargas Terceiros</h2>
+<p class="hist-sub">Informações do Dashboard Logística (data, rota, motorista, placa, tipo de veículo) para todas as cargas de Terceiros já registradas.</p>
+<div class="hist-status" id="histStatus">Carregando histórico...</div>
+<div class="hist-wrap">
+<table class="hist" id="histTable" style="display:none;">
+<thead>
+<tr><th>Data</th><th>Rota</th><th>Motorista</th><th>Placa</th><th>Tipo de Veículo</th></tr>
+</thead>
+<tbody id="histBody"></tbody>
+</table>
+</div>
+</div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const CAT = params.get("cat") === "terceiros" ? "terceiros" : "terceiros";
+
+const STATUS_OPTIONS = ["Agendado", "Confirmado", "Em andamento", "Concluído", "Cancelado"];
+
+// Mesmo endpoint público usado no Dashboard Logística (sem CPF, sem valores comerciais).
+const DASHBOARD_DATA_URL = "https://script.google.com/macros/s/AKfycbwJdAE53zoBxym1kVDZOpWpka2aQKruHe9Y8krz-aQZYyzAybnpRw-bSV5jH_k2GIGa9w/exec?data=all";
+
+const grid = document.getElementById("grid");
+const statusEl = document.getElementById("status");
+const toastEl = document.getElementById("toast");
+const reloadBtn = document.getElementById("reloadBtn");
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  setTimeout(() => toastEl.classList.remove("show"), 2500);
+}
+
+function formatDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleString("pt-BR");
+}
+
+function formatDateBR(dateKey) {
+  if (!dateKey) return "";
+  const [y, m, d] = dateKey.split("-");
+  return d + "/" + m + "/" + y;
+}
+
+function money(v) {
+  const n = Number(v);
+  if (!v || isNaN(n)) return "R$ 0,00";
+  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function terceirosRoutesFromAssignments(assignments) {
+  return Object.keys(assignments)
+    .filter((id) => id.startsWith("terceiro-"))
+    .map((id) => ({ id, name: (assignments[id] && assignments[id].name) || "CARGA TERCEIRO" }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function statusOptions(selected) {
+  let html = '<option value="">Selecione</option>';
+  STATUS_OPTIONS.forEach((s) => {
+    html += `<option value="${s}" ${selected === s ? "selected" : ""}>${s}</option>`;
+  });
+  return html;
+}
+
+function calcLiquido(recebido, pago, gerouCusto, custoValor, custoTipo) {
+  const r = Number(recebido) || 0;
+  const p = Number(pago) || 0;
+  const c = gerouCusto === "Sim" ? Number(custoValor) || 0 : 0;
+  const sinal = custoTipo === "Custo Adicional" ? 1 : -1;
+  return r - p + sinal * c;
+}
+
+function renderCard(route, assignment) {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.dataset.id = route.id;
+
+  const driver = assignment && assignment.driver ? assignment.driver : "";
+  const plate = assignment && assignment.plate ? assignment.plate : "";
+  const finalizedAt = assignment && assignment.finalizedAt ? assignment.finalizedAt : "";
+  const ready = Boolean(driver && plate && finalizedAt);
+
+  if (!ready) {
+    card.classList.add("disabled");
+    card.innerHTML = `
+      <div class="route-name">${route.name}</div>
+      <div class="sub">Aguardando finalização do embarque (Telas 1, 2 e 3).</div>
+      <div class="meta">Motorista: <b>${driver || "-"}</b> &middot; Placa: <b>${plate || "-"}</b> &middot; Finalizado: <b>${finalizedAt ? "sim" : "não"}</b></div>
+    `;
+    return card;
+  }
+
+  const ordemColeta = assignment.ordemColeta || "";
+  const statusAgenda = assignment.statusAgenda || "";
+  const freteRecebido = assignment.freteRecebido !== undefined ? assignment.freteRecebido : "";
+  const valorPago = assignment.valorPago !== undefined ? assignment.valorPago : "";
+  const gerouCusto = assignment.gerouCusto || "Não";
+  const custoDescricao = assignment.custoDescricao || "";
+  const custoValor = assignment.custoValor !== undefined ? assignment.custoValor : "";
+  const custoTipo = assignment.custoTipo || "Despesa";
+  const updatedAtComercial = assignment.updatedAtComercial || "";
+
+  card.innerHTML = `
+    <div class="route-name">${route.name}</div>
+    <div class="sub">Motorista: <b>${driver}</b> &middot; Placa: <b>${plate}</b> &middot; Finalizado em <b>${formatDate(finalizedAt)}</b></div>
+    <div class="row">
+      <div class="field">
+        <label>Ordem de coleta</label>
+        <input type="text" class="ordem-input" placeholder="Nº da ordem" value="${ordemColeta.replace(/"/g, "&quot;")}" />
+      </div>
+      <div class="field">
+        <label>Status da agenda</label>
+        <select class="status-select">${statusOptions(statusAgenda)}</select>
+      </div>
+      <div class="field">
+        <label>Frete recebido (R$)</label>
+        <input type="number" min="0" step="0.01" class="recebido-input" placeholder="0,00" value="${freteRecebido}" />
+      </div>
+      <div class="field">
+        <label>Valor pago (R$)</label>
+        <input type="number" min="0" step="0.01" class="pago-input" placeholder="0,00" value="${valorPago}" />
+      </div>
+      <div class="field">
+        <label>Gerou custo?</label>
+        <select class="custo-select">
+          <option value="Não" ${gerouCusto === "Não" ? "selected" : ""}>Não</option>
+          <option value="Sim" ${gerouCusto === "Sim" ? "selected" : ""}>Sim</option>
+        </select>
+      </div>
+      <div class="custo-box ${gerouCusto === "Sim" ? "show" : ""}">
+        <div class="field">
+          <label>Descrição do custo</label>
+          <input type="text" class="custo-desc-input" placeholder="Ex: pedágio, avaria..." value="${custoDescricao.replace(/"/g, "&quot;")}" />
+        </div>
+        <div class="field">
+          <label>Tipo de custo</label>
+          <select class="custo-tipo-select">
+            <option value="Despesa" ${custoTipo === "Despesa" ? "selected" : ""}>Despesa (subtrai do valor líquido)</option>
+            <option value="Custo Adicional" ${custoTipo === "Custo Adicional" ? "selected" : ""}>Custo Adicional (soma ao valor líquido)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Valor do custo (R$)</label>
+          <input type="number" min="0" step="0.01" class="custo-valor-input" placeholder="0,00" value="${custoValor}" />
+        </div>
+      </div>
+      <div class="liquido-box">
+        Valor líquido estimado: <span class="valor liquido-display">${money(calcLiquido(freteRecebido, valorPago, gerouCusto, custoValor, custoTipo))}</span>
+      </div>
+      <button class="save-btn finalize-btn">Salvar dados comerciais</button>
+    </div>
+    <div class="meta ${updatedAtComercial ? "saved" : ""}">${updatedAtComercial ? "Dados comerciais salvos em " + formatDate(updatedAtComercial) : "Dados comerciais ainda não preenchidos"}</div>
+  `;
+
+  const ordemInput = card.querySelector(".ordem-input");
+  const statusSelect = card.querySelector(".status-select");
+  const recebidoInput = card.querySelector(".recebido-input");
+  const pagoInput = card.querySelector(".pago-input");
+  const custoSelect = card.querySelector(".custo-select");
+  const custoBox = card.querySelector(".custo-box");
+  const custoDescInput = card.querySelector(".custo-desc-input");
+  const custoTipoSelect = card.querySelector(".custo-tipo-select");
+  const custoValorInput = card.querySelector(".custo-valor-input");
+  const liquidoDisplay = card.querySelector(".liquido-display");
+  const saveBtn = card.querySelector(".save-btn");
+  const metaEl = card.querySelector(".meta");
+
+  function refreshLiquido() {
+    liquidoDisplay.textContent = money(
+      calcLiquido(recebidoInput.value, pagoInput.value, custoSelect.value, custoValorInput.value, custoTipoSelect.value)
+    );
+  }
+
+  custoSelect.addEventListener("change", () => {
+    custoBox.classList.toggle("show", custoSelect.value === "Sim");
+    refreshLiquido();
+  });
+  recebidoInput.addEventListener("input", refreshLiquido);
+  pagoInput.addEventListener("input", refreshLiquido);
+  custoTipoSelect.addEventListener("change", refreshLiquido);
+  custoValorInput.addEventListener("input", refreshLiquido);
+
+  saveBtn.addEventListener("click", async () => {
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Salvando...";
+    const liquido = calcLiquido(recebidoInput.value, pagoInput.value, custoSelect.value, custoValorInput.value, custoTipoSelect.value);
+    try {
+      const res = await fetch("/api/routes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: route.id,
+          name: route.name,
+          comercial: true,
+          ordemColeta: ordemInput.value.trim(),
+          statusAgenda: statusSelect.value,
+          freteRecebido: recebidoInput.value === "" ? "" : Number(recebidoInput.value),
+          valorPago: pagoInput.value === "" ? "" : Number(pagoInput.value),
+          gerouCusto: custoSelect.value,
+          custoDescricao: custoSelect.value === "Sim" ? custoDescInput.value.trim() : "",
+          custoTipo: custoSelect.value === "Sim" ? custoTipoSelect.value : "",
+          custoValor: custoSelect.value === "Sim" && custoValorInput.value !== "" ? Number(custoValorInput.value) : "",
+          valorLiquido: liquido,
+        }),
+      });
+      if (!res.ok) throw new Error("Falha ao salvar");
+      const data = await res.json();
+      const ts = (data.record && data.record.updatedAtComercial) || data.updatedAt;
+      metaEl.textContent = "Dados comerciais salvos em " + formatDate(ts);
+      metaEl.classList.add("saved");
+      if (data.warning) {
+        showToast("Salvo localmente, mas: " + data.warning);
+      } else {
+        showToast("Dados comerciais da carga \"" + route.name + "\" salvos.");
+      }
+    } catch (err) {
+      showToast("Erro ao salvar. Tente novamente.");
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Salvar dados comerciais";
+    }
+  });
+
+  return card;
+}
+
+async function loadData() {
+  statusEl.textContent = "Carregando cargas...";
+  grid.innerHTML = "";
+  try {
+    const res = await fetch("/api/routes");
+    const data = await res.json();
+    const assignments = data.assignments || {};
+    const ROUTES = terceirosRoutesFromAssignments(assignments);
+    ROUTES.forEach((route) => {
+      grid.appendChild(renderCard(route, assignments[route.id]));
+    });
+    if (ROUTES.length === 0) {
+      statusEl.textContent = 'Nenhuma carga terceiro cadastrada ainda. Cadastre na Tela 1 (Motorista).';
+    } else {
+      statusEl.textContent = ROUTES.length + " carga(s) — carga do dia " + formatDateBR(data.date) + ".";
+    }
+  } catch (err) {
+    statusEl.textContent = "Erro ao carregar cargas.";
+  }
+}
+
+function formatDateISO(iso) {
+  if (!iso || iso.indexOf("-") === -1) return iso || "-";
+  const [y, m, d] = iso.split("-");
+  return d + "/" + m + "/" + y;
+}
+
+async function withRetryFetch(url, opts, tentativas = 4) {
+
+  let ultimoErro;
+
+  for (let i = 1; i <= tentativas; i++) {
+
+    try {
+
+      const ctrl = new AbortController();
+
+      const _t = setTimeout(() => ctrl.abort(), 25000);
+
+      try { return await fetch(url, Object.assign({}, opts, { signal: ctrl.signal })); }
+
+      finally { clearTimeout(_t); }
+
+    } catch (e) {
+
+      ultimoErro = e;
+
+      if (i < tentativas) await new Promise((r) => setTimeout(r, 1500 * i));
+
+    }
+
+  }
+
+  throw ultimoErro;
+
+}
+
+
+async function loadHistorico() {
+  const histStatus = document.getElementById("histStatus");
+  const histTable = document.getElementById("histTable");
+  const histBody = document.getElementById("histBody");
+  histStatus.textContent = "Carregando histórico...";
+  histTable.style.display = "none";
+  try {
+    const res = await withRetryFetch(DASHBOARD_DATA_URL);
+    if (!res.ok) throw new Error("Falha ao contatar o serviço de dados (" + res.status + ").");
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Falha ao carregar dados.");
+    const rows = (data.rows || [])
+      .filter((r) => (r["Categoria"] || "") === "Cargas Terceiros")
+      .sort((a, b) => (b["Data do Embarque"] || "").localeCompare(a["Data do Embarque"] || ""));
+
+    if (rows.length === 0) {
+      histStatus.textContent = "Nenhum embarque de Cargas Terceiros no histórico ainda.";
+      return;
+    }
+
+    histBody.innerHTML = rows
+      .map(
+        (r) => `
+          <tr>
+            <td>${formatDateISO(r["Data do Embarque"])}</td>
+            <td>${r["Rota"] || "-"}</td>
+            <td>${r["Nome do Motorista"] || "-"}</td>
+            <td>${r["Placa"] || "-"}</td>
+            <td>${r["Tipo do Veiculo"] || "-"}</td>
+          </tr>
+        `
+      )
+      .join("");
+    histStatus.textContent = rows.length + " embarque(s) de Cargas Terceiros no histórico.";
+    histTable.style.display = "table";
+  } catch (err) {
+    histStatus.textContent = "Erro ao carregar histórico: " + (err && err.message ? err.message : "erro desconhecido");
+  }
+}
+
+reloadBtn.addEventListener("click", () => {
+  loadData();
+  loadHistorico();
+});
+loadData();
+loadHistorico();
+</script>
+</body>
+</html>

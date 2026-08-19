@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Controle de Embarque TRANSTAC - Painel Diário</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #14171a;
+  --card: #1c2024;
+  --card-alt: #191d21;
+  --field: #24282d;
+  --accent: #f5821f;
+  --accent-soft: #ffab5c;
+  --text: #f1f1f1;
+  --muted: #9ca3af;
+  --border: #2b2f34;
+  --border-2: #3a3f45;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background-color: #14171a;
+  background-image: linear-gradient(rgba(18, 20, 23, 0.90), rgba(18, 20, 23, 0.94)), url("fundo-transtac.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ---------- Topo ---------- */
+header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 22px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(20, 23, 26, 0.82);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  backdrop-filter: blur(6px);
+}
+.brand-logo { height: 34px; width: auto; display: block; flex-shrink: 0; }
+header h1 { font-size: 16px; margin: 0; color: #fff; font-weight: 700; letter-spacing: 0.01em; }
+header .sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+a.home-link { color: var(--muted); font-size: 13px; text-decoration: none; }
+a.home-link:hover { color: var(--text); }
+
+.live {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--field); border: 1px solid var(--border-2);
+  border-radius: 999px; padding: 5px 12px 5px 10px; font-size: 12px; color: var(--muted);
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 rgba(52,211,153,0.5); animation: pulse 2s infinite; }
+.dot.paused { background: var(--warn); animation: none; }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(52,211,153,0.45); }
+  70% { box-shadow: 0 0 0 7px rgba(52,211,153,0); }
+  100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+}
+.btn {
+  background: var(--field); border: 1px solid var(--border-2); border-radius: 8px;
+  padding: 7px 13px; font-size: 12.5px; color: var(--text); cursor: pointer; font-family: inherit;
+}
+.btn:hover { background: var(--border-2); }
+.btn.primary { background: var(--accent); color: #14171a; border-color: var(--accent); font-weight: 700; }
+.btn.primary:hover { background: var(--accent-soft); }
+.btn:focus-visible, .chip:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+#progressBar { height: 2px; background: var(--accent); width: 0%; transition: width 0.9s linear; }
+
+/* ---------- Layout ---------- */
+main { padding: 16px 22px 30px; }
+.filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.filters .lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; margin-right: 2px; }
+.chip {
+  background: var(--field); border: 1px solid var(--border-2); color: var(--muted);
+  border-radius: 999px; padding: 6px 14px; font-size: 12.5px; cursor: pointer; font-family: inherit;
+  transition: all 0.15s ease;
+}
+.chip:hover { color: var(--text); border-color: var(--accent); }
+.chip.on { background: var(--accent); border-color: var(--accent); color: #14171a; font-weight: 700; }
+.sep { width: 1px; height: 22px; background: var(--border-2); margin: 0 6px; }
+.date-field { display: flex; flex-direction: column; gap: 3px; }
+.date-field label { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700; }
+.date-field input {
+  background: var(--field); border: 1px solid var(--border-2); border-radius: 8px;
+  padding: 5px 9px; font-size: 12.5px; color: var(--text); font-family: inherit; color-scheme: dark;
+}
+.date-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(245,130,31,0.22); }
+.date-field input.ativo { border-color: var(--accent); color: var(--accent-soft); }
+#chipsPer.desligado { opacity: 0.4; pointer-events: none; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.kpi { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--k, var(--accent)); border-radius: 12px; padding: 13px 16px; }
+.kpi .label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700; }
+.kpi .value { font-size: 30px; font-weight: 800; color: var(--text); line-height: 1.15; margin-top: 4px; }
+.kpi .value.small { font-size: 18px; }
+.kpi .hint { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.kpi .hint b { color: var(--accent-soft); font-weight: 700; }
+
+.cols { display: grid; grid-template-columns: 1.35fr 1fr; gap: 14px; align-items: start; }
+.stack { display: grid; gap: 14px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px 17px; }
+.card h3 { font-size: 13.5px; margin: 0 0 3px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.card h3 .tag {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-soft);
+  background: rgba(245,130,31,0.15); border-radius: 999px; padding: 2px 8px; font-weight: 800;
+}
+.card .desc { font-size: 11.5px; color: var(--muted); margin: 0 0 11px; }
+.chart-wrap { position: relative; height: 250px; }
+.chart-wrap.short { height: 195px; }
+
+/* ---------- Top rotas ---------- */
+.rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.rank li { position: relative; }
+.rank button {
+  width: 100%; text-align: left; background: var(--card-alt); border: 1px solid var(--border);
+  border-radius: 9px; padding: 9px 12px; cursor: pointer; color: var(--text); font-family: inherit;
+  display: flex; align-items: center; gap: 10px; overflow: hidden; position: relative;
+}
+.rank button:hover { border-color: var(--accent); }
+.rank .fill { position: absolute; inset: 0 auto 0 0; background: rgba(245,130,31,0.14); z-index: 0; }
+.rank .pos { position: relative; z-index: 1; font-size: 11px; font-weight: 800; color: var(--accent); width: 18px; flex-shrink: 0; }
+.rank .nm { position: relative; z-index: 1; font-size: 12.5px; font-weight: 600; flex: 1; }
+.rank .qt { position: relative; z-index: 1; font-size: 13px; font-weight: 800; color: var(--accent-soft); }
+.rank .pc { position: relative; z-index: 1; font-size: 11px; color: var(--muted); width: 42px; text-align: right; }
+
+/* ---------- Pendentes ---------- */
+.pend { display: grid; gap: 7px; max-height: 430px; overflow-y: auto; padding-right: 3px; }
+.pend-item {
+  display: flex; align-items: center; gap: 10px; background: var(--card-alt);
+  border: 1px solid var(--border); border-left: 3px solid var(--st, var(--bad));
+  border-radius: 9px; padding: 9px 12px; text-decoration: none; color: var(--text);
+}
+.pend-item:hover { border-color: var(--accent); border-left-color: var(--accent); }
+.pend-item .op { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800; color: var(--muted); background: var(--field); border-radius: 5px; padding: 3px 7px; flex-shrink: 0; }
+.pend-item .rt { font-size: 12.5px; font-weight: 600; flex: 1; }
+.pend-item .stt { font-size: 11px; color: var(--st, var(--bad)); font-weight: 700; white-space: nowrap; }
+.pend-empty { text-align: center; padding: 26px 10px; color: var(--ok); font-size: 13.5px; font-weight: 600; }
+.pend-empty span { display: block; font-size: 26px; margin-bottom: 6px; }
+.pend::-webkit-scrollbar { width: 7px; }
+.pend::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 4px; }
+
+.done-line { display: flex; align-items: center; gap: 8px; margin-top: 11px; font-size: 11.5px; color: var(--muted); }
+.bar { flex: 1; height: 7px; background: var(--field); border-radius: 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ok); transition: width 0.5s ease; }
+
+/* ---------- Modal ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(8,10,12,0.72); display: none; align-items: center; justify-content: center; z-index: 80; padding: 20px; }
+.overlay.on { display: flex; }
+.modal { background: var(--card); border: 1px solid var(--border-2); border-radius: 14px; width: min(760px, 96vw); max-height: 82vh; display: flex; flex-direction: column; }
+.modal header { position: static; background: none; backdrop-filter: none; border-bottom: 1px solid var(--border); padding: 14px 18px; }
+.modal h4 { margin: 0; font-size: 14.5px; color: #fff; }
+.modal .body { overflow: auto; padding: 6px 18px 18px; }
+table.det { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table.det th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent-soft); padding: 9px 8px; border-bottom: 1px solid var(--border-2); position: sticky; top: 0; background: var(--card); }
+table.det td { padding: 8px; border-bottom: 1px solid var(--border); color: #e5e7eb; }
+table.det tr:nth-child(even) td { background: var(--card-alt); }
+
+.status-msg { text-align: center; color: var(--muted); padding: 50px 0; font-size: 14px; }
+.error-msg { text-align: center; color: var(--bad); padding: 16px; font-size: 13px; }
+
+@media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  main { padding: 14px; }
+  header { padding: 10px 14px; }
+  .header-right { width: 100%; margin-left: 0; }
+  .kpi .value { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<!-- TRANSTAC | efeito de carregamento (padrao do app) -->
+<style>
+#tt-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;background-color:#14171a;
+  background-image:linear-gradient(180deg,rgba(14,16,18,.90) 0%,rgba(14,16,18,.96) 100%),url('fundo-transtac.jpg');
+  background-size:cover;background-position:center center;
+  transition:opacity .45s ease,visibility .45s ease;}
+#tt-splash::before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,112,13,.20),transparent 62%);
+  animation:ttPulse 2.4s ease-in-out infinite;}
+#tt-splash.hide{opacity:0;visibility:hidden;}
+#tt-splash .tt-logo{position:relative;width:min(280px,62vw);height:auto;opacity:0;
+  transform:translateY(10px) scale(.96);
+  animation:ttIn .7s cubic-bezier(.2,.8,.25,1) forwards;
+  filter:drop-shadow(0 8px 26px rgba(0,0,0,.6));}
+#tt-splash .tt-bar{position:relative;width:min(230px,52vw);height:3px;border-radius:999px;
+  background:rgba(255,255,255,.09);overflow:hidden;}
+#tt-splash .tt-bar i{position:absolute;top:0;left:-40%;width:40%;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,transparent,#F2700D,transparent);
+  animation:ttSlide 1.15s ease-in-out infinite;}
+#tt-splash .tt-txt{position:relative;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;
+  font-weight:700;color:#8A939E;opacity:0;animation:ttIn .7s ease .25s forwards;}
+@keyframes ttIn{to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes ttSlide{0%{left:-40%;}100%{left:100%;}}
+@keyframes ttPulse{0%,100%{transform:scale(.92);opacity:.55;}50%{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){#tt-splash *,#tt-splash::before{animation:none !important;}}
+</style>
+<div id="tt-splash">
+  <img class="tt-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="tt-bar"><i></i></div>
+  <div class="tt-txt">Carregando</div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('tt-splash');
+  if(!s) return;
+  var fechado=false;
+  function fim(){
+    if(fechado) return; fechado=true;
+    s.classList.add('hide');
+    setTimeout(function(){ if(s&&s.parentNode) s.parentNode.removeChild(s); },600);
+  }
+  if(document.readyState==='complete'){ setTimeout(fim,450); }
+  else{ window.addEventListener('load',function(){ setTimeout(fim,450); }); }
+  setTimeout(fim,6000);   /* trava de seguranca */
+})();
+</script>
+
+<header>
+  <img class="brand-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES" />
+  <div>
+    <h1>Painel Diário &middot; Cargas</h1>
+    <div class="sub" id="hoje">&nbsp;</div>
+  </div>
+  <div class="header-right">
+    <div class="live"><span class="dot" id="liveDot"></span><span id="liveTxt">atualiza em 30s</span></div>
+    <button class="btn" id="btnPause">Pausar</button>
+    <button class="btn primary" id="btnNow">Atualizar agora</button>
+    <a class="home-link" href="logistica.html">&larr; Voltar</a>
+  </div>
+</header>
+<div id="progressBar"></div>
+
+<main>
+  <div id="erro"></div>
+  <div class="filters" id="filters" hidden>
+    <span class="lbl">Operação</span>
+    <div id="chipsOp" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    <span class="sep"></span>
+    <span class="lbl">Período do gráfico</span>
+    <div id="chipsPer" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="chip" data-per="7">7 dias</button>
+      <button class="chip on" data-per="14">14 dias</button>
+      <button class="chip" data-per="30">30 dias</button>
+      <button class="chip" data-per="90">90 dias</button>
+    </div>
+    <span class="sep"></span>
+    <div class="date-field"><label for="fDia">Dia de referência</label><input type="date" id="fDia" /></div>
+    <div class="date-field"><label for="fDe">De</label><input type="date" id="fDe" /></div>
+    <div class="date-field"><label for="fAte">Até</label><input type="date" id="fAte" /></div>
+    <button class="btn" id="btnLimpar">Limpar datas</button>
+  </div>
+
+  <div id="conteudo"><div class="status-msg">Carregando dados dos embarques...</div></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <header><h4 id="mdTitle">Detalhes</h4></header>
+    <div class="body" id="mdBody"></div>
+    <div style="padding:0 18px 16px;"><button class="btn" id="mdClose">Fechar</button></div>
+  </div>
+</div>
+
+<script>
+Chart.defaults.color = "#9ca3af";
+Chart.defaults.borderColor = "rgba(255,255,255,0.08)";
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif";
+
+const DATA_URL = "https://script.google.com/macros/s/AKfycbwJdAE53zoBxym1kVDZOpWpka2aQKruHe9Y8krz-aQZYyzAybnpRw-bSV5jH_k2GIGa9w/exec?data=all";
+const REFRESH_MS = 30000;
+
+const COR_OP = { "GAM": "#f5821f", "JadLog": "#0ea5e9", "Cargas Terceiros": "#059669", "Transferências": "#a855f7" };
+const ORDEM_OP = ["GAM", "JadLog", "Cargas Terceiros", "Transferências"];
+function corOp(nome, i) { return COR_OP[nome] || ["#e11d48", "#ca8a04", "#0891b2", "#7c3aed"][i % 4]; }
+
+/* Catálogo de rotas fixas — mesmo cadastro das telas de operação */
+const ROTAS_GAM_UTIL = [
+  "TUB X BIGUAÇU", "TUB X BLUMENAU X TROMBUDO", "TUB X BOM JARDIM X LAGES X ERVAL",
+  "TUB X CHAPECÓ", "TUB X IÇARA", "TUB X JOINVILLE", "TUB X TIJUCAS X ITAJAÍ",
+  "TUB X SÃO JOSÉ DOS PINHAIS", "TUB X DISTRITO FEDERAL", "TUB X ESPIRITO SANTO",
+];
+const ROTAS_GAM_DOM = [
+  "BIGUAÇU / BLUMENAU / AGRONÔMICA", "IÇARA / TUBARÃO",
+  "LAGES / ERVAL VELHO / CHAPECÓ", "TIJUCAS / ITAJAÍ / JOINVILLE",
+];
+const ROTAS_JADLOG = [
+  "JP X COLOMBO X BOTICÁRIO", "ITAJAÍ X VIDA BOA X GASPAR",
+  "JP X COLOMBO X CAMPINA GRANDE", "ITAJAÍ X GASPAR X BRUSQUE",
+];
+const ROTAS_TRANSF = [
+  "GARUVA X ITAJAÍ X TUBARÃO", "TUBARÃO X PORTO ALEGRE",
+  "ITAJÁI X TUBARÃO", "PORTO BELO X TUBARÃO",
+];
+const IDS = {
+  "TUB X BIGUAÇU": "r1", "TUB X BLUMENAU X TROMBUDO": "r2", "TUB X BOM JARDIM X LAGES X ERVAL": "r3",
+  "TUB X CHAPECÓ": "r4", "TUB X IÇARA": "r5", "TUB X JOINVILLE": "r6", "TUB X TIJUCAS X ITAJAÍ": "r7",
+  "TUB X SÃO JOSÉ DOS PINHAIS": "r9", "TUB X DISTRITO FEDERAL": "r15", "TUB X ESPIRITO SANTO": "r16",
+  "BIGUAÇU / BLUMENAU / AGRONÔMICA": "r11", "IÇARA / TUBARÃO": "r12",
+  "LAGES / ERVAL VELHO / CHAPECÓ": "r13", "TIJUCAS / ITAJAÍ / JOINVILLE": "r14",
+  "JP X COLOMBO X BOTICÁRIO": "rj1", "ITAJAÍ X VIDA BOA X GASPAR": "rj2",
+  "JP X COLOMBO X CAMPINA GRANDE": "rj3", "ITAJAÍ X GASPAR X BRUSQUE": "rj4",
+  "GARUVA X ITAJAÍ X TUBARÃO": "rt1", "TUBARÃO X PORTO ALEGRE": "rt2",
+  "ITAJÁI X TUBARÃO": "rt3", "PORTO BELO X TUBARÃO": "rt4",
+};
+
+let LINHAS = [];
+let ASSIGN = {};
+let ERRO_ASSIGN = false;
+let FILTRO_OP = "";
+let PERIODO = 14;
+let REF_DIA = "";   // dia de referência dos indicadores (vazio = hoje)
+let DE = "";        // início do intervalo (vazio = sem intervalo)
+let ATE = "";       // fim do intervalo
+let PAUSADO = false;
+let SEGUNDOS = REFRESH_MS / 1000;
+let CARREGANDO = false;
+const graficos = [];
+
+/* ---------- utilidades ---------- */
+function hojeISO() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+function ehDomingo(iso) {
+  const d = iso ? new Date(iso + "T12:00:00") : new Date();
+  return new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short" }).format(d) === "Sun";
+}
+/* dia usado nos indicadores: o escolhido no filtro ou hoje */
+function diaRef() { return REF_DIA || hojeISO(); }
+function nomeDia(iso) {
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(new Date(iso + "T12:00:00"));
+}
+function somaDias(iso, n) {
+  const d = new Date(iso + "T12:00:00");
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function dataBR(iso) {
+  if (!iso || iso.indexOf("-") === -1) return iso || "-";
+  const p = iso.split("-");
+  return p[2] + "/" + p[1] + "/" + p[0];
+}
+function diaCurto(iso) {
+  if (!iso || iso.indexOf("-") === -1) return iso || "-";
+  const p = iso.split("-");
+  return p[2] + "/" + p[1];
+}
+function normal(s) {
+  return String(s || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z0-9]/g, "");
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function op(r) { return r["Categoria"] || "GAM"; }
+function dia(r) { return r["Data do Embarque"] || ""; }
+
+/* ---------- busca de dados ---------- */
+async function comTimeout(p, ms) {
+  return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("Tempo esgotado ao carregar dados.")), ms))]);
+}
+async function buscarLinhas() {
+  const res = await comTimeout(fetch(DATA_URL, { cache: "no-store" }), 25000);
+  if (!res.ok) throw new Error("Serviço de dados indisponível (" + res.status + ").");
+  const d = await res.json();
+  if (!d.ok) throw new Error(d.error || "Falha ao carregar dados.");
+  return d.rows || [];
+}
+async function buscarAssignments() {
+  try {
+    const res = await comTimeout(fetch("/api/routes", { cache: "no-store" }), 15000);
+    const d = await res.json();
+    ERRO_ASSIGN = false;
+    return d.assignments || {};
+  } catch (e) {
+    ERRO_ASSIGN = true;
+    return {};
+  }
+}
+
+/* ---------- cálculos ---------- */
+function linhasFiltradas() {
+  return FILTRO_OP ? LINHAS.filter((r) => op(r) === FILTRO_OP) : LINHAS;
+}
+/* mesma base, já recortada pelo intervalo De/Até quando informado */
+function linhasNoIntervalo() {
+  return linhasFiltradas().filter((r) => {
+    const d = dia(r);
+    if (DE && d < DE) return false;
+    if (ATE && d > ATE) return false;
+    return true;
+  });
+}
+function temIntervalo() { return !!(DE || ATE); }
+/* eixo de dias: o intervalo escolhido ou os últimos N dias até o dia de referência */
+function eixoDias() {
+  const fim = ATE || diaRef();
+  let inicio;
+  inicio = DE || somaDias(fim, -(PERIODO - 1));
+  if (inicio > fim) inicio = fim;
+  const dias = [];
+  let cur = inicio;
+  while (cur <= fim && dias.length < 400) { dias.push(cur); cur = somaDias(cur, 1); }
+  return dias.length ? dias : [fim];
+}
+function porDia(linhas) {
+  const dias = eixoDias();
+  const cont = new Map(dias.map((d) => [d, 0]));
+  linhas.forEach((r) => { if (cont.has(dia(r))) cont.set(dia(r), cont.get(dia(r)) + 1); });
+  return dias.map((d) => ({ dia: d, qtd: cont.get(d) }));
+}
+function porMes(linhas) {
+  const mapa = new Map();
+  linhas.forEach((r) => {
+    const d = dia(r);
+    if (!d || d.length < 7) return;
+    const m = d.slice(0, 7);
+    if (!mapa.has(m)) mapa.set(m, { total: 0, dias: new Set() });
+    const o = mapa.get(m);
+    o.total++;
+    o.dias.add(d);
+  });
+  return Array.from(mapa.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-8)
+    .map(([m, o]) => ({ mes: m, total: o.total, dias: o.dias.size, media: o.dias.size ? o.total / o.dias.size : 0 }));
+}
+function topRotas(linhas, n) {
+  const mapa = new Map();
+  linhas.forEach((r) => {
+    const k = r["Rota"] || "(sem rota)";
+    mapa.set(k, (mapa.get(k) || 0) + 1);
+  });
+  return Array.from(mapa.entries()).sort((a, b) => b[1] - a[1]).slice(0, n);
+}
+function rotasPrevistas(refDia) {
+  const lista = [];
+  (ehDomingo(refDia) ? ROTAS_GAM_DOM : ROTAS_GAM_UTIL).forEach((n) => lista.push({ nome: n, op: "GAM", cat: "gam" }));
+  ROTAS_JADLOG.forEach((n) => lista.push({ nome: n, op: "JadLog", cat: "jadlog" }));
+  ROTAS_TRANSF.forEach((n) => lista.push({ nome: n, op: "Transferências", cat: "transferencias" }));
+  return lista;
+}
+function situacaoRotas(refDia) {
+  const ehHoje = refDia === hojeISO();
+  const feitas = new Set(LINHAS.filter((r) => dia(r) === refDia).map((r) => normal(r["Rota"])));
+  return rotasPrevistas(refDia).map((rt) => {
+    const id = IDS[rt.nome];
+    const a = (ehHoje && id && ASSIGN[id]) || {};
+    const feita = feitas.has(normal(rt.nome)) || !!a.finalizedAt;
+    let status = ehHoje ? "Não iniciada" : "Sem registro", cor = "#f87171";
+    if (feita) { status = "Finalizada"; cor = "#34d399"; }
+    else if (a.driver && a.plate) { status = "Motorista e placa definidos"; cor = "#fbbf24"; }
+    else if (a.driver) { status = "Falta placa"; cor = "#fbbf24"; }
+    else if (a.plate) { status = "Falta motorista"; cor = "#fbbf24"; }
+    return Object.assign({}, rt, { feita, status, cor, motorista: a.driver || "", placa: a.plate || "" });
+  });
+}
+
+/* ---------- render ---------- */
+function destruirGraficos() { graficos.forEach((g) => g.destroy()); graficos.length = 0; }
+
+function render() {
+  destruirGraficos();
+  const linhas = linhasFiltradas();
+  const noIntervalo = linhasNoIntervalo();
+  const hoje = hojeISO();
+  const ref = diaRef();
+  const ehHoje = ref === hoje;
+  const mesAtual = ref.slice(0, 7);
+
+  const doHoje = linhas.filter((r) => dia(r) === ref);
+  const doMes = linhas.filter((r) => dia(r).slice(0, 7) === mesAtual);
+  const diasMes = new Set(doMes.map(dia)).size;
+  const mediaMes = diasMes ? doMes.length / diasMes : 0;
+
+  const serieDia = porDia(linhas);
+  const serieMes = porMes(linhas);
+  const baseTop = temIntervalo() ? noIntervalo : (doMes.length ? doMes : linhas);
+  const top5 = topRotas(baseTop, 5);
+  const situacao = situacaoRotas(ref).filter((s) => !FILTRO_OP || s.op === FILTRO_OP);
+  const pendentes = situacao.filter((s) => !s.feita);
+  const feitas = situacao.length - pendentes.length;
+  const pctFeito = situacao.length ? Math.round((feitas / situacao.length) * 100) : 0;
+
+  const ontem = serieDia.length > 1 ? serieDia[serieDia.length - 2].qtd : 0;
+  const dif = doHoje.length - ontem;
+  const sinal = dif > 0 ? "+" : "";
+
+  document.getElementById("hoje").textContent = nomeDia(ref) + (ehHoje ? "" : "  (data selecionada)");
+
+  const rotuloMes = (() => {
+    const p = mesAtual.split("-");
+    return ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"][Number(p[1]) - 1] + " de " + p[0];
+  })();
+
+  const html = `
+    <div class="kpis">
+      <div class="kpi" style="--k:#f5821f">
+        <div class="label">Cargas ${ehHoje ? "de hoje" : "do dia " + dataBR(ref)}</div>
+        <div class="value">${doHoje.length}</div>
+        <div class="hint">${ontem} no dia anterior &middot; <b>${sinal}${dif}</b> na comparação</div>
+      </div>
+      <div class="kpi" style="--k:#0ea5e9">
+        <div class="label">Média diária do mês</div>
+        <div class="value">${mediaMes.toFixed(1)}</div>
+        <div class="hint">${doMes.length} cargas em ${diasMes} dia(s) com movimento</div>
+      </div>
+      <div class="kpi" style="--k:#a855f7">
+        <div class="label">Total do mês</div>
+        <div class="value">${doMes.length}</div>
+        <div class="hint">${rotuloMes}</div>
+      </div>
+      <div class="kpi" style="--k:${pendentes.length ? "#f87171" : "#34d399"}">
+        <div class="label">Rotas pendentes ${ehHoje ? "hoje" : "no dia"}</div>
+        <div class="value">${pendentes.length}</div>
+        <div class="hint">${feitas} de ${situacao.length} rotas fixas concluídas</div>
+      </div>
+      <div class="kpi" style="--k:#34d399">
+        <div class="label">Motoristas ${ehHoje ? "de hoje" : "do dia"}</div>
+        <div class="value">${new Set(doHoje.map((r) => r["Nome do Motorista"]).filter(Boolean)).size}</div>
+        <div class="hint">${new Set(doHoje.map((r) => r["Placa"]).filter(Boolean)).size} placa(s) em rota</div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="stack">
+        <div class="card">
+          <h3>Cargas por dia <span class="tag">clique em uma barra</span></h3>
+          <p class="desc">${temIntervalo() ? "De " + dataBR(serieDia[0].dia) + " a " + dataBR(serieDia[serieDia.length - 1].dia) : "Últimos " + PERIODO + " dias até " + dataBR(ref)}. A linha tracejada é a média do período.</p>
+          <div class="chart-wrap"><canvas id="gDia"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Média diária por mês <span class="tag">clique em uma barra</span></h3>
+          <p class="desc">Média de cargas por dia com movimento, mês a mês.</p>
+          <div class="chart-wrap short"><canvas id="gMes"></canvas></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <h3>Rotas ${ehHoje ? "do dia" : "de " + dataBR(ref)} ainda não feitas</h3>
+          <p class="desc">Rotas fixas previstas para ${ehHoje ? "hoje" : dataBR(ref)} sem embarque finalizado.${ehHoje && ERRO_ASSIGN ? " (sem conexão com as designações do dia)" : ""}</p>
+          <div class="pend">
+            ${pendentes.length
+              ? pendentes.map((p) => `
+                <a class="pend-item" style="--st:${p.cor}" href="finalizar.html?cat=${p.cat}">
+                  <span class="op">${esc(p.op)}</span>
+                  <span class="rt">${esc(p.nome)}${p.motorista ? ' <span style="color:var(--muted);font-weight:400;font-size:11px;">— ' + esc(p.motorista) + (p.placa ? " / " + esc(p.placa) : "") + "</span>" : ""}</span>
+                  <span class="stt">${esc(p.status)}</span>
+                </a>`).join("")
+              : '<div class="pend-empty"><span>✓</span>Todas as rotas previstas para ' + (ehHoje ? "hoje" : dataBR(ref)) + ' já foram finalizadas.</div>'}
+          </div>
+          <div class="done-line"><div class="bar"><i style="width:${pctFeito}%"></i></div><span>${pctFeito}% concluído</span></div>
+        </div>
+
+        <div class="card">
+          <h3>Top 5 rotas <span class="tag">clique para detalhar</span></h3>
+          <p class="desc">Rotas com mais embarques ${temIntervalo() ? "no intervalo selecionado" : (doMes.length ? "em " + rotuloMes : "no período disponível")}.</p>
+          <ul class="rank">
+            ${top5.length
+              ? top5.map(([nome, qtd], i) => {
+                  const max = top5[0][1] || 1;
+                  const base = baseTop.length || 1;
+                  return `<li><button data-rota="${esc(nome)}">
+                    <span class="fill" style="width:${(qtd / max) * 100}%"></span>
+                    <span class="pos">${i + 1}º</span>
+                    <span class="nm">${esc(nome)}</span>
+                    <span class="qt">${qtd}</span>
+                    <span class="pc">${((qtd / base) * 100).toFixed(0)}%</span>
+                  </button></li>`;
+                }).join("")
+              : '<li style="color:var(--muted);font-size:13px;">Nenhum embarque no período.</li>'}
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("conteudo").innerHTML = html;
+
+  /* gráfico diário */
+  const media = serieDia.reduce((s, d) => s + d.qtd, 0) / (serieDia.length || 1);
+  graficos.push(new Chart(document.getElementById("gDia"), {
+    type: "bar",
+    data: {
+      labels: serieDia.map((d) => diaCurto(d.dia)),
+      datasets: [
+        {
+          label: "Cargas",
+          data: serieDia.map((d) => d.qtd),
+          backgroundColor: serieDia.map((d) => (d.dia === ref ? "#f5821f" : "rgba(245,130,31,0.45)")),
+          borderColor: serieDia.map((d) => (d.dia === ref ? "#ffab5c" : "transparent")),
+          borderWidth: 1.5,
+          borderRadius: 5,
+        },
+        {
+          label: "Média do período",
+          data: serieDia.map(() => media),
+          type: "line",
+          borderColor: "#0ea5e9",
+          borderDash: [6, 5],
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { afterLabel: (c) => (c.datasetIndex === 0 ? "Clique para ver os embarques" : "") } },
+      },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      onClick: (e, els) => {
+        if (!els.length) return;
+        const d = serieDia[els[0].index];
+        if (d) abrirDia(d.dia);
+      },
+    },
+  }));
+
+  /* gráfico mensal */
+  graficos.push(new Chart(document.getElementById("gMes"), {
+    type: "bar",
+    data: {
+      labels: serieMes.map((m) => {
+        const p = m.mes.split("-");
+        return ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"][Number(p[1]) - 1] + "/" + p[0].slice(2);
+      }),
+      datasets: [{
+        label: "Média por dia",
+        data: serieMes.map((m) => Number(m.media.toFixed(2))),
+        backgroundColor: serieMes.map((m) => (m.mes === mesAtual ? "#0ea5e9" : "rgba(14,165,233,0.4)")),
+        borderRadius: 5,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { afterLabel: (c) => { const m = serieMes[c.dataIndex]; return m.total + " cargas em " + m.dias + " dia(s)"; } } },
+      },
+      scales: { y: { beginAtZero: true } },
+      onClick: (e, els) => { if (els.length) abrirMes(serieMes[els[0].index].mes); },
+    },
+  }));
+
+  document.querySelectorAll(".rank button[data-rota]").forEach((b) => {
+    b.addEventListener("click", () => abrirRota(b.dataset.rota));
+  });
+}
+
+/* ---------- modal ---------- */
+function tabela(linhas, titulo) {
+  document.getElementById("mdTitle").textContent = titulo + " — " + linhas.length + " embarque(s)";
+  document.getElementById("mdBody").innerHTML = linhas.length
+    ? `<table class="det"><thead><tr><th>Data</th><th>Operação</th><th>Rota</th><th>Motorista</th><th>Placa</th><th>Veículo</th></tr></thead><tbody>${
+        linhas.slice().sort((a, b) => dia(b).localeCompare(dia(a))).map((r) => `<tr>
+          <td>${dataBR(dia(r))}</td><td>${esc(op(r))}</td><td>${esc(r["Rota"] || "-")}</td>
+          <td>${esc(r["Nome do Motorista"] || "-")}</td><td>${esc(r["Placa"] || "-")}</td><td>${esc(r["Tipo do Veiculo"] || "-")}</td>
+        </tr>`).join("")
+      }</tbody></table>`
+    : '<p style="color:var(--muted);font-size:13px;">Nenhum embarque registrado.</p>';
+  document.getElementById("overlay").classList.add("on");
+  document.getElementById("mdClose").focus();
+}
+function abrirDia(d) { tabela(linhasFiltradas().filter((r) => dia(r) === d), "Cargas de " + dataBR(d)); }
+function abrirMes(m) { tabela(linhasFiltradas().filter((r) => dia(r).slice(0, 7) === m), "Cargas de " + m.split("-").reverse().join("/")); }
+function abrirRota(nome) {
+  const base = linhasFiltradas();
+  let escopo;
+  if (temIntervalo()) {
+    escopo = linhasNoIntervalo();
+  } else {
+    const mes = diaRef().slice(0, 7);
+    const doMes = base.filter((r) => dia(r).slice(0, 7) === mes);
+    escopo = doMes.length ? doMes : base;
+  }
+  tabela(escopo.filter((r) => normal(r["Rota"]) === normal(nome)), "Rota " + nome);
+}
+function fecharModal() { document.getElementById("overlay").classList.remove("on"); }
+document.getElementById("mdClose").addEventListener("click", fecharModal);
+document.getElementById("overlay").addEventListener("click", (e) => { if (e.target.id === "overlay") fecharModal(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") fecharModal(); });
+
+/* ---------- filtros ---------- */
+function montarChipsOp() {
+  const cats = Array.from(new Set(LINHAS.map(op)));
+  cats.sort((a, b) => ORDEM_OP.indexOf(a) - ORDEM_OP.indexOf(b));
+  const el = document.getElementById("chipsOp");
+  el.innerHTML = `<button class="chip on" data-op="">Todas</button>` +
+    cats.map((c) => `<button class="chip" data-op="${esc(c)}">${esc(c)}</button>`).join("");
+  el.querySelectorAll(".chip").forEach((b) => {
+    b.addEventListener("click", () => {
+      FILTRO_OP = b.dataset.op;
+      el.querySelectorAll(".chip").forEach((x) => x.classList.toggle("on", x === b));
+      render();
+    });
+  });
+  document.getElementById("filters").hidden = false;
+  const hoje = hojeISO();
+  ["fDia", "fDe", "fAte"].forEach((id) => document.getElementById(id).setAttribute("max", hoje));
+}
+document.querySelectorAll("#chipsPer .chip").forEach((b) => {
+  b.addEventListener("click", () => {
+    PERIODO = Number(b.dataset.per);
+    document.querySelectorAll("#chipsPer .chip").forEach((x) => x.classList.toggle("on", x === b));
+    render();
+  });
+});
+
+/* ---------- filtro de data ---------- */
+const inDia = document.getElementById("fDia");
+const inDe = document.getElementById("fDe");
+const inAte = document.getElementById("fAte");
+
+function aplicarDatas() {
+  REF_DIA = inDia.value || "";
+  DE = inDe.value || "";
+  ATE = inAte.value || "";
+  if (DE && ATE && DE > ATE) { ATE = DE; inAte.value = DE; }
+  inDia.classList.toggle("ativo", !!REF_DIA);
+  inDe.classList.toggle("ativo", !!DE);
+  inAte.classList.toggle("ativo", !!ATE);
+  document.getElementById("chipsPer").classList.toggle("desligado", temIntervalo());
+  render();
+}
+[inDia, inDe, inAte].forEach((i) => i.addEventListener("change", aplicarDatas));
+document.getElementById("btnLimpar").addEventListener("click", () => {
+  inDia.value = ""; inDe.value = ""; inAte.value = "";
+  aplicarDatas();
+});
+
+/* ---------- ciclo de atualização ---------- */
+async function carregar(primeira) {
+  if (CARREGANDO) return;
+  CARREGANDO = true;
+  try {
+    const [linhas, assign] = await Promise.all([buscarLinhas(), buscarAssignments()]);
+    LINHAS = linhas;
+    ASSIGN = assign;
+    document.getElementById("erro").innerHTML = "";
+    if (primeira) montarChipsOp();
+    render();
+  } catch (err) {
+    const msg = "Não foi possível atualizar: " + (err && err.message ? err.message : "erro desconhecido");
+    if (primeira) {
+      document.getElementById("conteudo").innerHTML = '<div class="error-msg">' + esc(msg) + "</div>";
+    } else {
+      document.getElementById("erro").innerHTML = '<div class="error-msg">' + esc(msg) + " — exibindo os últimos dados carregados.</div>";
+    }
+  } finally {
+    CARREGANDO = false;
+    SEGUNDOS = REFRESH_MS / 1000;
+  }
+}
+
+const barra = document.getElementById("progressBar");
+const liveTxt = document.getElementById("liveTxt");
+const liveDot = document.getElementById("liveDot");
+
+setInterval(() => {
+  if (PAUSADO) return;
+  SEGUNDOS--;
+  if (SEGUNDOS <= 0) { carregar(false); return; }
+  liveTxt.textContent = "atualiza em " + SEGUNDOS + "s";
+  barra.style.width = (100 - (SEGUNDOS / (REFRESH_MS / 1000)) * 100).toFixed(1) + "%";
+}, 1000);
+
+document.getElementById("btnPause").addEventListener("click", (e) => {
+  PAUSADO = !PAUSADO;
+  e.target.textContent = PAUSADO ? "Retomar" : "Pausar";
+  liveDot.classList.toggle("paused", PAUSADO);
+  liveTxt.textContent = PAUSADO ? "atualização pausada" : "atualiza em " + SEGUNDOS + "s";
+});
+document.getElementById("btnNow").addEventListener("click", () => carregar(false));
+document.addEventListener("visibilitychange", () => { if (!document.hidden && !PAUSADO) carregar(false); });
+
+carregar(true);
+</script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TRANSTAC &middot; WOW Inglesa - Programacao Diaria</title>
+<style>
+/* ============================================================
+   TRANSTAC - Identidade visual padrao (preto / cinza / laranja)
+   Usada nas telas do modulo WOW - Inglesa
+   ============================================================ */
+:root {
+  color-scheme: dark;
+  --tt-bg: #14171a;
+  --tt-panel: #1c2024;
+  --tt-panel-alt: #1a1e22;
+  --tt-head: #24282d;
+  --tt-line: #2b2f34;
+  --tt-line-2: #3a3f45;
+  --tt-orange: #f5821f;
+  --tt-orange-dark: #c2590f;
+  --tt-yellow: #f5c518;
+  --tt-text: #f1f1f1;
+  --tt-muted: #9ca3af;
+  --tt-soft: #e5e7eb;
+  --tt-ok: #34d399;
+  --tt-err: #f87171;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--tt-bg);
+  color: var(--tt-text);
+  min-height: 100vh;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; }
+.wrap.wide { max-width: 1360px; }
+
+/* ---------- Cabecalho / marca ---------- */
+header.hdr {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0 20px;
+  border-bottom: 1px solid var(--tt-line);
+  margin-bottom: 22px;
+}
+.brand-mark { width: 34px; height: 40px; color: var(--tt-orange); flex-shrink: 0; }
+.brand-word {
+  font-size: 20px; font-weight: 800; letter-spacing: 0.02em;
+  color: #fff; line-height: 1.1;
+}
+.brand-word small {
+  display: block; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.14em; color: var(--tt-orange);
+}
+.hdr-sub { margin-left: 10px; }
+.hdr-sub .title { font-size: 18px; font-weight: 700; color: #fff; }
+.hdr-sub .subtitle { font-size: 12.5px; color: var(--tt-muted); font-style: italic; margin-top: 2px; }
+.home-link { margin-left: auto; color: var(--tt-muted); text-decoration: none; font-size: 13px; }
+.home-link:hover { color: var(--tt-text); }
+
+/* ---------- Cartoes de modulo ---------- */
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 6px;
+}
+.hub-card {
+  background: var(--tt-panel);
+  border: 1px solid var(--tt-line);
+  border-radius: 14px;
+  padding: 24px 20px;
+  text-decoration: none;
+  color: var(--tt-text);
+  display: block;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.hub-card:hover { transform: translateY(-2px); border-color: var(--tt-orange); }
+.hub-card .tag {
+  display: inline-block; font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--tt-orange); font-weight: 800; margin-bottom: 8px;
+}
+.hub-card h2 { font-size: 18px; margin: 0 0 6px; color: #fff; }
+.hub-card p { font-size: 13px; color: var(--tt-muted); margin: 0; line-height: 1.45; }
+
+/* ---------- Painel / formulario ---------- */
+.panel {
+  background: var(--tt-panel);
+  border: 1px solid var(--tt-line);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+}
+.panel-title {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--tt-orange); font-weight: 800; margin: 0 0 16px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px 16px;
+}
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field.span-2 { grid-column: span 2; }
+.field label {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--tt-muted); font-weight: 700;
+}
+.field input,
+.field select,
+.field textarea {
+  background: var(--tt-head);
+  border: 1px solid var(--tt-line-2);
+  color: var(--tt-text);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 13.5px;
+  font-family: inherit;
+  width: 100%;
+}
+.field textarea { resize: vertical; min-height: 66px; }
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--tt-orange);
+  box-shadow: 0 0 0 2px rgba(245, 130, 31, 0.22);
+}
+.field input::placeholder, .field textarea::placeholder { color: #6b7280; }
+
+/* ---------- Botoes ---------- */
+.actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.btn-confirm {
+  background: var(--tt-orange);
+  color: #14171a;
+  border: none;
+  border-radius: 9px;
+  padding: 12px 30px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-confirm:hover { background: var(--tt-orange-dark); color: #fff; }
+.btn-confirm:disabled { background: #7c4a1c; color: #d1d5db; cursor: default; }
+.btn-ghost {
+  background: var(--tt-head);
+  border: 1px solid var(--tt-line-2);
+  color: var(--tt-text);
+  border-radius: 9px;
+  padding: 11px 18px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-ghost:hover { background: var(--tt-line-2); }
+
+/* ---------- Mensagens ---------- */
+.status-msg { text-align: center; color: var(--tt-muted); padding: 46px 0; font-size: 14px; }
+.error-msg { text-align: center; color: var(--tt-err); padding: 46px 0; font-size: 14px; }
+.hint { font-size: 12px; color: var(--tt-muted); margin-top: 10px; line-height: 1.5; }
+.toast {
+  position: fixed; left: 50%; bottom: 28px;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--tt-head); color: var(--tt-text);
+  border: 1px solid var(--tt-line-2);
+  padding: 11px 20px; border-radius: 8px; font-size: 13px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s; z-index: 60;
+  max-width: 88vw; text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.ok { border-color: var(--tt-ok); }
+.toast.err { border-color: var(--tt-err); }
+
+/* ---------- Controles (filtros) ---------- */
+.controls {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 14px;
+  background: var(--tt-panel);
+  border: 1px solid var(--tt-line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
+}
+.date-box { display: flex; align-items: center; gap: 10px; }
+.date-box button {
+  background: var(--tt-line); border: none; color: var(--tt-text);
+  width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 14px;
+}
+.date-box button:hover { background: var(--tt-line-2); }
+.date-pill {
+  background: var(--tt-yellow); color: var(--tt-bg); font-weight: 800; font-size: 15px;
+  padding: 7px 16px; border-radius: 8px; min-width: 118px; text-align: center;
+}
+.date-weekday { font-style: italic; font-size: 13px; color: #d1d5db; text-transform: capitalize; }
+input[type="date"] {
+  background: var(--tt-head); border: 1px solid var(--tt-line-2); color: var(--tt-text);
+  border-radius: 8px; padding: 6px 8px; font-size: 12.5px; font-family: inherit;
+}
+.check-inline { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--tt-muted); }
+.check-inline input { accent-color: var(--tt-orange); width: 15px; height: 15px; }
+.total-box { margin-left: auto; text-align: right; }
+.total-box .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--tt-muted); }
+.total-box .value { font-size: 26px; font-weight: 800; color: var(--tt-orange); }
+
+/* ---------- Tabela ---------- */
+.table-scroll { overflow-x: auto; border-radius: 12px; border: 1px solid var(--tt-line); }
+table.manifest { width: 100%; border-collapse: collapse; background: var(--tt-panel); }
+table.manifest th {
+  background: var(--tt-head); color: var(--tt-orange);
+  text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em;
+  text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--tt-line);
+  white-space: nowrap;
+}
+table.manifest td {
+  padding: 10px 14px; font-size: 13.5px;
+  border-bottom: 1px solid var(--tt-head); color: var(--tt-soft);
+}
+table.manifest tbody tr:nth-child(even) { background: var(--tt-panel-alt); }
+table.manifest tbody tr:hover { background: var(--tt-head); }
+.col-num { color: var(--tt-muted); width: 34px; }
+.badge {
+  display: inline-block; font-size: 10.5px; font-weight: 800;
+  padding: 2px 9px; border-radius: 999px; color: var(--tt-bg); white-space: nowrap;
+}
+.updated { text-align: right; font-size: 11.5px; color: #6b7280; margin-top: 14px; }
+
+@media (max-width: 640px) {
+  header.hdr { flex-wrap: wrap; }
+  .home-link { margin-left: 0; flex-basis: 100%; }
+  .field.span-2 { grid-column: span 1; }
+}
+</style>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png" />
+<style>
+/* --- Identidade TRANSTAC: fundo e logo oficiais --- */
+body {
+  background-color: #14171a;
+  background-image: linear-gradient(rgba(18, 20, 23, 0.90), rgba(18, 20, 23, 0.94)), url("fundo-transtac.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+.brand-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) { .brand-logo { height: 32px; } }
+</style>
+</head>
+<body>
+<!-- TRANSTAC | efeito de carregamento (padrao do app) -->
+<style>
+#tt-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;background-color:#14171a;
+  background-image:linear-gradient(180deg,rgba(14,16,18,.90) 0%,rgba(14,16,18,.96) 100%),url('fundo-transtac.jpg');
+  background-size:cover;background-position:center center;
+  transition:opacity .45s ease,visibility .45s ease;}
+#tt-splash::before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,112,13,.20),transparent 62%);
+  animation:ttPulse 2.4s ease-in-out infinite;}
+#tt-splash.hide{opacity:0;visibility:hidden;}
+#tt-splash .tt-logo{position:relative;width:min(280px,62vw);height:auto;opacity:0;
+  transform:translateY(10px) scale(.96);
+  animation:ttIn .7s cubic-bezier(.2,.8,.25,1) forwards;
+  filter:drop-shadow(0 8px 26px rgba(0,0,0,.6));}
+#tt-splash .tt-bar{position:relative;width:min(230px,52vw);height:3px;border-radius:999px;
+  background:rgba(255,255,255,.09);overflow:hidden;}
+#tt-splash .tt-bar i{position:absolute;top:0;left:-40%;width:40%;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,transparent,#F2700D,transparent);
+  animation:ttSlide 1.15s ease-in-out infinite;}
+#tt-splash .tt-txt{position:relative;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;
+  font-weight:700;color:#8A939E;opacity:0;animation:ttIn .7s ease .25s forwards;}
+@keyframes ttIn{to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes ttSlide{0%{left:-40%;}100%{left:100%;}}
+@keyframes ttPulse{0%,100%{transform:scale(.92);opacity:.55;}50%{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){#tt-splash *,#tt-splash::before{animation:none !important;}}
+</style>
+<div id="tt-splash">
+  <img class="tt-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="tt-bar"><i></i></div>
+  <div class="tt-txt">Carregando</div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('tt-splash');
+  if(!s) return;
+  var fechado=false;
+  function fim(){
+    if(fechado) return; fechado=true;
+    s.classList.add('hide');
+    setTimeout(function(){ if(s&&s.parentNode) s.parentNode.removeChild(s); },600);
+  }
+  if(document.readyState==='complete'){ setTimeout(fim,450); }
+  else{ window.addEventListener('load',function(){ setTimeout(fim,450); }); }
+  setTimeout(fim,6000);   /* trava de seguranca */
+})();
+</script>
+
+<div class="wrap wide">
+<header class="hdr">
+<img class="brand-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES" />
+<div class="hdr-sub">
+<div class="title">WOW - Inglesa &middot; Programacao Diaria</div>
+<div class="subtitle">Mapa de carregamentos do dia</div>
+</div>
+<a class="home-link" href="wow.html">&larr; Voltar para WOW - Inglesa</a>
+</header>
+
+<div id="main">
+  <div class="status-msg">Carregando dados das planilhas...</div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE_COLORS = { "Cargas Agendadas": "#f5821f", "Cotacao": "#0ea5e9" };
+const BASE_ORDER = ["Cargas Agendadas", "Cotacao"];
+const WEEKDAYS_PT = ["domingo", "segunda-feira", "terca-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sabado"];
+
+const toastEl = document.getElementById("toast");
+function showToast(msg, kind) {
+  toastEl.textContent = msg;
+  toastEl.className = "toast show " + (kind || "");
+  setTimeout(function () { toastEl.className = "toast"; }, kind === "err" ? 12000 : 3500);
+}
+
+/* ---------- helpers ---------- */
+function norm(s) {
+  return String(s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+function pick(row, nomes) {
+  const mapa = {};
+  Object.keys(row || {}).forEach(function (k) { mapa[norm(k)] = row[k]; });
+  for (let i = 0; i < nomes.length; i++) {
+    const v = mapa[norm(nomes[i])];
+    if (v !== undefined && v !== null && String(v).trim() !== "") return String(v).trim();
+  }
+  return "";
+}
+/* Aceita SOMENTE formatos de data reais. Nada de new Date() solto:
+   "5166" viraria o ano 5166, "51" viraria 1951, e um campo numerico
+   qualquer acabava virando data. */
+function toISO(valor) {
+  const v = String(valor || "").trim();
+  if (!v) return "";
+
+  let m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);          // 2026-08-06
+  if (!m) {
+    const br = v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/); // 06/08/2026
+    if (br) m = [null, br[3], String(br[2]).padStart(2, "0"), String(br[1]).padStart(2, "0")];
+  }
+  if (!m) return "";
+
+  const ano = Number(m[1]), mes = Number(m[2]), dia = Number(m[3]);
+  if (ano < 2000 || ano > 2100) return "";
+  if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return "";
+
+  return m[1] + "-" + String(mes).padStart(2, "0") + "-" + String(dia).padStart(2, "0");
+}
+function dataValida(iso) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso || "");
+}
+function formatDateBR(iso) {
+  if (!dataValida(iso)) return "Sem data";
+  const p = iso.split("-");
+  return p[2] + "/" + p[1] + "/" + p[0];
+}
+function weekdayName(iso) {
+  if (!dataValida(iso)) return "";
+  const p = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+  return WEEKDAYS_PT[dt.getUTCDay()];
+}
+function addDays(iso, delta) {
+  if (!dataValida(iso)) return hoje();
+  const p = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+  dt.setUTCDate(dt.getUTCDate() + delta);
+  return dt.getUTCFullYear() + "-" +
+    String(dt.getUTCMonth() + 1).padStart(2, "0") + "-" +
+    String(dt.getUTCDate()).padStart(2, "0");
+}
+function hoje() {
+  try {
+    const s = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+    if (dataValida(s)) return s;
+  } catch (e) { /* navegador sem suporte a en-CA: usa o fallback abaixo */ }
+  const d = new Date();
+  return d.getFullYear() + "-" +
+    String(d.getMonth() + 1).padStart(2, "0") + "-" +
+    String(d.getDate()).padStart(2, "0");
+}
+/* Municipio/Estado: usa a coluna propria se existir, senao extrai do Destino */
+function municipioEstado(row, destino) {
+  const direto = pick(row, ["Municipio/Estado", "Municipio / Estado", "Municipio", "Cidade/UF", "Cidade"]);
+  const uf = pick(row, ["Estado", "UF"]);
+  if (direto && uf && direto.indexOf("/") === -1) return direto + "/" + uf;
+  if (direto) return direto;
+  const m = String(destino || "").match(/([A-Za-zÀ-ÿ\s\.'-]+)[\s\/,-]+([A-Za-z]{2})\s*$/);
+  if (m) return m[1].replace(/[\s\-\/,\.]+$/, "").trim() + "/" + m[2].toUpperCase();
+  return destino || "-";
+}
+function chaveNF(v) {
+  return String(v || "").replace(/[^0-9,;]/g, "").split(/[,;]/).filter(Boolean).sort().join(",");
+}
+
+/* ---------- normalizacao das bases ---------- */
+function fromCotacao(row) {
+  const destino = pick(row, ["Destino"]);
+  return {
+    base: "Cotacao",
+    data: toISO(pick(row, ["DATA", "Data", "Data Registro", "Data da Cotacao", "Timestamp"])),
+    oc: pick(row, ["Numero da OC", "N da OC", "OC", "Nº da OC"]),
+    nf: pick(row, ["NF's", "NFs", "NF", "Notas Fiscais"]),
+    cliente: pick(row, ["Cliente Final", "Cliente"]),
+    destino: destino,
+    municipio: municipioEstado(row, destino),
+    frete: pick(row, ["Valor Cotado", "Valor"])
+  };
+}
+function fromCarga(row) {
+  const destino = pick(row, ["Destino"]);
+  return {
+    base: "Cargas Agendadas",
+    data: toISO(pick(row, ["DATA", "Data", "Data Registro", "Timestamp"])),
+    oc: pick(row, ["Numero da OC", "OC"]),
+    nf: pick(row, ["NF's", "NFs", "NF", "Notas Fiscais"]),
+    cliente: pick(row, ["Cliente Final", "Cliente"]),
+    destino: destino,
+    municipio: municipioEstado(row, destino),
+    frete: pick(row, ["Valor Frete Cliente", "Valor"])
+  };
+}
+
+let LINHAS = [];
+let selectedDate = hoje();
+let todasDatas = false;
+
+async function withRetry(fn, tentativas) {
+  tentativas = tentativas || 3;
+  let ultimoErro;
+  for (let i = 1; i <= tentativas; i++) {
+    try {
+      return await Promise.race([
+        fn(),
+        new Promise(function (_, rej) { setTimeout(function () { rej(new Error("Tempo esgotado ao carregar dados.")); }, 25000); })
+      ]);
+    } catch (e) {
+      ultimoErro = e;
+      if (i < tentativas) await new Promise(function (r) { setTimeout(r, 1500 * i); });
+    }
+  }
+  throw ultimoErro;
+}
+
+async function fetchDados() {
+  const res = await fetch("/api/wow?data=all&t=" + Date.now(), { cache: "no-store" });
+  const data = await res.json().catch(function () { return {}; });
+  if (!res.ok || !data.ok) {
+    var msg = (data && data.error) || "Falha ao carregar dados.";
+    if (data && data.detail) msg += " [" + data.detail + "]";
+    throw new Error(msg);
+  }
+  const cotacoes = (data.cotacao || []).map(fromCotacao);
+  const cargas = (data.cargas || []).map(fromCarga);
+
+  /* Completa a OC das cargas usando a cotacao correspondente (mesma NF) */
+  const porNF = {};
+  cotacoes.forEach(function (c) { if (c.nf && c.oc) porNF[chaveNF(c.nf)] = c.oc; });
+  cargas.forEach(function (c) {
+    if (!c.oc && c.nf && porNF[chaveNF(c.nf)]) c.oc = porNF[chaveNF(c.nf)];
+  });
+
+  return cargas.concat(cotacoes);
+}
+
+function render() {
+  const main = document.getElementById("main");
+  const baseSel = document.getElementById("filterBase") ? document.getElementById("filterBase").value : "";
+
+  let linhas = LINHAS.slice();
+  if (!todasDatas) linhas = linhas.filter(function (r) { return r.data === selectedDate; });
+  if (baseSel) linhas = linhas.filter(function (r) { return r.base === baseSel; });
+
+  linhas.sort(function (a, b) {
+    if (a.data !== b.data) return (b.data || "").localeCompare(a.data || "");
+    const ia = BASE_ORDER.indexOf(a.base), ib = BASE_ORDER.indexOf(b.base);
+    if (ia !== ib) return ia - ib;
+    return (a.cliente || "").localeCompare(b.cliente || "");
+  });
+
+  const linhasHtml = linhas.map(function (r, i) {
+    return "<tr>" +
+      '<td class="col-num">' + (i + 1) + "</td>" +
+      "<td>" + (r.oc || "-") + "</td>" +
+      "<td>" + (r.nf || "-") + "</td>" +
+      "<td>" + (r.cliente || "-") + "</td>" +
+      "<td>" + (r.destino || "-") + "</td>" +
+      "<td>" + (r.municipio || "-") + "</td>" +
+      '<td><span class="badge" style="background:' + (BASE_COLORS[r.base] || "#f5c518") + '">' + r.base + "</span></td>" +
+      "<td>" + (r.frete || "-") + "</td>" +
+      "</tr>";
+  }).join("");
+
+  const controlsHtml =
+    '<div class="controls">' +
+      '<div class="date-box">' +
+        '<button id="prevDay" title="Dia anterior">&larr;</button>' +
+        "<div>" +
+          '<div class="date-pill">' + formatDateBR(selectedDate) + "</div>" +
+          '<div class="date-weekday">' + weekdayName(selectedDate) + "</div>" +
+        "</div>" +
+        '<button id="nextDay" title="Proximo dia">&rarr;</button>' +
+      "</div>" +
+      '<div class="field">' +
+        "<label>Escolher data</label>" +
+        '<input type="date" id="datePicker" value="' + selectedDate + '" />' +
+      "</div>" +
+      '<div class="field">' +
+        "<label>Base</label>" +
+        '<select id="filterBase">' +
+          '<option value="">Todas as bases</option>' +
+          BASE_ORDER.map(function (b) {
+            return '<option value="' + b + '"' + (baseSel === b ? " selected" : "") + ">" + b + "</option>";
+          }).join("") +
+        "</select>" +
+      "</div>" +
+      '<label class="check-inline"><input type="checkbox" id="chkTodas"' + (todasDatas ? " checked" : "") + " /> Todas as datas</label>" +
+      '<div class="total-box">' +
+        '<div class="label">Total de registros</div>' +
+        '<div class="value">' + linhas.length + "</div>" +
+      "</div>" +
+    "</div>";
+
+  const tableHtml = linhas.length
+    ? '<div class="table-scroll"><table class="manifest"><thead><tr>' +
+        "<th>#</th><th>OC</th><th>NF</th><th>Cliente Final</th><th>Destino</th>" +
+        "<th>Municipio/Estado</th><th>Base</th><th>Frete/Carga</th>" +
+      "</tr></thead><tbody>" + linhasHtml + "</tbody></table></div>"
+    : '<div class="status-msg">Nenhum registro' + (todasDatas ? "" : " para esta data") + (baseSel ? " na base " + baseSel : "") + ".</div>";
+
+  main.innerHTML = controlsHtml + tableHtml + '<div class="updated" id="updatedAt"></div>';
+
+  document.getElementById("prevDay").addEventListener("click", function () { selectedDate = addDays(selectedDate, -1); todasDatas = false; render(); });
+  document.getElementById("nextDay").addEventListener("click", function () { selectedDate = addDays(selectedDate, 1); todasDatas = false; render(); });
+  document.getElementById("datePicker").addEventListener("change", function (e) {
+    if (e.target.value) { selectedDate = e.target.value; todasDatas = false; render(); }
+  });
+  document.getElementById("filterBase").addEventListener("change", render);
+  document.getElementById("chkTodas").addEventListener("change", function (e) { todasDatas = e.target.checked; render(); });
+
+  setUpdatedAt();
+}
+
+function setUpdatedAt() {
+  const el = document.getElementById("updatedAt");
+  if (!el) return;
+  el.textContent = "Atualizado em " + new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+  }).format(new Date());
+}
+
+async function init() {
+  try {
+    LINHAS = await withRetry(fetchDados);
+    const datas = Array.from(new Set(LINHAS.map(function (r) { return r.data; }).filter(dataValida))).sort();
+    const h = hoje();
+    selectedDate = datas.indexOf(h) !== -1 ? h : (datas.length ? datas[datas.length - 1] : h);
+    render();
+  } catch (err) {
+    document.getElementById("main").innerHTML =
+      '<div class="error-msg">Erro ao carregar dados das planilhas: ' + (err && err.message ? err.message : "erro desconhecido") + "</div>";
+  }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Horas Extras TRANSTAC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#111318;
+    --panel:#1b1e24;
+    --panel-2:#20232a;
+    --border:#2b2f37;
+    --orange:#f5821f;
+    --orange-2:#ff9a42;
+    --blue:#29a3e0;
+    --purple:#9b59d0;
+    --green:#2ecc71;
+    --red:#e0524a;
+    --text:#f4f5f7;
+    --text-dim:#9aa0ab;
+    --text-faint:#6b7280;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;
+  }
+  .wrap{max-width:1400px;margin:0 auto;padding:24px 28px 60px;}
+
+  header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .shield{width:34px;height:34px;flex-shrink:0;}
+  .brand h1{font-size:18px;margin:0;letter-spacing:.3px;}
+  .brand-text small{display:block;color:var(--orange);font-size:10px;font-weight:700;letter-spacing:1.5px;margin-top:1px;}
+  .back-link{color:var(--orange);text-decoration:none;font-size:12.5px;align-self:flex-start;margin-top:4px;}
+  .back-link:hover{text-decoration:underline;}
+
+  .titlebar{margin-bottom:18px;}
+  .titlebar h2{font-size:20px;margin:0 0 4px;}
+  .titlebar p{margin:0;color:var(--text-dim);font-size:13px;}
+
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+
+  .filters{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:18px;}
+  .filters .field{display:flex;flex-direction:column;gap:5px;}
+  .filters label{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:600;}
+  .filters select, .filters input[type=date], .filters input[type=text]{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:6px;padding:8px 10px;font-size:13px;min-width:150px;
+  }
+  .filters select:focus, .filters input:focus{outline:1px solid var(--orange);}
+  .checkfield{display:flex;align-items:center;gap:7px;padding-bottom:8px;}
+  .checkfield input{width:auto;}
+  .checkfield label{margin:0;text-transform:none;font-size:13px;color:var(--text);font-weight:400;}
+  .btn{
+    background:var(--orange);color:#1a1200;border:none;border-radius:6px;
+    padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;
+  }
+  .btn:hover{background:var(--orange-2);}
+  .btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn.secondary:hover{border-color:var(--orange);color:var(--orange);}
+  .btn.danger{background:transparent;border:1px solid var(--red);color:var(--red);padding:5px 10px;font-size:12px;}
+  .btn.danger:hover{background:var(--red);color:#fff;}
+  .filters .spacer{flex:1;}
+  .result-count{font-size:12px;color:var(--text-dim);text-align:right;}
+  .result-count b{color:var(--orange);font-size:15px;}
+
+  .actions-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--orange);border-radius:8px;padding:14px 16px;}
+  .kpi.blue{border-left-color:var(--blue);}
+  .kpi.purple{border-left-color:var(--purple);}
+  .kpi.green{border-left-color:var(--green);}
+  .kpi .label{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:700;}
+  .kpi.blue .label{color:var(--blue);}
+  .kpi.purple .label{color:var(--purple);}
+  .kpi.green .label{color:var(--green);}
+  .kpi .value{font-size:24px;font-weight:700;margin-top:4px;}
+  .kpi .foot{font-size:11.5px;color:var(--text-faint);margin-top:2px;}
+
+  .charts{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:14px;}
+  .chart-card h3{font-size:13px;margin:0 0 12px;font-weight:600;}
+  .chart-card{height:320px;}
+  .chart-card .canvas-wrap{height:260px;position:relative;}
+  .chart-card.wide{grid-column:1/-1;height:260px;}
+  .chart-card.wide .canvas-wrap{height:200px;}
+  .charts-row3{margin-bottom:18px;}
+
+  .table-card{padding:0;overflow:hidden;}
+  .table-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);}
+  .table-head h3{margin:0;font-size:14px;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  thead th{
+    text-align:left;padding:10px 14px;background:var(--panel-2);
+    color:var(--orange);text-transform:uppercase;font-size:10.5px;letter-spacing:.6px;
+    border-bottom:1px solid var(--border);white-space:nowrap;
+  }
+  tbody td{padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  tbody tr:hover{background:#1f232b;}
+  tbody tr:last-child td{border-bottom:none;}
+  .mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--text-dim);}
+  .chip{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:600;background:var(--panel-2);color:var(--text-dim);border:1px solid var(--border);}
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px;}
+  .badge.he50{background:rgba(41,163,224,.18);color:var(--blue);}
+  .badge.he100{background:rgba(224,82,74,.18);color:var(--red);}
+  .badge.total{background:rgba(245,130,31,.18);color:var(--orange);}
+  .row-actions{display:flex;gap:6px;}
+  .icon-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:5px;padding:4px 8px;font-size:11px;cursor:pointer;}
+  .icon-btn:hover{border-color:var(--orange);color:var(--orange);}
+  .icon-btn.del:hover{border-color:var(--red);color:var(--red);}
+  .empty-state{padding:40px 20px;text-align:center;color:var(--text-dim);}
+  .table-foot{padding:10px 18px;color:var(--text-faint);font-size:11px;border-top:1px solid var(--border);}
+
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:50;}
+  .modal-bg.open{display:flex;}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:22px;width:480px;max-width:92vw;max-height:88vh;overflow:auto;}
+  .modal h3{margin:0 0 16px;font-size:16px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .form-grid .full{grid-column:1/-1;}
+  .form-grid label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-bottom:5px;font-weight:600;}
+  .form-grid input, .form-grid select{
+    width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:6px;padding:8px 10px;font-size:13px;
+  }
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+  .modal .hint{font-size:11px;color:var(--text-faint);margin-top:4px;}
+
+  .settings-panel{margin-bottom:18px;display:none;}
+  .settings-panel.open{display:block;}
+  .settings-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .settings-grid .field label{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:600;display:block;margin-bottom:5px;}
+  .settings-grid input{width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 10px;font-size:13px;}
+
+  .hint{font-size:11.5px;color:var(--text-faint);margin-top:10px;}
+  input[type=file]{display:none;}
+
+  @media (max-width:1000px){
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .charts{grid-template-columns:1fr;}
+    .settings-grid{grid-template-columns:repeat(2,1fr);}
+  }
+
+  /* ---- Login ---- */
+  .login-bg{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;}
+  .login-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:36px 34px;width:360px;max-width:92vw;}
+  .login-card .brand{justify-content:center;margin-bottom:22px;}
+  .login-card h3{margin:0 0 6px;font-size:17px;text-align:center;}
+  .login-card p.sub{margin:0 0 22px;color:var(--text-dim);font-size:12.5px;text-align:center;}
+  .login-card label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:600;margin-bottom:5px;}
+  .login-card input{width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:10px 12px;font-size:14px;margin-bottom:14px;}
+  .login-card input:focus{outline:1px solid var(--orange);}
+  .login-card .btn{width:100%;padding:11px;font-size:14px;margin-top:4px;}
+  .login-error{color:var(--red);font-size:12.5px;text-align:center;margin:0 0 10px;display:none;}
+  .logout-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;}
+  .logout-btn:hover{border-color:var(--red);color:var(--red);}
+  body.locked .wrap{display:none;}
+
+  /* ---- Home RH ---- */
+  .home-wrap{max-width:1100px;margin:0 auto;padding:40px 28px 60px;display:none;}
+  .home-wrap.open{display:block;}
+  body.locked .home-wrap{display:none!important;}
+  .home-title{text-align:center;margin:34px 0 6px;font-size:26px;letter-spacing:.5px;}
+  .home-sub{text-align:center;color:var(--text-dim);font-size:13.5px;margin:0 0 36px;}
+  .home-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;max-width:820px;margin:0 auto;}
+  .home-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px 22px;cursor:pointer;transition:border-color .15s, transform .15s;text-align:left;}
+  .home-card:hover{border-color:var(--orange);transform:translateY(-2px);}
+  .home-card .tag{display:inline-block;background:rgba(245,130,31,.15);color:var(--orange);font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;border-radius:20px;padding:4px 10px;margin-bottom:12px;}
+  .home-card h4{margin:0 0 6px;font-size:16px;}
+  .home-card p{margin:0;color:var(--text-dim);font-size:12.5px;line-height:1.5;}
+  .home-card.disabled{opacity:.45;cursor:default;}
+  .home-card.disabled:hover{border-color:var(--border);transform:none;}
+</style>
+</head>
+<body>
+<!-- TRANSTAC | efeito de carregamento (padrao do app) -->
+<style>
+#tt-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;background-color:#14171a;
+  background-image:linear-gradient(180deg,rgba(14,16,18,.90) 0%,rgba(14,16,18,.96) 100%),url('fundo-transtac.jpg');
+  background-size:cover;background-position:center center;
+  transition:opacity .45s ease,visibility .45s ease;}
+#tt-splash::before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,112,13,.20),transparent 62%);
+  animation:ttPulse 2.4s ease-in-out infinite;}
+#tt-splash.hide{opacity:0;visibility:hidden;}
+#tt-splash .tt-logo{position:relative;width:min(280px,62vw);height:auto;opacity:0;
+  transform:translateY(10px) scale(.96);
+  animation:ttIn .7s cubic-bezier(.2,.8,.25,1) forwards;
+  filter:drop-shadow(0 8px 26px rgba(0,0,0,.6));}
+#tt-splash .tt-bar{position:relative;width:min(230px,52vw);height:3px;border-radius:999px;
+  background:rgba(255,255,255,.09);overflow:hidden;}
+#tt-splash .tt-bar i{position:absolute;top:0;left:-40%;width:40%;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,transparent,#F2700D,transparent);
+  animation:ttSlide 1.15s ease-in-out infinite;}
+#tt-splash .tt-txt{position:relative;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;
+  font-weight:700;color:#8A939E;opacity:0;animation:ttIn .7s ease .25s forwards;}
+@keyframes ttIn{to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes ttSlide{0%{left:-40%;}100%{left:100%;}}
+@keyframes ttPulse{0%,100%{transform:scale(.92);opacity:.55;}50%{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){#tt-splash *,#tt-splash::before{animation:none !important;}}
+</style>
+<div id="tt-splash">
+  <img class="tt-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="tt-bar"><i></i></div>
+  <div class="tt-txt">Carregando</div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('tt-splash');
+  if(!s) return;
+  var fechado=false;
+  function fim(){
+    if(fechado) return; fechado=true;
+    s.classList.add('hide');
+    setTimeout(function(){ if(s&&s.parentNode) s.parentNode.removeChild(s); },600);
+  }
+  if(document.readyState==='complete'){ setTimeout(fim,450); }
+  else{ window.addEventListener('load',function(){ setTimeout(fim,450); }); }
+  setTimeout(fim,6000);   /* trava de seguranca */
+})();
+</script>
+
+<div class="home-wrap" id="homeWrap">
+  <header>
+    <div class="brand">
+      <svg class="shield" viewBox="0 0 40 44" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 1 L38 8 V21 C38 32 30 40 20 43 C10 40 2 32 2 21 V8 Z" fill="none" stroke="#f5821f" stroke-width="2.4"/>
+        <text x="20" y="27" font-size="16" font-weight="700" fill="#f5821f" text-anchor="middle" font-family="Arial">T</text>
+      </svg>
+      <div class="brand-text">
+        <h1>TRANSTAC</h1>
+        <small>TRANSPORTES</small>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;align-self:flex-start;margin-top:4px;">
+      <a class="back-link" style="margin-top:0;align-self:center;" href="index.html">&larr; Voltar ao menu</a>
+      <button class="logout-btn" onclick="logout()">Sair</button>
+    </div>
+  </header>
+  <h2 class="home-title">RECURSOS HUMANOS TRANSTAC</h2>
+  <p class="home-sub">Escolha o m&oacute;dulo.</p>
+  <div class="home-cards">
+    <div class="home-card" onclick="openModulo('horas-extras')">
+      <span class="tag">M&oacute;dulo</span>
+      <h4>Horas Extras</h4>
+      <p>Extrato de horas extras por colaborador e por per&iacute;odo, com custo estimado por sal&aacute;rio &mdash; base Secullum RH | Garoponto.</p>
+    </div>
+  </div>
+</div>
+<div class="login-bg" id="loginBg" style="display:none;">
+  <div class="login-card">
+    <div class="brand">
+      <svg class="shield" viewBox="0 0 40 44" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 1 L38 8 V21 C38 32 30 40 20 43 C10 40 2 32 2 21 V8 Z" fill="none" stroke="#f5821f" stroke-width="2.4"/>
+        <text x="20" y="27" font-size="16" font-weight="700" fill="#f5821f" text-anchor="middle" font-family="Arial">T</text>
+      </svg>
+      <div class="brand-text">
+        <h1>TRANSTAC</h1>
+        <small>TRANSPORTES</small>
+      </div>
+    </div>
+    <h3>Recursos Humanos</h3>
+    <p class="sub">Acesso restrito. Identifique-se para continuar.</p>
+    <form id="loginForm">
+      <label>Usu&aacute;rio</label>
+      <input type="text" id="loginUser" autocomplete="username" required>
+      <label>Senha</label>
+      <input type="password" id="loginPass" autocomplete="current-password" required>
+      <p class="login-error" id="loginError">Usu&aacute;rio ou senha incorretos.</p>
+      <button type="submit" class="btn">Entrar</button>
+    </form>
+  </div>
+</div>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <svg class="shield" viewBox="0 0 40 44" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 1 L38 8 V21 C38 32 30 40 20 43 C10 40 2 32 2 21 V8 Z" fill="none" stroke="#f5821f" stroke-width="2.4"/>
+        <text x="20" y="27" font-size="16" font-weight="700" fill="#f5821f" text-anchor="middle" font-family="Arial">T</text>
+      </svg>
+      <div class="brand-text">
+        <h1>TRANSTAC</h1>
+        <small>TRANSPORTES</small>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;align-self:flex-start;margin-top:4px;">
+      <a class="back-link" style="margin-top:0;align-self:center;" href="#" onclick="showHome();return false;">&larr; Voltar ao RH</a>
+      <button class="logout-btn" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <div class="titlebar">
+    <h2>CONTROLE DE HORAS EXTRAS</h2>
+    <p>Extrato de horas extras por colaborador e por período &mdash; base Secullum RH | Garoponto.</p>
+  </div>
+
+  <div class="actions-row">
+    <button class="btn" id="btnNovo">+ Novo lançamento</button>
+    <button class="btn secondary" id="btnImportar">Importar planilha (Secullum)</button>
+    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+    <button class="btn secondary" id="btnModelo">Baixar modelo</button>
+    <button class="btn secondary" id="btnExportar">Exportar CSV</button>
+    <button class="btn secondary" id="btnConfig">Configurações</button>
+  </div>
+
+  <div class="panel settings-panel" id="settingsPanel">
+    <div class="settings-grid">
+      <div class="field">
+        <label>Divisor de horas (padrão 220)</label>
+        <input type="number" id="cfgDivisor" step="1" min="1">
+      </div>
+      <div class="field">
+        <label>Adicional EX50% (%)</label>
+        <input type="number" id="cfgMult50" step="1" min="0">
+      </div>
+      <div class="field">
+        <label>Adicional EX100% (%)</label>
+        <input type="number" id="cfgMult100" step="1" min="0">
+      </div>
+    </div>
+    <p class="hint">Custo estimado = (salário do colaborador &divide; divisor) &times; (1 + adicional) &times; horas extras de cada tipo. Colaboradores sem salário cadastrado aparecem com valor R$ 0,00.</p>
+  </div>
+
+  <div class="panel filters">
+    <div class="field">
+      <label>Período</label>
+      <select id="fPeriodo"></select>
+    </div>
+    <div class="field">
+      <label>Empresa</label>
+      <select id="fEmpresa"><option value="">Todas as empresas</option></select>
+    </div>
+    <div class="field">
+      <label>Setor</label>
+      <select id="fSetor"><option value="">Todos os setores</option></select>
+    </div>
+    <div class="field">
+      <label>Colaborador</label>
+      <select id="fColaborador"><option value="">Todos os colaboradores</option></select>
+    </div>
+    <div class="field">
+      <label>Ordenar por</label>
+      <select id="fOrdenar">
+        <option value="total_desc">Maior total de HE</option>
+        <option value="total_asc">Menor total de HE</option>
+        <option value="ex100_desc">Maior EX100%</option>
+        <option value="nome_asc">Nome (A-Z)</option>
+      </select>
+    </div>
+    <div class="checkfield">
+      <input type="checkbox" id="fSomenteHE">
+      <label for="fSomenteHE">Somente com horas extras</label>
+    </div>
+    <button class="btn secondary" id="btnLimpar">Limpar filtros</button>
+    <div class="spacer"></div>
+    <div class="result-count" id="resultCount"></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div class="label">Total de Horas Extras</div>
+      <div class="value" id="kpiTotalHE">00:00</div>
+      <div class="foot" id="kpiTotalHEFoot">no filtro atual</div>
+    </div>
+    <div class="kpi blue">
+      <div class="label">Colaboradores com HE</div>
+      <div class="value" id="kpiColaboradores">0</div>
+      <div class="foot" id="kpiColaboradoresFoot">de 0 colaboradores</div>
+    </div>
+    <div class="kpi purple">
+      <div class="label">HE 100% (Domingo/Feriado)</div>
+      <div class="value" id="kpiHE100">00:00</div>
+      <div class="foot" id="kpiHE100Foot">0% do total de HE</div>
+    </div>
+    <div class="kpi green">
+      <div class="label">Custo Estimado</div>
+      <div class="value" id="kpiCusto">R$ 0,00</div>
+      <div class="foot">com base no salário de cada colaborador</div>
+    </div>
+  </div>
+
+  <div class="charts">
+    <div class="panel chart-card">
+      <h3>Top Colaboradores por Horas Extras</h3>
+      <div class="canvas-wrap"><canvas id="chartColaborador"></canvas></div>
+    </div>
+    <div class="panel chart-card">
+      <h3>Distribuição EX50% vs EX100%</h3>
+      <div class="canvas-wrap"><canvas id="chartTipo"></canvas></div>
+    </div>
+  </div>
+  <div class="charts-row3">
+    <div class="panel chart-card wide">
+      <h3 id="chart3Title">Comparativo entre Períodos</h3>
+      <div class="canvas-wrap"><canvas id="chartPeriodo"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel table-card">
+    <div class="table-head">
+      <h3>Registros de Horas Extras</h3>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Empresa</th>
+            <th>Matrícula</th>
+            <th>Colaborador</th>
+            <th>Setor</th>
+            <th>EX50%</th>
+            <th>EX100%</th>
+            <th>Total HE</th>
+            <th>Valor Estimado</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">Nenhum registro encontrado para os filtros selecionados.</div>
+    </div>
+    <div class="table-foot" id="tableFoot"></div>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">Novo lançamento</h3>
+    <form id="recordForm">
+      <input type="hidden" id="recId">
+      <div class="form-grid">
+        <div class="full">
+          <label>Período</label>
+          <select id="rPeriodo"></select>
+          <p class="hint">Para criar um período novo, use o botão "Importar planilha" ou digite abaixo.</p>
+        </div>
+        <div class="full" id="novoPeriodoWrap" style="display:none;">
+          <label>Novo período (rótulo)</label>
+          <input type="text" id="rPeriodoNovo" placeholder="Ex: 26/07/2026 a 25/08/2026">
+        </div>
+        <div>
+          <label>Matrícula (Nº Folha)</label>
+          <input type="text" id="rFolha" placeholder="Opcional">
+        </div>
+        <div>
+          <label>Colaborador</label>
+          <input type="text" id="rNome" placeholder="Nome completo" required>
+        </div>
+        <div>
+          <label>EX50% (HH:MM)</label>
+          <input type="text" id="rEx50" placeholder="00:00" pattern="-?\d{1,4}:\d{2}">
+        </div>
+        <div>
+          <label>EX100% (HH:MM)</label>
+          <input type="text" id="rEx100" placeholder="00:00" pattern="-?\d{1,4}:\d{2}">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="btnCancelar">Cancelar</button>
+        <button type="submit" class="btn">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ---- Autenticacao (hash SHA-256 de "usuario:senha") ----
+const AUTH_HASHES = {"usuario1": "28851de663acc510c2fa82f4ef1a3b9c5a616ca45b86fe611449540a9d2df6a3", "usuario2": "3b39e448ad894b26947bf565bc70b2b7342f05a8083e75d05c737c7771b148c2", "usuario3": "338d8d41485681498d775c78789d1c4735dfa1ef3460edbecf893e3212197824"};
+const AUTH_KEY = 'transtac_rh_auth_v1';
+
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function isLogged(){
+  const tok = sessionStorage.getItem(AUTH_KEY);
+  return tok && Object.values(AUTH_HASHES).includes(tok);
+}
+function showLogin(){
+  document.body.classList.add('locked');
+  document.getElementById('loginBg').style.display = 'flex';
+  setTimeout(()=>document.getElementById('loginUser').focus(), 50);
+}
+function hideLogin(){
+  document.body.classList.remove('locked');
+  document.getElementById('loginBg').style.display = 'none';
+}
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const u = document.getElementById('loginUser').value.trim().toLowerCase();
+  const p = document.getElementById('loginPass').value;
+  const h = await sha256Hex(u + ':' + p);
+  if(AUTH_HASHES[u] === h){
+    sessionStorage.setItem(AUTH_KEY, h);
+    document.getElementById('loginError').style.display = 'none';
+    hideLogin();
+    showHome();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('loginPass').value = '';
+  }
+});
+function logout(){
+  sessionStorage.removeItem(AUTH_KEY);
+  location.reload();
+}
+function showHome(){
+  document.getElementById('homeWrap').classList.add('open');
+  document.querySelector('.wrap').style.display = 'none';
+}
+function openModulo(mod){
+  if(mod==='horas-extras'){
+    document.getElementById('homeWrap').classList.remove('open');
+    document.querySelector('.wrap').style.display = 'block';
+    window.scrollTo(0,0);
+  }
+}
+function hideLoginAndShowHome(){
+  hideLogin();
+  showHome();
+}
+if(!isLogged()){ showLogin(); } else { showHome(); }
+</script>
+<script>
+const STORAGE_KEY = 'transtac_horas_extras_periods_v3';
+const CFG_KEY = 'transtac_horas_extras_cfg_v3';
+const SETORES_KEY = 'transtac_horas_extras_setores_v1';
+
+const defaultCfg = { divisorHora: 220, mult50: 50, mult100: 100 };
+
+// Cadastro de funcionários (empresa, código e salário) — base RH consolidada
+const employeesInfo = {"ADRIANA DA SILVA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 449, "salario": 2321.0}, "ADRIANO MANENTI DIAS": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 422, "salario": 2590.0}, "ALCEU MAZZUCHETTI": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 394, "salario": 2590.0}, "ALEXANDRE LUCIO ALVES": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 433, "salario": 2590.0}, "ARIELE FELICIANO ANTUNES": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 399, "salario": 5111.48}, "BRUNO DEICHMANN DA SILVA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 441, "salario": 2526.73}, "CAMILA PECK BARRETO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 401, "salario": 2428.03}, "CLEDINEI CASTOLDI": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 411, "salario": 2590.0}, "DANIEL CLASEN MACHADO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 393, "salario": 2590.0}, "DOUGLAS VALDECINO ANDRETTI CALISTRO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 430, "salario": 1888.49}, "ERIC CARDOSO KERBER": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 442, "salario": 2590.0}, "EVANDRO VIEIRA RODRIGUES": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 408, "salario": 2590.0}, "FARIDES TEIXEIRA GOMES": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 423, "salario": 2590.0}, "FILIPE JUST CIPRIANI": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 409, "salario": 2590.0}, "GABRIEL PAGANI": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 451, "salario": 2110.0}, "GABRIEL WESTER PEREIRA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 446, "salario": 2332.61}, "GABRIELA MARIA RIBEIRO SIMAO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 436, "salario": 2500.0}, "GERALDO JULIO AVILA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 425, "salario": 2590.0}, "GUSTAVO DE OLIVEIRA EUZEBIO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 426, "salario": 2590.0}, "HIGOR DOMINGOS RUFINO TEIXEIRA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 432, "salario": 2590.0}, "ISRAEL OLIVEIRA MARTINS ROCHA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 419, "salario": 2590.0}, "JAIR QUERINO DA COSTA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 390, "salario": 2590.0}, "JENIFFER CAROLINE RODRIGUES DOS SANTOS": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 448, "salario": 1867.74}, "JOAO VITOR ANDRADE MARTINS": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 434, "salario": 1888.49}, "JONAS BARRETO DATIVO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 415, "salario": 2332.61}, "JOSUE DE SOUSA CANDIDO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 439, "salario": 2590.0}, "KELY APARECIDA MANOEL": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 389, "salario": 3293.39}, "KEREN DO NASCIMENTO COSTA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 387, "salario": 2500.0}, "LEANDRO FERNANDES": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 392, "salario": 2590.0}, "LEANDRO FLAVIO DE ANDRADE": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 405, "salario": 2590.0}, "LEONARDO ALVES THRONICKE": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 404, "salario": 2590.0}, "LILIAN CRISTIAN SANSONOWICZ": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 437, "salario": 2590.0}, "LUANA RUFINO ROQUE": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 407, "salario": 2321.0}, "LUCAS DE SOUZA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 420, "salario": 2590.0}, "LUCAS INACIO DA SILVA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 396, "salario": 2590.0}, "LUCIANO MENDES DA LUZ": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 391, "salario": 2590.0}, "LUCINARA VARELA BORGES": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 428, "salario": 2590.0}, "LUIZ EDUARDO LEAL PEREIRA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 395, "salario": 2590.0}, "MANUELA MAINKA BRAGA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 447, "salario": 1867.74}, "MARCIO MACHETTI RAMBO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 410, "salario": 2590.0}, "MARCOS CLASEN MACHADO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 438, "salario": 2590.0}, "MARLON LEONARDO FELICIO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 421, "salario": 3386.55}, "MESSIAS GARCIA DA SILVA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 431, "salario": 2590.0}, "OTAVIO EUCLIDES NASCIMENTO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 418, "salario": 2590.0}, "PAULO RODRIGO FABRO": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 406, "salario": 2205.9}, "PAULO SERGIO BARBOSA SOUZA SAFADI": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 416, "salario": 2110.0}, "RICARDO NUNES MARTINS": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 398, "salario": 2590.0}, "RUAN FERREIRA DA SILVA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 450, "salario": 2679.7}, "SERGIO RODRIGUES DA SILVA": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 444, "salario": 2590.0}, "SHIRLEY DA SILVA AGUIAR": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 397, "salario": 2270.89}, "VALDECIR VOLKMER": {"empresa": "SCHMITZ TRANSPORTES LTDA", "codigo": 403, "salario": 2590.0}, "ADILSON DELA VEDOVA": {"empresa": "TRANSCHMITZ TRANSPORTES LTDA", "codigo": 6, "salario": 1888.49}, "DOUGLAS HENRIQUE": {"empresa": "TRANSCHMITZ TRANSPORTES LTDA", "codigo": 4, "salario": 1888.49}, "DOUGLAS VERGILIO ALMEIDA": {"empresa": "TRANSCHMITZ TRANSPORTES LTDA", "codigo": 3, "salario": 6210.3}, "FREDERICO DANDOLINI": {"empresa": "TRANSCHMITZ TRANSPORTES LTDA", "codigo": 5, "salario": 3243.07}, "NELSON DE OLIVEIRA TEIXEIRA": {"empresa": "TRANSCHMITZ TRANSPORTES LTDA", "codigo": 1, "salario": 2590.0}, "WILLYAN MAGALHAES CARVALHO": {"empresa": "TRANSCHMITZ TRANSPORTES LTDA", "codigo": 2, "salario": 2590.0}};
+
+const seedPeriods = {"26/05/2026 a 25/06/2026": [{"folha": "0200000000000000000108", "nome": "ADILSON DELA VEDOVA", "ex50": 15.9, "ex100": 11.8333}, {"folha": "0100000000000000000444", "nome": "ADRIANA DA SILVA", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000367", "nome": "ADRIANO MANENTI DIAS", "ex50": 75.0167, "ex100": 18.75}, {"folha": "0100000000000000000207", "nome": "ALCEU MAZZUCHETTI", "ex50": 94.5833, "ex100": 28.3333}, {"folha": "0100000000000000000383", "nome": "ALEXANDRE LUCIO ALVES", "ex50": 77.5167, "ex100": 19.1333}, {"folha": "0100000000000000000265", "nome": "ARIELE FELICIANO ANTUNES", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000377", "nome": "BRENO ANTONIO DA ROSA", "ex50": 53.35, "ex100": 24.5667}, {"folha": "0100000000000000000356", "nome": "BRUNO DEICHMANN DA SILVA", "ex50": 7.5667, "ex100": 8.7667}, {"folha": "0100000000000000000275", "nome": "CAMILA PECK BARRETO", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000331", "nome": "CLEDINEI CASTOLDI", "ex50": 33.2167, "ex100": 9.95}, {"folha": "0100000000000000000204", "nome": "DANIEL CLASEN MACHADO", "ex50": 75.9333, "ex100": 48.65}, {"folha": "0200000000000000000070", "nome": "DOUGLAS HENRIQUE", "ex50": 31.4, "ex100": 10.8333}, {"folha": "0100000000000000000379", "nome": "DOUGLAS VALDECINO ANDRETTI CALISTRO", "ex50": 10.0833, "ex100": 21.5333}, {"folha": "0100000000000000000375", "nome": "ERIC CARDOSO KERBER", "ex50": 25.1667, "ex100": 17.6167}, {"folha": "0100000000000000000323", "nome": "EVANDRO VIEIRA RODRIGUES", "ex50": 44.7833, "ex100": 22.1333}, {"folha": "0100000000000000000370", "nome": "FARIDES TEIXEIRA GOMES", "ex50": 75.0667, "ex100": 17.4833}, {"folha": "0100000000000000000327", "nome": "FILIPE JUST CIPRIANI", "ex50": 13.65, "ex100": 9.35}, {"folha": "0200000000000000000077", "nome": "FREDERICO DANDOLINI", "ex50": 6.6333, "ex100": 8.75}, {"folha": "0100000000000000000440", "nome": "GABRIEL WESTER PEREIRA", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000386", "nome": "GABRIELA MARIA RIBEIRO SIMÃO", "ex50": 22.2833, "ex100": 9.0167}, {"folha": "0100000000000000000372", "nome": "GERALDO JULIO AVILA", "ex50": 59.2333, "ex100": 10.5}, {"folha": "0100000000000000000373", "nome": "GUSTAVO DE OLIVEIRA EUZÉBIO", "ex50": 21.7667, "ex100": 11.0667}, {"folha": "0100000000000000000382", "nome": "HIGOR DOMINGOS RUFINO TEIXEIRA", "ex50": 71.3667, "ex100": 16.4167}, {"folha": "0100000000000000000358", "nome": "ISRAEL OLIVEIRA MARTINS ROCHA", "ex50": 52.3833, "ex100": 11.2667}, {"folha": "0100000000000000000105", "nome": "JAIR QUERINO DA COSTA", "ex50": 96.0667, "ex100": 15.3}, {"folha": "0100000000000000000441", "nome": "JENIFFER CAROLINE RODRIGUES DOS SANTOS", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000384", "nome": "JOAO VITOR ANDRADE MARTINS", "ex50": 36.85, "ex100": 11.5167}, {"folha": "0100000000000000000347", "nome": "JONAS BARRETO DATIVO", "ex50": 16.3333, "ex100": 16.7667}, {"folha": "0100000000000000000321", "nome": "JOSUÉ DE SOUSA CANDIDO", "ex50": 15.3833, "ex100": 9.05}, {"folha": "0100000000000000000022", "nome": "KELY APARECIDA MANOEL", "ex50": 39.3167, "ex100": 31.2333}, {"folha": "0100000000000000000387", "nome": "KEREN DO NASCIMENTO COSTA", "ex50": 2.5, "ex100": 0.0}, {"folha": "0100000000000000000191", "nome": "LEANDRO FERNANDES", "ex50": 26.0833, "ex100": 0.0}, {"folha": "0100000000000000000305", "nome": "LEANDRO FLAVIO DE ANDRADE", "ex50": 88.6167, "ex100": 20.8333}, {"folha": "0100000000000000000301", "nome": "LEONARDO ALVES THRONICKE", "ex50": 32.2833, "ex100": 19.5167}, {"folha": "0100000000000000000437", "nome": "LILIAN CRISTIAN SANSONOWICZ", "ex50": 24.6667, "ex100": 16.8667}, {"folha": "0100000000000000000309", "nome": "LUANA RUFINO ROQUE", "ex50": 0.1667, "ex100": 0.0}, {"folha": "0100000000000000000365", "nome": "LUCAS DE SOUZA", "ex50": 14.25, "ex100": 10.5667}, {"folha": "0100000000000000000228", "nome": "LUCAS INACIO DA SILVA", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000147", "nome": "LUCIANO MENDES DA LUZ", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000376", "nome": "LUCINARA VARELA BORGES", "ex50": 20.7167, "ex100": 12.45}, {"folha": "0100000000000000000210", "nome": "LUIZ EDUARDO LEAL PEREIRA", "ex50": 80.9167, "ex100": 31.1833}, {"folha": "0100000000000000000442", "nome": "MANUELA MAINKA BRAGA", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000330", "nome": "MARCIO MACHETTI RAMBO", "ex50": 74.2833, "ex100": 11.1}, {"folha": "0100000000000000000205", "nome": "MARCOS CLASEN MACHADO", "ex50": 116.1333, "ex100": 46.1833}, {"folha": "0100000000000000000344", "nome": "MARIA APARECIDA PORTO MADALENA", "ex50": 0.0, "ex100": 8.5}, {"folha": "0100000000000000000380", "nome": "MESSIAS GARCIA DA SILVA", "ex50": 61.25, "ex100": 28.0}, {"folha": "0200000000000000000002", "nome": "NELSON DE OLIVEIRA TEIXEIRA", "ex50": 10.6, "ex100": 15.3167}, {"folha": "0100000000000000000353", "nome": "OTAVIO EUCLIDES NASCIMENTO", "ex50": 112.9333, "ex100": 32.1333}, {"folha": "0100000000000000000350", "nome": "PAULO SERGIO BARBOSA SOUZA SAFADI", "ex50": 73.3667, "ex100": 27.2333}, {"folha": "0100000000000000000256", "nome": "RICARDO NUNES MARTINS", "ex50": 96.15, "ex100": 56.5667}, {"folha": "0100000000000000000443", "nome": "RUAN FERREIRA DA SILVA", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000439", "nome": "SERGIO RODRIGUES DA SILVA", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000229", "nome": "SHIRLEY DA SILVA AGUIAR", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000296", "nome": "VALDECIR VOLKMER", "ex50": 98.15, "ex100": 7.6833}, {"folha": "0100000000000000000385", "nome": "WELLINGTON ALVES DE SOUZA", "ex50": 3.25, "ex100": 9.5833}, {"folha": "0200000000000000000010", "nome": "WILLYAN MAGALHAES CARVALHO", "ex50": 23.1, "ex100": 35.05}], "26/06/2026 a 25/07/2026 (parcial – dados até 14/07/2026)": [{"folha": "0200000000000000000108", "nome": "ADILSON DELA VEDOVA", "ex50": 14.6833, "ex100": 0.0}, {"folha": "0100000000000000000444", "nome": "ADRIANA DA SILVA", "ex50": 0.4667, "ex100": 0.0}, {"folha": "0100000000000000000367", "nome": "ADRIANO MANENTI DIAS", "ex50": 51.1333, "ex100": 0.0}, {"folha": "0100000000000000000207", "nome": "ALCEU MAZZUCHETTI", "ex50": 79.7833, "ex100": 0.0}, {"folha": "0100000000000000000383", "nome": "ALEXANDRE LUCIO ALVES", "ex50": 58.8167, "ex100": 0.0}, {"folha": "0100000000000000000265", "nome": "ARIELE FELICIANO ANTUNES", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000377", "nome": "BRENO ANTONIO DA ROSA", "ex50": 15.2333, "ex100": 0.0}, {"folha": "0100000000000000000356", "nome": "BRUNO DEICHMANN DA SILVA", "ex50": 5.9333, "ex100": 0.0}, {"folha": "0100000000000000000275", "nome": "CAMILA PECK BARRETO", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000331", "nome": "CLEDINEI CASTOLDI", "ex50": 25.5167, "ex100": 0.0}, {"folha": "0100000000000000000204", "nome": "DANIEL CLASEN MACHADO", "ex50": 68.7333, "ex100": 0.0}, {"folha": "0200000000000000000070", "nome": "DOUGLAS HENRIQUE", "ex50": 19.75, "ex100": 0.0}, {"folha": "0100000000000000000379", "nome": "DOUGLAS VALDECINO ANDRETTI CALISTRO", "ex50": 32.5167, "ex100": 0.0}, {"folha": "0100000000000000000375", "nome": "ERIC CARDOSO KERBER", "ex50": 18.2833, "ex100": 2.9833}, {"folha": "0100000000000000000323", "nome": "EVANDRO VIEIRA RODRIGUES", "ex50": 37.8333, "ex100": 0.0}, {"folha": "0100000000000000000370", "nome": "FARIDES TEIXEIRA GOMES", "ex50": 53.1167, "ex100": 0.0}, {"folha": "0100000000000000000327", "nome": "FILIPE JUST CIPRIANI", "ex50": 3.5667, "ex100": 0.0}, {"folha": "0200000000000000000077", "nome": "FREDERICO DANDOLINI", "ex50": 6.3167, "ex100": 0.0}, {"folha": "0100000000000000000440", "nome": "GABRIEL WESTER PEREIRA", "ex50": 3.3167, "ex100": 0.0}, {"folha": "0100000000000000000386", "nome": "GABRIELA MARIA RIBEIRO SIMÃO", "ex50": 36.25, "ex100": 0.0}, {"folha": "0100000000000000000372", "nome": "GERALDO JULIO AVILA", "ex50": 30.2167, "ex100": 0.0}, {"folha": "0100000000000000000373", "nome": "GUSTAVO DE OLIVEIRA EUZÉBIO", "ex50": 12.2, "ex100": 0.0}, {"folha": "0100000000000000000382", "nome": "HIGOR DOMINGOS RUFINO TEIXEIRA", "ex50": 23.3, "ex100": 0.0}, {"folha": "0100000000000000000358", "nome": "ISRAEL OLIVEIRA MARTINS ROCHA", "ex50": 33.45, "ex100": 0.0}, {"folha": "0100000000000000000105", "nome": "JAIR QUERINO DA COSTA", "ex50": 58.3333, "ex100": 0.0}, {"folha": "0100000000000000000441", "nome": "JENIFFER CAROLINE RODRIGUES DOS SANTOS", "ex50": 1.4833, "ex100": 0.0}, {"folha": "0100000000000000000384", "nome": "JOAO VITOR ANDRADE MARTINS", "ex50": 20.5333, "ex100": 0.0}, {"folha": "0100000000000000000347", "nome": "JONAS BARRETO DATIVO", "ex50": 14.1, "ex100": 2.1}, {"folha": "0100000000000000000321", "nome": "JOSUÉ DE SOUSA CANDIDO", "ex50": 3.5, "ex100": 0.0}, {"folha": "0100000000000000000022", "nome": "KELY APARECIDA MANOEL", "ex50": 36.65, "ex100": 5.4667}, {"folha": "0100000000000000000387", "nome": "KEREN DO NASCIMENTO COSTA", "ex50": 1.45, "ex100": 0.0}, {"folha": "0100000000000000000191", "nome": "LEANDRO FERNANDES", "ex50": 40.9833, "ex100": 0.0}, {"folha": "0100000000000000000305", "nome": "LEANDRO FLAVIO DE ANDRADE", "ex50": 37.5, "ex100": 0.0}, {"folha": "0100000000000000000301", "nome": "LEONARDO ALVES THRONICKE", "ex50": 23.8667, "ex100": 2.7167}, {"folha": "0100000000000000000437", "nome": "LILIAN CRISTIAN SANSONOWICZ", "ex50": 65.3, "ex100": 0.0}, {"folha": "0100000000000000000309", "nome": "LUANA RUFINO ROQUE", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000365", "nome": "LUCAS DE SOUZA", "ex50": 5.6167, "ex100": 0.0}, {"folha": "0100000000000000000228", "nome": "LUCAS INACIO DA SILVA", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000147", "nome": "LUCIANO MENDES DA LUZ", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000376", "nome": "LUCINARA VARELA BORGES", "ex50": 11.15, "ex100": 0.0}, {"folha": "0100000000000000000210", "nome": "LUIZ EDUARDO LEAL PEREIRA", "ex50": 44.3333, "ex100": 0.0}, {"folha": "0100000000000000000442", "nome": "MANUELA MAINKA BRAGA", "ex50": 0.9333, "ex100": 0.0}, {"folha": "0100000000000000000330", "nome": "MARCIO MACHETTI RAMBO", "ex50": 39.8167, "ex100": 0.0}, {"folha": "0100000000000000000205", "nome": "MARCOS CLASEN MACHADO", "ex50": 45.2833, "ex100": 0.0}, {"folha": "0100000000000000000344", "nome": "MARIA APARECIDA PORTO MADALENA", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000380", "nome": "MESSIAS GARCIA DA SILVA", "ex50": 43.4667, "ex100": 0.0}, {"folha": "0200000000000000000002", "nome": "NELSON DE OLIVEIRA TEIXEIRA", "ex50": 11.5, "ex100": 0.0}, {"folha": "0100000000000000000353", "nome": "OTAVIO EUCLIDES NASCIMENTO", "ex50": 63.0667, "ex100": 0.0}, {"folha": "0100000000000000000350", "nome": "PAULO SERGIO BARBOSA SOUZA SAFADI", "ex50": 21.9, "ex100": 0.0}, {"folha": "0100000000000000000256", "nome": "RICARDO NUNES MARTINS", "ex50": 74.4167, "ex100": 0.0}, {"folha": "0100000000000000000443", "nome": "RUAN FERREIRA DA SILVA", "ex50": 1.9333, "ex100": 0.0}, {"folha": "0100000000000000000439", "nome": "SERGIO RODRIGUES DA SILVA", "ex50": 35.7, "ex100": 0.0}, {"folha": "0100000000000000000229", "nome": "SHIRLEY DA SILVA AGUIAR", "ex50": 0.0, "ex100": 0.0}, {"folha": "0100000000000000000296", "nome": "VALDECIR VOLKMER", "ex50": 35.9167, "ex100": 0.0}, {"folha": "0100000000000000000385", "nome": "WELLINGTON ALVES DE SOUZA", "ex50": 0.0, "ex100": 0.0}, {"folha": "0200000000000000000010", "nome": "WILLYAN MAGALHAES CARVALHO", "ex50": 1.2333, "ex100": 0.0}]};
+
+function load(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return JSON.parse(JSON.stringify(fallback));
+    return JSON.parse(raw);
+  }catch(e){ return JSON.parse(JSON.stringify(fallback)); }
+}
+function persist(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(periodsData));
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+  localStorage.setItem(SETORES_KEY, JSON.stringify(setoresData));
+}
+function normName(s){
+  return String(s||'').trim().toUpperCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+}
+const employeesInfoNorm = {};
+Object.entries(employeesInfo).forEach(([k,v])=>{ employeesInfoNorm[normName(k)] = v; });
+function infoFor(nome){
+  return employeesInfoNorm[normName(nome)] || { empresa:'', codigo:'', salario:0 };
+}
+function setorFor(nome){
+  return setoresData[nome] || '';
+}
+function setSetor(nome, setor){
+  setoresData[nome] = setor;
+  persist();
+  render();
+}
+
+let periodsData = load(STORAGE_KEY, seedPeriods);
+let cfg = load(CFG_KEY, defaultCfg);
+let setoresData = load(SETORES_KEY, {});
+
+function parseHM(str){
+  if(str===undefined || str===null || str==='') return 0;
+  if(typeof str === 'number') return str;
+  str = String(str).trim();
+  if(!str.includes(':')){ const n = Number(str); return isNaN(n)?0:n; }
+  const neg = str.startsWith('-');
+  if(neg) str = str.slice(1);
+  const parts = str.split(':');
+  const h = Number(parts[0])||0, m = Number(parts[1])||0;
+  const val = h + m/60;
+  return neg? -val : val;
+}
+function fmtHM(decimal){
+  if(decimal===undefined||decimal===null||isNaN(decimal)) decimal = 0;
+  const neg = decimal < 0;
+  decimal = Math.abs(decimal);
+  let h = Math.floor(decimal + 1e-6);
+  let m = Math.round((decimal - h) * 60);
+  if(m===60){ h+=1; m=0; }
+  return (neg?'-':'') + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+function fmtMoeda(v){
+  return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+function parsePeriodoStart(label){
+  const m = label.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if(!m) return 0;
+  return new Date(`${m[3]}-${m[2]}-${m[1]}T00:00:00`).getTime();
+}
+function periodoLabels(sortDir){
+  const labels = Object.keys(periodsData);
+  labels.sort((a,b)=> sortDir==='asc'
+    ? parsePeriodoStart(a)-parsePeriodoStart(b)
+    : parsePeriodoStart(b)-parsePeriodoStart(a));
+  return labels;
+}
+function matricula(folha){
+  if(!folha) return '';
+  const s = String(folha);
+  const prefix = s.slice(0,2);
+  const numPart = s.slice(2).replace(/^0+/,'') || '0';
+  return prefix + '-' + numPart;
+}
+
+let charts = {};
+
+function populateSelects(){
+  const fPeriodo = document.getElementById('fPeriodo');
+  const currentF = fPeriodo.value;
+  const labels = periodoLabels('desc');
+  fPeriodo.innerHTML = '<option value="">Todos os períodos</option>' + labels.map(l=>`<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+  if(labels.includes(currentF)) fPeriodo.value = currentF;
+
+  const fColab = document.getElementById('fColaborador');
+  const currentC = fColab.value;
+  const names = new Set();
+  Object.values(periodsData).forEach(arr=>arr.forEach(r=>names.add(r.nome)));
+  const sortedNames = [...names].sort();
+  fColab.innerHTML = '<option value="">Todos os colaboradores</option>' + sortedNames.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  if(sortedNames.includes(currentC)) fColab.value = currentC;
+
+  const fEmpresa = document.getElementById('fEmpresa');
+  const currentE = fEmpresa.value;
+  const empresas = new Set([...names].map(n=>infoFor(n).empresa).filter(Boolean));
+  const sortedEmpresas = [...empresas].sort();
+  fEmpresa.innerHTML = '<option value="">Todas as empresas</option>' + sortedEmpresas.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+  if(sortedEmpresas.includes(currentE)) fEmpresa.value = currentE;
+
+  const fSetor = document.getElementById('fSetor');
+  const currentS = fSetor.value;
+  const setores = new Set([...names].map(n=>setorFor(n)).filter(Boolean));
+  const sortedSetores = [...setores].sort();
+  fSetor.innerHTML = '<option value="">Todos os setores</option>' + sortedSetores.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('') + '<option value="__SEM__">(sem setor)</option>';
+  if(sortedSetores.includes(currentS) || currentS==='__SEM__') fSetor.value = currentS;
+
+  const rPeriodo = document.getElementById('rPeriodo');
+  rPeriodo.innerHTML = labels.map(l=>`<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('') + '<option value="__NOVO__">+ Novo período...</option>';
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function getFlatRecords(){
+  const rows = [];
+  Object.entries(periodsData).forEach(([periodo, arr])=>{
+    arr.forEach(r=>{
+      const info = infoFor(r.nome);
+      rows.push({
+        periodo, folha:r.folha, nome:r.nome, ex50:r.ex50||0, ex100:r.ex100||0,
+        empresa: info.empresa, codigo: info.codigo, salario: info.salario,
+        setor: setorFor(r.nome)
+      });
+    });
+  });
+  return rows;
+}
+
+function getFiltered(){
+  const periodo = document.getElementById('fPeriodo').value;
+  const colaborador = document.getElementById('fColaborador').value;
+  const empresa = document.getElementById('fEmpresa').value;
+  const setor = document.getElementById('fSetor').value;
+  const somenteHE = document.getElementById('fSomenteHE').checked;
+  const ordenar = document.getElementById('fOrdenar').value;
+
+  let rows = getFlatRecords().filter(r=>{
+    if(periodo && r.periodo!==periodo) return false;
+    if(colaborador && r.nome!==colaborador) return false;
+    if(empresa && r.empresa!==empresa) return false;
+    if(setor==='__SEM__' && r.setor) return false;
+    if(setor && setor!=='__SEM__' && r.setor!==setor) return false;
+    const total = r.ex50 + r.ex100;
+    if(somenteHE && total<=0) return false;
+    return true;
+  });
+
+  rows.forEach(r=>{
+    r.total = r.ex50 + r.ex100;
+    const mult50 = 1 + cfg.mult50/100;
+    const mult100 = 1 + cfg.mult100/100;
+    const valorHora = (r.salario||0) / (cfg.divisorHora || 220);
+    r.valor = r.ex50*valorHora*mult50 + r.ex100*valorHora*mult100;
+  });
+
+  const sorters = {
+    total_desc: (a,b)=> b.total-a.total,
+    total_asc: (a,b)=> a.total-b.total,
+    ex100_desc: (a,b)=> b.ex100-a.ex100,
+    nome_asc: (a,b)=> a.nome.localeCompare(b.nome)
+  };
+  rows.sort(sorters[ordenar] || sorters.total_desc);
+  return rows;
+}
+
+function render(){
+  populateSelects();
+  const data = getFiltered();
+
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  if(data.length===0){
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = data.map(r=>`
+      <tr>
+        <td><span class="chip">${escapeHtml(r.periodo)}</span></td>
+        <td>${r.empresa ? `<span class="chip" title="${escapeHtml(r.empresa)}">${escapeHtml(r.empresa.split(' ')[0])}</span>` : '<span class="chip">—</span>'}</td>
+        <td class="mono">${escapeHtml(matricula(r.folha))}</td>
+        <td>${escapeHtml(r.nome)}</td>
+        <td><button class="icon-btn" onclick="promptSetor('${encodeURIComponent(r.nome)}')" title="Clique para editar o setor">${escapeHtml(r.setor || '+ definir')}</button></td>
+        <td><span class="badge he50">${fmtHM(r.ex50)}</span></td>
+        <td><span class="badge he100">${fmtHM(r.ex100)}</span></td>
+        <td><span class="badge total">${fmtHM(r.total)}</span></td>
+        <td>${fmtMoeda(r.valor)}</td>
+        <td class="row-actions">
+          <button class="icon-btn" onclick="editRecord('${encodeURIComponent(r.periodo)}','${encodeURIComponent(r.nome)}')">Editar</button>
+          <button class="icon-btn del" onclick="deleteRecord('${encodeURIComponent(r.periodo)}','${encodeURIComponent(r.nome)}')">Excluir</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+  const totalRows = getFlatRecords().length;
+  document.getElementById('resultCount').innerHTML = `<b>${data.length}</b> de ${totalRows} registros`;
+  document.getElementById('tableFoot').textContent = `Atualizado em ${new Date().toLocaleString('pt-BR')}`;
+
+  const totalHE = data.reduce((s,r)=>s+r.total,0);
+  const colaboradoresComHE = new Set(data.filter(r=>r.total>0).map(r=>r.nome)).size;
+  const totalColaboradores = new Set(getFlatRecords().map(r=>r.nome)).size;
+  const he100 = data.reduce((s,r)=>s+r.ex100,0);
+  const custo = data.reduce((s,r)=>s+r.valor,0);
+
+  document.getElementById('kpiTotalHE').textContent = fmtHM(totalHE);
+  const periodoSel = document.getElementById('fPeriodo').value;
+  document.getElementById('kpiTotalHEFoot').textContent = periodoSel ? periodoSel : 'acumulado em todos os períodos';
+  document.getElementById('kpiColaboradores').textContent = colaboradoresComHE;
+  document.getElementById('kpiColaboradoresFoot').textContent = `de ${totalColaboradores} colaboradores`;
+  document.getElementById('kpiHE100').textContent = fmtHM(he100);
+  document.getElementById('kpiHE100Foot').textContent = totalHE>0 ? `${Math.round(he100/totalHE*100)}% do total de HE` : '0% do total de HE';
+  document.getElementById('kpiCusto').textContent = fmtMoeda(custo);
+
+  renderCharts(data);
+}
+
+function renderCharts(data){
+  const gridColor = '#2b2f37';
+  const textColor = '#9aa0ab';
+
+  // Top colaboradores (aggregate across whatever is filtered)
+  const byNome = {};
+  data.forEach(r=>{
+    if(!byNome[r.nome]) byNome[r.nome] = {ex50:0, ex100:0};
+    byNome[r.nome].ex50 += r.ex50;
+    byNome[r.nome].ex100 += r.ex100;
+  });
+  const topNomes = Object.keys(byNome)
+    .map(n=>({nome:n, total:byNome[n].ex50+byNome[n].ex100, ex50:byNome[n].ex50, ex100:byNome[n].ex100}))
+    .sort((a,b)=>b.total-a.total)
+    .slice(0,12);
+
+  const ctx1 = document.getElementById('chartColaborador');
+  if(charts.colaborador) charts.colaborador.destroy();
+  charts.colaborador = new Chart(ctx1, {
+    type:'bar',
+    data:{
+      labels: topNomes.map(t=>t.nome.split(' ').slice(0,2).join(' ')),
+      datasets:[
+        { label:'EX50%', data: topNomes.map(t=>+t.ex50.toFixed(2)), backgroundColor:'#29a3e0', stack:'s' },
+        { label:'EX100%', data: topNomes.map(t=>+t.ex100.toFixed(2)), backgroundColor:'#e0524a', stack:'s' }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{color:textColor, boxWidth:10, font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:textColor,font:{size:9}},grid:{display:false},stacked:true},
+        y:{ticks:{color:textColor},grid:{color:gridColor}, beginAtZero:true, stacked:true}
+      }
+    }
+  });
+
+  const totEx50 = data.reduce((s,r)=>s+r.ex50,0);
+  const totEx100 = data.reduce((s,r)=>s+r.ex100,0);
+  const ctx2 = document.getElementById('chartTipo');
+  if(charts.tipo) charts.tipo.destroy();
+  charts.tipo = new Chart(ctx2, {
+    type:'doughnut',
+    data:{
+      labels:['EX50%','EX100%'],
+      datasets:[{ data:[+totEx50.toFixed(2), +totEx100.toFixed(2)], backgroundColor:['#29a3e0','#e0524a'], borderWidth:0 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'65%',
+      plugins:{legend:{position:'bottom', labels:{color:textColor, boxWidth:10, font:{size:11}}}}
+    }
+  });
+
+  // Comparativo entre períodos (respects colaborador filter, ignores período filter)
+  const colaborador = document.getElementById('fColaborador').value;
+  const labels = periodoLabels('asc');
+  const ex50PerPeriodo = [];
+  const ex100PerPeriodo = [];
+  labels.forEach(l=>{
+    const arr = periodsData[l] || [];
+    const filtered = colaborador ? arr.filter(r=>r.nome===colaborador) : arr;
+    ex50PerPeriodo.push(+filtered.reduce((s,r)=>s+(r.ex50||0),0).toFixed(2));
+    ex100PerPeriodo.push(+filtered.reduce((s,r)=>s+(r.ex100||0),0).toFixed(2));
+  });
+  document.getElementById('chart3Title').textContent = colaborador
+    ? `Evolução de ${colaborador} entre Períodos`
+    : 'Comparativo entre Períodos (todos os colaboradores)';
+
+  const ctx3 = document.getElementById('chartPeriodo');
+  if(charts.periodo) charts.periodo.destroy();
+  charts.periodo = new Chart(ctx3, {
+    type:'bar',
+    data:{
+      labels: labels,
+      datasets:[
+        { label:'EX50%', data: ex50PerPeriodo, backgroundColor:'#29a3e0', borderRadius:4, maxBarThickness:60 },
+        { label:'EX100%', data: ex100PerPeriodo, backgroundColor:'#e0524a', borderRadius:4, maxBarThickness:60 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{color:textColor, boxWidth:10, font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:textColor,font:{size:10}},grid:{display:false}},
+        y:{ticks:{color:textColor},grid:{color:gridColor}, beginAtZero:true}
+      }
+    }
+  });
+}
+
+['fPeriodo','fColaborador','fEmpresa','fSetor','fOrdenar','fSomenteHE'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', render);
+});
+document.getElementById('btnLimpar').addEventListener('click', ()=>{
+  document.getElementById('fPeriodo').value='';
+  document.getElementById('fColaborador').value='';
+  document.getElementById('fEmpresa').value='';
+  document.getElementById('fSetor').value='';
+  document.getElementById('fOrdenar').value='total_desc';
+  document.getElementById('fSomenteHE').checked=false;
+  render();
+});
+
+function loadCfgToForm(){
+  document.getElementById('cfgDivisor').value = cfg.divisorHora;
+  document.getElementById('cfgMult50').value = cfg.mult50;
+  document.getElementById('cfgMult100').value = cfg.mult100;
+}
+loadCfgToForm();
+document.getElementById('btnConfig').addEventListener('click', ()=>{
+  document.getElementById('settingsPanel').classList.toggle('open');
+});
+['cfgDivisor','cfgMult50','cfgMult100'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', (e)=>{
+    const map = {cfgDivisor:'divisorHora',cfgMult50:'mult50',cfgMult100:'mult100'};
+    cfg[map[id]] = Number(e.target.value)||0;
+    persist();
+    render();
+  });
+});
+
+const modalBg = document.getElementById('modalBg');
+function openModal(title){
+  document.getElementById('modalTitle').textContent = title;
+  modalBg.classList.add('open');
+}
+function closeModal(){
+  modalBg.classList.remove('open');
+  document.getElementById('recordForm').reset();
+  document.getElementById('recId').value='';
+  document.getElementById('novoPeriodoWrap').style.display='none';
+}
+document.getElementById('btnNovo').addEventListener('click', ()=>{
+  populateSelects();
+  openModal('Novo lançamento');
+});
+document.getElementById('btnCancelar').addEventListener('click', closeModal);
+modalBg.addEventListener('click', (e)=>{ if(e.target===modalBg) closeModal(); });
+document.getElementById('rPeriodo').addEventListener('change', (e)=>{
+  document.getElementById('novoPeriodoWrap').style.display = e.target.value==='__NOVO__' ? 'block' : 'none';
+});
+
+document.getElementById('recordForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  let periodo = document.getElementById('rPeriodo').value;
+  if(periodo==='__NOVO__'){
+    periodo = document.getElementById('rPeriodoNovo').value.trim();
+    if(!periodo){ alert('Informe o rótulo do novo período.'); return; }
+  }
+  const nome = document.getElementById('rNome').value.trim().toUpperCase();
+  const folha = document.getElementById('rFolha').value.trim();
+  const ex50 = parseHM(document.getElementById('rEx50').value || '00:00');
+  const ex100 = parseHM(document.getElementById('rEx100').value || '00:00');
+
+  if(!periodsData[periodo]) periodsData[periodo] = [];
+  const arr = periodsData[periodo];
+  const idx = arr.findIndex(r=>r.nome===nome);
+  const rec = {folha, nome, ex50, ex100};
+  if(idx>=0) arr[idx] = rec; else arr.push(rec);
+
+  persist();
+  closeModal();
+  render();
+});
+
+function promptSetor(nomeEnc){
+  const nome = decodeURIComponent(nomeEnc);
+  const atual = setorFor(nome);
+  const novo = prompt(`Setor de ${nome}:`, atual);
+  if(novo===null) return;
+  setSetor(nome, novo.trim());
+}
+function editRecord(periodoEnc, nomeEnc){
+  const periodo = decodeURIComponent(periodoEnc);
+  const nome = decodeURIComponent(nomeEnc);
+  const r = (periodsData[periodo]||[]).find(x=>x.nome===nome);
+  if(!r) return;
+  populateSelects();
+  document.getElementById('rPeriodo').value = periodo;
+  document.getElementById('novoPeriodoWrap').style.display = 'none';
+  document.getElementById('rFolha').value = r.folha||'';
+  document.getElementById('rNome').value = r.nome;
+  document.getElementById('rEx50').value = fmtHM(r.ex50);
+  document.getElementById('rEx100').value = fmtHM(r.ex100);
+  openModal('Editar lançamento');
+}
+function deleteRecord(periodoEnc, nomeEnc){
+  const periodo = decodeURIComponent(periodoEnc);
+  const nome = decodeURIComponent(nomeEnc);
+  if(!confirm(`Excluir o registro de ${nome} em ${periodo}?`)) return;
+  periodsData[periodo] = (periodsData[periodo]||[]).filter(r=>r.nome!==nome);
+  persist();
+  render();
+}
+
+// Import: auto-detect Secullum "Extrato de Totais" layout, fallback to simple CSV template
+document.getElementById('btnImportar').addEventListener('click', ()=> document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt)=>{
+    try{
+      const wb = XLSX.read(evt.target.result, {type:'binary', cellDates:false});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
+
+      // Try to detect period label from the first ~15 rows
+      let periodo = null;
+      for(let r=0; r<Math.min(15, rows.length); r++){
+        for(const cell of rows[r]){
+          if(typeof cell === 'string' && /per[ií]odo/i.test(cell)){
+            const m = cell.match(/(\d{2}\/\d{2}\/\d{4}).{1,6}(\d{2}\/\d{2}\/\d{4})/);
+            if(m){ periodo = `${m[1]} a ${m[2]}`; }
+          }
+        }
+      }
+
+      // Find header row containing NOME
+      let headerRow = -1, colNome=-1, colEx50=-1, colEx100=-1, colFolha=-1;
+      for(let r=0; r<rows.length; r++){
+        const idx = rows[r].findIndex(c=>String(c).trim().toUpperCase()==='NOME');
+        if(idx>=0){
+          headerRow = r; colNome = idx;
+          rows[r].forEach((c,ci)=>{
+            const v = String(c).trim().toUpperCase();
+            if(v.includes('EX50')) colEx50 = ci;
+            if(v.includes('EX100')) colEx100 = ci;
+            if(v.includes('FOLHA')) colFolha = ci;
+          });
+          break;
+        }
+      }
+
+      let imported = [];
+      if(headerRow>=0){
+        // Secullum layout
+        if(!periodo) periodo = file.name.replace(/\.(xlsx|xls|csv)$/i,'');
+        for(let r=headerRow+1; r<rows.length; r++){
+          const nome = String(rows[r][colNome]||'').trim();
+          if(!nome || nome.toUpperCase()==='NOME') continue;
+          imported.push({
+            folha: colFolha>=0 ? String(rows[r][colFolha]||'').trim() : '',
+            nome: nome.toUpperCase(),
+            ex50: parseHM(colEx50>=0 ? rows[r][colEx50] : 0),
+            ex100: parseHM(colEx100>=0 ? rows[r][colEx100] : 0)
+          });
+        }
+      } else {
+        // Fallback: simple template with header row 0 (Período,Nº Folha,Nome,EX50%,EX100%)
+        const header = rows[0].map(h=>String(h).trim().toUpperCase());
+        const iPeriodo = header.findIndex(h=>h.includes('PER'));
+        const iFolha = header.findIndex(h=>h.includes('FOLHA'));
+        const iNome = header.findIndex(h=>h.includes('NOME'));
+        const iEx50 = header.findIndex(h=>h.includes('EX50'));
+        const iEx100 = header.findIndex(h=>h.includes('EX100'));
+        for(let r=1; r<rows.length; r++){
+          const nome = String(rows[r][iNome]||'').trim();
+          if(!nome) continue;
+          const p = iPeriodo>=0 ? String(rows[r][iPeriodo]||'').trim() : (periodo || 'Importado');
+          imported.push({
+            _periodo: p,
+            folha: iFolha>=0 ? String(rows[r][iFolha]||'').trim() : '',
+            nome: nome.toUpperCase(),
+            ex50: parseHM(iEx50>=0 ? rows[r][iEx50] : 0),
+            ex100: parseHM(iEx100>=0 ? rows[r][iEx100] : 0)
+          });
+        }
+      }
+
+      if(imported.length===0){
+        alert('Nenhum registro reconhecido. Verifique se a planilha segue o layout do Extrato de Totais do Secullum (colunas NOME, EX50%, EX100%) ou o modelo simplificado (Período, Nº Folha, Nome, EX50%, EX100%).');
+        return;
+      }
+
+      let count = 0;
+      imported.forEach(rec=>{
+        const p = rec._periodo || periodo || 'Importado';
+        if(!periodsData[p]) periodsData[p] = [];
+        const arr = periodsData[p];
+        const idx = arr.findIndex(x=>x.nome===rec.nome);
+        const clean = {folha:rec.folha, nome:rec.nome, ex50:rec.ex50, ex100:rec.ex100};
+        if(idx>=0) arr[idx]=clean; else arr.push(clean);
+        count++;
+      });
+
+      persist();
+      render();
+      alert(`${count} registro(s) importado(s) no período "${periodo || 'detectado automaticamente'}".`);
+    }catch(err){
+      alert('Erro ao importar a planilha: ' + err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+  e.target.value = '';
+});
+
+document.getElementById('btnModelo').addEventListener('click', ()=>{
+  const header = 'Período,Nº Folha,Nome,EX50%,EX100%\n';
+  const example = '26/07/2026 a 25/08/2026,0100000000000000000444,JOAO DA SILVA,10:30,02:15\n';
+  const blob = new Blob(['﻿'+header+example], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'modelo_horas_extras.csv';
+  a.click();
+});
+
+document.getElementById('btnExportar').addEventListener('click', ()=>{
+  const data = getFiltered();
+  const header = 'Período,Empresa,Matrícula,Colaborador,Setor,EX50%,EX100%,Total HE,Valor Estimado\n';
+  const rows = data.map(r=>[
+    `"${r.periodo}"`, `"${r.empresa||''}"`, matricula(r.folha), `"${r.nome}"`, `"${r.setor||''}"`, fmtHM(r.ex50), fmtHM(r.ex100), fmtHM(r.total), r.valor.toFixed(2)
+  ].join(',')).join('\n');
+  const blob = new Blob(['﻿'+header+rows], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'horas_extras_exportado.csv';
+  a.click();
+});
+
+render();
+</script>
+</body>
+</html>

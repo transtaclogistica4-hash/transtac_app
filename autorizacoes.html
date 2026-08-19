@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TRANSTAC - Autorizacoes de Embarque (GAM)</title>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+margin: 0;
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+background: #14171a;
+color: #f1f1f1;
+}
+.wrap {
+max-width: 1180px;
+margin: 0 auto;
+padding: 22px 20px 50px;
+}
+header.hdr {
+display: flex;
+align-items: center;
+gap: 16px;
+padding: 18px 0 20px;
+border-bottom: 1px solid #2b2f34;
+margin-bottom: 20px;
+}
+.brand-mark { width: 34px; height: 40px; color: #f5821f; flex-shrink: 0; }
+.brand-word { font-size: 20px; font-weight: 800; letter-spacing: 0.02em; color: #fff; line-height: 1.1; }
+.brand-word small { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; color: #f5821f; }
+.hdr-sub { margin-left: 10px; }
+.hdr-sub .title { font-size: 18px; font-weight: 700; color: #fff; }
+.hdr-sub .subtitle { font-size: 12.5px; color: #9ca3af; font-style: italic; margin-top: 2px; }
+.home-link { margin-left: auto; color: #9ca3af; text-decoration: none; font-size: 13px; }
+.home-link:hover { color: #f1f1f1; }
+.controls {
+display: flex;
+align-items: center;
+flex-wrap: wrap;
+gap: 14px;
+background: #1c2024;
+border: 1px solid #2b2f34;
+border-radius: 12px;
+padding: 16px 18px;
+margin-bottom: 22px;
+}
+.date-box { display: flex; align-items: center; gap: 10px; }
+.date-box button {
+background: #2b2f34;
+border: none;
+color: #f1f1f1;
+width: 30px;
+height: 30px;
+border-radius: 8px;
+cursor: pointer;
+font-size: 14px;
+}
+.date-box button:hover { background: #3a3f45; }
+.date-pill {
+background: #f5c518;
+color: #14171a;
+font-weight: 800;
+font-size: 15px;
+padding: 7px 16px;
+border-radius: 8px;
+min-width: 118px;
+text-align: center;
+}
+.date-weekday { font-style: italic; font-size: 13px; color: #d1d5db; text-transform: capitalize; }
+input[type="date"] {
+background: #2b2f34;
+border: 1px solid #3a3f45;
+color: #f1f1f1;
+border-radius: 8px;
+padding: 6px 8px;
+font-size: 12.5px;
+font-family: inherit;
+}
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: #9ca3af; }
+.total-box { text-align: right; }
+.total-box .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #9ca3af; }
+.total-box .value { font-size: 26px; font-weight: 800; color: #f5821f; }
+.action-box { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.start-btn {
+background: #f5821f;
+color: #14171a;
+border: none;
+border-radius: 8px;
+padding: 9px 18px;
+font-size: 13px;
+font-weight: 800;
+cursor: pointer;
+}
+.start-btn:hover { background: #ff9a3d; }
+.start-btn:disabled { opacity: 0.55; cursor: default; }
+.start-btn.is-done { background: #2b2f34; color: #9ca3af; }
+.start-status { font-size: 11.5px; color: #9ca3af; text-align: right; max-width: 260px; }
+table.manifest {
+width: 100%;
+border-collapse: collapse;
+background: #1c2024;
+border: 1px solid #2b2f34;
+border-radius: 12px;
+overflow: hidden;
+}
+table.manifest th {
+background: #24282d;
+color: #f5821f;
+text-transform: uppercase;
+font-size: 11px;
+letter-spacing: 0.04em;
+text-align: left;
+padding: 11px 14px;
+border-bottom: 1px solid #2b2f34;
+}
+table.manifest td {
+padding: 10px 14px;
+font-size: 13.5px;
+border-bottom: 1px solid #24282d;
+color: #e5e7eb;
+}
+table.manifest tbody tr:nth-child(even) { background: #1a1e22; }
+table.manifest tbody tr:hover { background: #24282d; }
+.badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.badge.done { background: #d1fae5; color: #065f46; }
+.badge.pending { background: #3a3f45; color: #9ca3af; }
+.status-msg { text-align: center; color: #9ca3af; padding: 50px 0; font-size: 14px; }
+.retry-box { text-align: center; padding: 46px 16px; }
+.retry-box .retry-title { color: #f87171; font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.retry-box .retry-detail { color: #9ca3af; font-size: 13px; margin-bottom: 20px; line-height: 1.5;
+  max-width: 520px; margin-left: auto; margin-right: auto; word-break: break-word; }
+.retry-box button { background: #f5821f; color: #14171a; border: none; border-radius: 9px;
+  padding: 11px 26px; font-size: 13.5px; font-weight: 800; cursor: pointer; font-family: inherit; }
+.retry-box button:hover { background: #c2590f; color: #fff; }
+.retry-box button:disabled { background: #7c4a1c; color: #d1d5db; cursor: default; }
+.error-msg { text-align: center; color: #f87171; padding: 50px 0; font-size: 14px; }
+.updated { text-align: right; font-size: 11.5px; color: #6b7280; margin-top: 14px; }
+.col-num { color: #9ca3af; width: 34px; }
+.wa-btn { display: inline-flex; align-items: center; gap: 6px; background: #25d366; color: #0b1f14; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.wa-btn:hover { background: #1ebd5a; }
+.wa-btn:disabled { opacity: 0.6; cursor: default; }
+</style>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png" />
+<style>
+/* --- Identidade TRANSTAC: fundo e logo oficiais --- */
+body {
+  background-color: #14171a;
+  background-image: linear-gradient(rgba(18, 20, 23, 0.90), rgba(18, 20, 23, 0.94)), url("fundo-transtac.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+.brand-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) { .brand-logo { height: 32px; } }
+</style>
+</head>
+<body>
+<!-- TRANSTAC | efeito de carregamento (padrao do app) -->
+<style>
+#tt-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;background-color:#14171a;
+  background-image:linear-gradient(180deg,rgba(14,16,18,.90) 0%,rgba(14,16,18,.96) 100%),url('fundo-transtac.jpg');
+  background-size:cover;background-position:center center;
+  transition:opacity .45s ease,visibility .45s ease;}
+#tt-splash::before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;
+  background:radial-gradient(circle,rgba(242,112,13,.20),transparent 62%);
+  animation:ttPulse 2.4s ease-in-out infinite;}
+#tt-splash.hide{opacity:0;visibility:hidden;}
+#tt-splash .tt-logo{position:relative;width:min(280px,62vw);height:auto;opacity:0;
+  transform:translateY(10px) scale(.96);
+  animation:ttIn .7s cubic-bezier(.2,.8,.25,1) forwards;
+  filter:drop-shadow(0 8px 26px rgba(0,0,0,.6));}
+#tt-splash .tt-bar{position:relative;width:min(230px,52vw);height:3px;border-radius:999px;
+  background:rgba(255,255,255,.09);overflow:hidden;}
+#tt-splash .tt-bar i{position:absolute;top:0;left:-40%;width:40%;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,transparent,#F2700D,transparent);
+  animation:ttSlide 1.15s ease-in-out infinite;}
+#tt-splash .tt-txt{position:relative;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;
+  font-weight:700;color:#8A939E;opacity:0;animation:ttIn .7s ease .25s forwards;}
+@keyframes ttIn{to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes ttSlide{0%{left:-40%;}100%{left:100%;}}
+@keyframes ttPulse{0%,100%{transform:scale(.92);opacity:.55;}50%{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){#tt-splash *,#tt-splash::before{animation:none !important;}}
+</style>
+<div id="tt-splash">
+  <img class="tt-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="tt-bar"><i></i></div>
+  <div class="tt-txt">Carregando</div>
+</div>
+<script>
+(function(){
+  var s=document.getElementById('tt-splash');
+  if(!s) return;
+  var fechado=false;
+  function fim(){
+    if(fechado) return; fechado=true;
+    s.classList.add('hide');
+    setTimeout(function(){ if(s&&s.parentNode) s.parentNode.removeChild(s); },600);
+  }
+  if(document.readyState==='complete'){ setTimeout(fim,450); }
+  else{ window.addEventListener('load',function(){ setTimeout(fim,450); }); }
+  setTimeout(fim,6000);   /* trava de seguranca */
+})();
+</script>
+
+<div class="wrap">
+<header class="hdr">
+<img class="brand-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES" />
+<div class="hdr-sub">
+<div class="title">Autorizacoes de Embarque &middot; GAM</div>
+<div class="subtitle">Numero da AE por rota e dia</div>
+</div>
+<a class="home-link" href="menu.html?cat=gam">&larr; Voltar ao menu</a>
+</header>
+<div id="main">
+<div class="status-msg">Carregando dados da planilha...</div>
+</div>
+</div>
+<script>
+const DATA_URL = "https://script.google.com/macros/s/AKfycbxhgxZzIv4IzQI_XUt9rDiPwtSYb48gr6bwR9aHA8MeOggfwTxSNLQX6AMY79BWfeLX/exec";
+const WEEKDAYS_PT = ["domingo", "segunda-feira", "terca-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sabado"];
+function formatDateBR(iso) {
+if (!iso || iso.indexOf("-") === -1) return iso || "-";
+const parts = iso.split("-");
+return parts[2] + "/" + parts[1] + "/" + parts[0];
+}
+function weekdayName(iso) {
+if (!iso) return "";
+const p = iso.split("-").map(Number);
+const dt = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+return WEEKDAYS_PT[dt.getUTCDay()];
+}
+function addDays(iso, delta) {
+const p = iso.split("-").map(Number);
+const dt = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+dt.setUTCDate(dt.getUTCDate() + delta);
+const yy = dt.getUTCFullYear();
+const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+const dd = String(dt.getUTCDate()).padStart(2, "0");
+return yy + "-" + mm + "-" + dd;
+}
+let ALL_ROWS = [];
+let selectedDate = "";
+async function fetchRows() {
+let lastErr;
+for (let attempt = 1; attempt <= 3; attempt++) {
+const ctrl = new AbortController();
+const timer = setTimeout(function () { ctrl.abort(); }, 12000);
+try {
+const sep = DATA_URL.indexOf("?") === -1 ? "?" : "&";
+const res = await fetch(DATA_URL + sep + "t=" + Date.now(), { signal: ctrl.signal, cache: "no-store" });
+clearTimeout(timer);
+if (!res.ok) throw new Error("Falha ao contatar a planilha (" + res.status + ").");
+const data = await res.json();
+if (!data.ok) throw new Error(data.error || "Falha ao carregar dados.");
+return data.rows || [];
+} catch (e) {
+clearTimeout(timer);
+lastErr = e;
+if (e && e.name === "AbortError") lastErr = new Error("A planilha demorou demais para responder (mais de 12s).");
+if (attempt < 3) await new Promise(function (r) { setTimeout(r, 1200 * attempt); });
+}
+}
+throw lastErr || new Error("Falha ao carregar dados apos varias tentativas.");
+}
+function render() {
+const main = document.getElementById("main");
+const rows = ALL_ROWS.filter(function (r) { return (r["Data do Embarque"] || "") === selectedDate; });
+const tableRows = rows.slice().sort(function (a, b) {
+return (a["Rota"] || "").localeCompare(b["Rota"] || "");
+}).map(function (r, idx) {
+const ae = r["Autorizacao de Embarque"] || r["Autorização de Embarque"];
+const aeBadge = ae ? '<span class="badge done">' + ae + '</span>' : '<span class="badge pending">Nao emitida</span>';
+const driverName = r["Nome do Motorista"] || "";
+const waBtn = driverName ? ('<button type="button" class="wa-btn" data-driver="' + driverName.replace(/"/g, "&quot;") + '" data-rota="' + (r["Rota"] || "").replace(/"/g, "&quot;") + '" data-placa="' + (r["Placa"] || "") + '" data-paletes="' + (r["Quantidade de Paletes"] || "") + '" data-data="' + (r["Data do Embarque"] || "") + '" data-ae="' + (ae || "") + '">Enviar WhatsApp</button>') : "-";
+return "<tr><td class=\"col-num\">" + (idx + 1) + "</td><td>" + (r["Rota"] || "-") + "</td><td>" + (r["Nome do Motorista"] || "-") + "</td><td>" + (r["Placa"] || "-") + "</td><td>" + aeBadge + "</td><td>" + waBtn + "</td></tr>";
+}).join("");
+const controlsHtml = "<div class=\"controls\"><div class=\"date-box\"><button id=\"prevDay\" title=\"Dia anterior\">&larr;</button><div><div class=\"date-pill\">" + formatDateBR(selectedDate) + "</div><div class=\"date-weekday\">" + weekdayName(selectedDate) + "</div></div><button id=\"nextDay\" title=\"Proximo dia\">&rarr;</button></div><div class=\"field\"><label>Escolher data</label><input type=\"date\" id=\"datePicker\" value=\"" + selectedDate + "\" /></div><div class=\"total-box\"><div class=\"label\">Rotas no dia</div><div class=\"value\">" + rows.length + "</div></div><div class=\"action-box\"><button type=\"button\" id=\"startBtn\" class=\"start-btn\">Iniciar Automacao de AE</button><div class=\"start-status\" id=\"startStatus\"></div></div></div>";
+const tableHtml = rows.length ? ("<table class=\"manifest\"><thead><tr><th>#</th><th>Rota</th><th>Motorista</th><th>Placa</th><th>Autorizacao de Embarque</th><th>Acoes</th></tr></thead><tbody>" + tableRows + "</tbody></table>") : "<div class=\"status-msg\">Nenhuma rota da GAM registrada para esta data.</div>";
+main.innerHTML = controlsHtml + tableHtml + "<div class=\"updated\" id=\"updatedAt\"></div>";
+document.getElementById("prevDay").addEventListener("click", function () {
+selectedDate = addDays(selectedDate, -1);
+render();
+});
+document.getElementById("nextDay").addEventListener("click", function () {
+selectedDate = addDays(selectedDate, 1);
+render();
+});
+document.getElementById("datePicker").addEventListener("change", function (e) {
+if (e.target.value) {
+selectedDate = e.target.value;
+render();
+}
+});
+main.querySelectorAll(".wa-btn").forEach(function (btn) {
+btn.addEventListener("click", function () { handleSendWhatsApp(btn); });
+});
+document.getElementById("startBtn").addEventListener("click", handleStartClick);
+setUpdatedAt();
+refreshTriggerUI();
+}
+async function handleSendWhatsApp(btn) {
+const original = btn.textContent;
+btn.disabled = true;
+btn.textContent = "Abrindo...";
+try {
+const res = await fetch("/api/whatsapp-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ driver: btn.dataset.driver, routeName: btn.dataset.rota, plate: btn.dataset.placa, pallets: btn.dataset.paletes, date: btn.dataset.data, aeNumber: btn.dataset.ae }) });
+const data = await res.json();
+if (data && data.ok && data.url) {
+window.location.href = data.url;
+} else {
+alert((data && data.error) || "Numero de WhatsApp nao cadastrado para este motorista.");
+}
+} catch (err) {
+alert("Erro ao gerar link do WhatsApp: " + (err && err.message ? err.message : "erro desconhecido"));
+} finally {
+btn.disabled = false;
+btn.textContent = original;
+}
+}
+function formatDateTimeBR(iso) {
+if (!iso) return "";
+try {
+return new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+} catch (err) {
+return iso;
+}
+}
+async function fetchTriggerStatus(date) {
+const res = await fetch("/api/ae-trigger?date=" + encodeURIComponent(date));
+if (!res.ok) throw new Error("Falha ao consultar status (" + res.status + ").");
+return res.json();
+}
+async function refreshTriggerUI() {
+const btn = document.getElementById("startBtn");
+const statusEl = document.getElementById("startStatus");
+if (!btn || !statusEl) return;
+try {
+const data = await fetchTriggerStatus(selectedDate);
+if (data && data.triggered && !data.processedAt) {
+btn.disabled = true;
+btn.textContent = "Automacao em andamento...";
+btn.classList.remove("is-done");
+statusEl.textContent = "Iniciado em " + formatDateTimeBR(data.triggeredAt) + ". Aguardando emissao das AE.";
+} else if (data && data.triggered && data.processedAt) {
+btn.disabled = false;
+btn.textContent = "Executar novamente";
+btn.classList.add("is-done");
+statusEl.textContent = "Ultima emissao concluida em " + formatDateTimeBR(data.processedAt) + ".";
+} else {
+btn.disabled = false;
+btn.textContent = "Iniciar Automacao de AE";
+btn.classList.remove("is-done");
+statusEl.textContent = "Clique para autorizar a emissao das AE de hoje.";
+}
+} catch (err) {
+statusEl.textContent = "Nao foi possivel checar o status da automacao.";
+}
+}
+async function handleStartClick() {
+const btn = document.getElementById("startBtn");
+const statusEl = document.getElementById("startStatus");
+btn.disabled = true;
+btn.textContent = "Iniciando...";
+try {
+const res = await fetch("/api/ae-trigger", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "start", date: selectedDate }) });
+const data = await res.json();
+if (data && data.ok) {
+statusEl.textContent = "Automacao autorizada. A emissao das AE comecara em instantes.";
+refreshTriggerUI();
+} else {
+statusEl.textContent = (data && data.error) || "Erro ao iniciar automacao.";
+btn.disabled = false;
+btn.textContent = "Iniciar Automacao de AE";
+}
+} catch (err) {
+statusEl.textContent = "Erro ao iniciar automacao: " + (err && err.message ? err.message : "erro desconhecido");
+btn.disabled = false;
+btn.textContent = "Iniciar Automacao de AE";
+}
+}
+function setUpdatedAt() {
+const el = document.getElementById("updatedAt");
+if (!el) return;
+const now = new Date();
+const formatted = new Intl.DateTimeFormat("pt-BR", {
+timeZone: "America/Sao_Paulo",
+day: "2-digit",
+month: "2-digit",
+year: "numeric",
+hour: "2-digit",
+minute: "2-digit",
+}).format(now);
+el.textContent = "Atualizado em " + formatted;
+}
+function mostrarErro(err) {
+var detalhe = (err && err.message) ? err.message : "erro desconhecido";
+var main = document.getElementById("main");
+main.innerHTML =
+'<div class="retry-box">' +
+'<div class="retry-title">Nao foi possivel carregar os dados da planilha</div>' +
+'<div class="retry-detail">' + detalhe + '</div>' +
+'<button id="btnReconectar">Reconectar</button>' +
+'</div>';
+
+document.getElementById("btnReconectar").addEventListener("click", function () {
+this.disabled = true;
+this.textContent = "Reconectando...";
+init();
+});
+}
+
+async function init() {
+document.getElementById("main").innerHTML = '<div class="status-msg">Carregando dados da planilha...</div>';
+try {
+ALL_ROWS = await fetchRows();
+const datas = Array.from(new Set(ALL_ROWS.map(function (r) { return r["Data do Embarque"]; }).filter(Boolean))).sort();
+selectedDate = datas.length ? datas[datas.length - 1] : new Date().toISOString().slice(0, 10);
+render();
+} catch (err) {
+mostrarErro(err);
+}
+}
+init();
+</script>
+</body>
+</html>
