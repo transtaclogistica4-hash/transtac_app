@@ -8,6 +8,18 @@
 <title>Dashboard de Multas · TRANSTAC</title>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="stylesheet" href="multas.css?v=9">
+<style>
+  /* barra com duas colunas de numero: valor somado + quantidade */
+  .bar-row.two{grid-template-columns:150px 1fr 108px 52px;}
+  .bar-row .bar-money{
+    text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;
+    color:var(--accent);font-weight:600;font-size:12.5px;
+  }
+  @media (max-width:720px){
+    .bar-row.two{grid-template-columns:92px 1fr 92px 42px;}
+    .bar-row .bar-money{font-size:11.5px;}
+  }
+</style>
 </head>
 <body>
 <div id="splash">
@@ -82,15 +94,24 @@ async function carregar() {
   render();
 }
 
-function barras(mapa, formato, limite) {
+/* extra = mapa com o valor (R$) somado de cada item; vira uma coluna a mais na barra.
+   extraFmt = 'brl' (padrao) ou 'num' para mostrar quantidade em vez de dinheiro. */
+function barras(mapa, formato, limite, extra, extraFmt) {
   const itens = Object.entries(mapa).sort((a, b) => b[1] - a[1]).slice(0, limite || 8);
   if (!itens.length) return '<div class="empty" style="padding:14px">Sem dados no período.</div>';
   const max = Math.max.apply(null, itens.map(i => i[1])) || 1;
-  return itens.map(([k, v]) =>
-    '<div class="bar-row"><div class="bar-label" title="' + esc(k) + '">' + esc(k) + '</div>' +
-    '<div class="bar-track"><div class="bar-fill" style="width:' + Math.max(2, (v / max) * 100) + '%"></div></div>' +
-    '<div class="bar-val">' + (formato === 'brl' ? brl(v) : v) + '</div></div>'
-  ).join('');
+  return itens.map(([k, v]) => {
+    let col = '';
+    if (extra) {
+      const e = extra[k] || 0;
+      col = '<div class="bar-money">' + (extraFmt === 'num' ? e : brl(e)) + '</div>';
+    }
+    return '<div class="bar-row' + (extra ? ' two' : '') + '">' +
+      '<div class="bar-label" title="' + esc(k) + '">' + esc(k) + '</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + Math.max(2, (v / max) * 100) + '%"></div></div>' +
+      col +
+      '<div class="bar-val">' + (formato === 'brl' ? brl(v) : v) + '</div></div>';
+  }).join('');
 }
 
 function render() {
@@ -116,16 +137,33 @@ function render() {
   ).join('');
 
   const porMes = {}, porStatus = {}, porMot = {}, porPlaca = {}, porOrgao = {}, porInfr = {};
+  /* mesmos agrupamentos, somando o valor (R$) em vez da quantidade */
+  const vlrMes = {}, vlrStatus = {}, vlrPlaca = {}, vlrOrgao = {}, vlrInfr = {}, qtdMot = {};
   const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   lista.forEach(m => {
+    const vl = numero(m.valor);
     const d = toDate(m.dataInfracao);
-    if (d) { const k = MES[d.getMonth()] + '/' + String(d.getFullYear()).slice(2); porMes[k] = (porMes[k] || 0) + 1; }
-    const st = statusInfo(m.status).label; porStatus[st] = (porStatus[st] || 0) + 1;
-    const mot = m.motorista || 'Não indicado'; porMot[mot] = (porMot[mot] || 0) + numero(m.valor);
-    if (m.placa) porPlaca[m.placa] = (porPlaca[m.placa] || 0) + 1;
-    const org = m.orgao || 'Não informado'; porOrgao[org] = (porOrgao[org] || 0) + 1;
+    if (d) {
+      const k = MES[d.getMonth()] + '/' + String(d.getFullYear()).slice(2);
+      porMes[k] = (porMes[k] || 0) + 1;
+      vlrMes[k] = (vlrMes[k] || 0) + vl;
+    }
+    const st = statusInfo(m.status).label;
+    porStatus[st] = (porStatus[st] || 0) + 1;
+    vlrStatus[st] = (vlrStatus[st] || 0) + vl;
+    const mot = m.motorista || 'Não indicado';
+    porMot[mot] = (porMot[mot] || 0) + vl;
+    qtdMot[mot] = (qtdMot[mot] || 0) + 1;
+    if (m.placa) {
+      porPlaca[m.placa] = (porPlaca[m.placa] || 0) + 1;
+      vlrPlaca[m.placa] = (vlrPlaca[m.placa] || 0) + vl;
+    }
+    const org = m.orgao || 'Não informado';
+    porOrgao[org] = (porOrgao[org] || 0) + 1;
+    vlrOrgao[org] = (vlrOrgao[org] || 0) + vl;
     const inf = (m.descricaoInfracao || m.codigoInfracao || 'Não informada').slice(0, 42);
     porInfr[inf] = (porInfr[inf] || 0) + 1;
+    vlrInfr[inf] = (vlrInfr[inf] || 0) + vl;
   });
 
   // mes em ordem cronologica
@@ -135,12 +173,13 @@ function render() {
     return (+pa[1] - +pb[1]) || (MES.indexOf(pa[0]) - MES.indexOf(pb[0]));
   }).forEach(k => mesOrd[k] = porMes[k]);
 
-  chMes.innerHTML = barras(mesOrd, null, 12);
-  chStatus.innerHTML = barras(porStatus, null, 8);
-  chMotorista.innerHTML = barras(porMot, 'brl', 8);
-  chPlaca.innerHTML = barras(porPlaca, null, 8);
-  chOrgao.innerHTML = barras(porOrgao, null, 8);
-  chInfracao.innerHTML = barras(porInfr, null, 8);
+  chMes.innerHTML = barras(mesOrd, null, 12, vlrMes);
+  chStatus.innerHTML = barras(porStatus, null, 8, vlrStatus);
+  /* aqui a barra ja e o valor — a coluna extra mostra a quantidade */
+  chMotorista.innerHTML = barras(porMot, 'brl', 8, qtdMot, 'num');
+  chPlaca.innerHTML = barras(porPlaca, null, 8, vlrPlaca);
+  chOrgao.innerHTML = barras(porOrgao, null, 8, vlrOrgao);
+  chInfracao.innerHTML = barras(porInfr, null, 8, vlrInfr);
 
   const venc = lista.filter(m => {
     if (['PAGA', 'CANCELADA'].includes(m.status)) return false;
