@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TRANSTAC MULTAS | build v9-2026-08-17 | pagina=indicacao -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -8,6 +7,14 @@
 <title>Indicação de Condutor · TRANSTAC</title>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="stylesheet" href="multas.css?v=9">
+<style>
+  /* a tabela de indicacao tem 12 colunas — o min-width padrao (860px) espremia tudo */
+  #tabIndicacao{min-width:1180px;}
+  #tabIndicacao th.num{text-align:right;}
+  #tabIndicacao td.col-infra{max-width:260px;}
+  #tabIndicacao th.col-grav,#tabIndicacao td.col-grav{white-space:nowrap;}
+  #tabIndicacao th.num,#tabIndicacao td.num{width:1%;white-space:nowrap;}
+</style>
 </head>
 <body>
 <div id="splash">
@@ -39,10 +46,11 @@
   </div>
 
   <div class="table-wrap">
-    <table class="data">
+    <table class="data" id="tabIndicacao">
       <thead>
         <tr>
           <th>AIT</th><th>Placa</th><th>Data infração</th><th>Infração</th>
+          <th class="col-grav">Gravidade</th><th class="num">Pts</th><th class="num">Valor</th>
           <th>Prazo legal</th><th>Situação</th><th>Motorista indicado</th><th>CNH</th><th></th>
         </tr>
       </thead>
@@ -67,6 +75,11 @@
       <div class="field sm"><label>CNH</label><input id="i_cnh"></div>
     </div>
     <div class="row" style="margin-top:10px">
+      <div class="field sm"><label>Gravidade</label><select id="i_gravidade"></select></div>
+      <div class="field sm" style="flex:0 0 110px"><label>Pontos</label><input type="number" id="i_pontos" min="0"></div>
+      <div class="field sm"><label>Valor (R$)</label><input type="number" step="0.01" min="0" id="i_valor"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
       <div class="field sm"><label>Situação</label><select id="i_situacao"></select></div>
       <div class="field sm"><label>Prazo legal</label><input type="date" id="i_prazo"></div>
       <div class="field"><label>Responsável</label><input id="i_responsavel"></div>
@@ -88,6 +101,14 @@ montarSubnav('multas-indicacao.html');
 
 let dados = [], atual = null;
 STATUS_INDICACAO.forEach(s => { fsit.add(new Option(s.label, s.v)); i_situacao.add(new Option(s.label, s.v)); });
+GRAVIDADES.forEach(g => i_gravidade.add(new Option(GRAV_LABEL[g], g)));
+i_gravidade.add(new Option('', ''), 0);
+
+/* pontuacao padrao do CTB quando o campo estiver vazio */
+const PONTOS_PADRAO = { LEVE: 3, MEDIA: 4, GRAVE: 5, GRAVISSIMA: 7 };
+i_gravidade.addEventListener('change', () => {
+  if (!i_pontos.value && PONTOS_PADRAO[i_gravidade.value]) i_pontos.value = PONTOS_PADRAO[i_gravidade.value];
+});
 
 async function carregar() {
   try { dados = await api('listar'); } catch (e) { toast('Erro: ' + e.message); dados = []; }
@@ -132,7 +153,10 @@ function render() {
       '<td class="mono">' + esc(m.ait || '—') + '</td>' +
       '<td class="mono"><b>' + esc(m.placa || '—') + '</b></td>' +
       '<td class="mono">' + br(m.dataInfracao) + '</td>' +
-      '<td>' + esc(m.descricaoInfracao || '—').slice(0, 70) + '</td>' +
+      '<td class="col-infra">' + esc(m.descricaoInfracao || '—').slice(0, 60) + '</td>' +
+      '<td class="col-grav">' + badgeGravidade(m.gravidade) + '</td>' +
+      '<td class="num">' + (numero(m.pontos) || '—') + '</td>' +
+      '<td class="num">' + (numero(m.valor) ? brl(numero(m.valor)) : '—') + '</td>' +
       '<td class="mono">' + br(m.prazoIndicacao) + '<br>' + (m.statusIndicacao === 'PENDENTE' ? pillPrazo(m.prazoIndicacao) : '') + '</td>' +
       '<td><span class="badge ' + cls + '">' + esc(sit.label || m.statusIndicacao) + '</span></td>' +
       '<td>' + esc(m.motorista || '—') + '</td>' +
@@ -151,6 +175,9 @@ function abrir(id) {
   mSub.textContent = (atual.placa || '') + ' · infração em ' + br(atual.dataInfracao) + ' · prazo ' + br(atual.prazoIndicacao);
   i_motorista.value = atual.motorista || '';
   i_cnh.value = atual.cnhMotorista || '';
+  i_gravidade.value = atual.gravidade || '';
+  i_pontos.value = numero(atual.pontos) || '';
+  i_valor.value = numero(atual.valor) || '';
   i_situacao.value = atual.statusIndicacao || 'PENDENTE';
   i_prazo.value = iso(atual.prazoIndicacao);
   i_responsavel.value = atual.responsavel || '';
@@ -166,6 +193,9 @@ mSalvar.onclick = async () => {
     id: atual.id,
     motorista: i_motorista.value,
     cnhMotorista: i_cnh.value,
+    gravidade: i_gravidade.value,
+    pontos: i_pontos.value === '' ? '' : numero(i_pontos.value),
+    valor: i_valor.value === '' ? '' : numero(i_valor.value),
     statusIndicacao: i_situacao.value,
     prazoIndicacao: i_prazo.value,
     responsavel: i_responsavel.value,
