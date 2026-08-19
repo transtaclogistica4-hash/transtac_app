@@ -518,6 +518,20 @@
     <div class="field"><label class="req">E-mail</label><input type="email" id="c-email" placeholder="seu@email.com"></div>
     <div class="field"><label class="req">Nome completo</label><input type="text" id="c-nome" placeholder="Nome e sobrenome"></div>
     <div class="field"><label class="req">Função</label><input type="text" id="c-funcao" placeholder="Ex.: Motorista, Analista, Supervisor"></div>
+    <div class="field"><label class="req">Setor / Área</label>
+      <select id="c-setor">
+        <option value="">Selecione o setor...</option>
+        <option value="LOGISTICA">Logística</option>
+        <option value="MANUTENCAO">Manutenção / Frota</option>
+        <option value="RH">RH / DP</option>
+        <option value="FINANCEIRO">Financeiro / Compras</option>
+        <option value="EXPEDICAO">Expedição</option>
+        <option value="MOTORISTA">Motorista</option>
+        <option value="DESENVOLVIMENTO">Desenvolvimento</option>
+        <option value="CD_ICARA">CD Içara</option>
+      </select>
+      <small style="display:block;margin-top:5px;color:var(--muted);font-size:11.5px;">O setor define quais módulos serão liberados após a aprovação.</small>
+    </div>
     <div class="field"><label class="req">Usuário</label><input type="text" id="c-usuario" autocomplete="off" placeholder="Usuário para login"></div>
     <div class="field"><label class="req">Senha</label><input type="password" id="c-senha" autocomplete="new-password" placeholder="Crie uma senha"></div>
     <button class="submit-btn" id="criar-btn" onclick="criarUsuario()">Solicitar acesso</button>
@@ -1443,17 +1457,53 @@
   var SCRIPT_URL_LOGIN = "https://script.google.com/macros/s/AKfycbzAfk74fdSU-JQ5Jyvw0UIq_6Wz3mViwnlWcgq33ErtWr5qmSqBfZui_Bt2FUyjqQiMpQ/exec";
   var SESSAO_KEY = "transtac_sessao_homolog_v1";
   var PERFIL_KEY = "transtac_perfil_homolog_v1";
-  /* ===== Permissões por perfil (coluna PERFIL da planilha de acessos) ===== */
+  /* ===== Permissões por SETOR (coluna PERFIL/SETOR da planilha de acessos) =====
+     O setor e escolhido pelo usuario no cadastro e gravado na planilha.
+     A liberacao continua sendo manual (aprovacao na planilha de senhas);
+     aprovado o e-mail, o acesso segue a matriz abaixo. */
+  var TELAS_MANUTENCAO = ['checklist','preenchidos','validacao','frota','ponto'];
   var PERMISSOES = {
-    ADMIN:     {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
-    GESTOR:    {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
-    OPERACAO:  {modulos:['manutencao','inventario','multas'],      telas:['checklist','preenchidos','validacao','frota','ponto']},
-    MOTORISTA: {modulos:['manutencao'],                            telas:['checklist']}
+    LOGISTICA:      {modulos:['logistica','manutencao','multas','inventario'], telas:'*'},
+    MANUTENCAO:     {modulos:['manutencao'],                                   telas:TELAS_MANUTENCAO},
+    RH:             {modulos:['rh','manutencao','multas'],                     telas:TELAS_MANUTENCAO},
+    FINANCEIRO:     {modulos:['compras'],                                      telas:[]},
+    EXPEDICAO:      {modulos:['expedicao'],                                    telas:[]},
+    MOTORISTA:      {modulos:[],                                               telas:[]},
+    DESENVOLVIMENTO:{modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
+    CD_ICARA:       {modulos:['inventario','multas','manutencao'],             telas:TELAS_MANUTENCAO},
+    /* perfis antigos mantidos por compatibilidade com cadastros ja existentes */
+    ADMIN:          {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
+    GESTOR:         {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
+    OPERACAO:       {modulos:['manutencao','inventario','multas'],             telas:TELAS_MANUTENCAO}
   };
+  var SETOR_LABEL = {
+    LOGISTICA:'Logística', MANUTENCAO:'Manutenção/Frota', RH:'RH/DP',
+    FINANCEIRO:'Financeiro/Compras', EXPEDICAO:'Expedição', MOTORISTA:'Motorista',
+    DESENVOLVIMENTO:'Desenvolvimento', CD_ICARA:'CD Içara'
+  };
+  /* aceita variacoes vindas da planilha: acento, espaco, barra, hifen */
+  function normalizarSetor(v){
+    v = (v||'').toString().toUpperCase();
+    try{ v = v.normalize('NFD').replace(/[\u0300-\u036f]/g,''); }catch(e){}
+    v = v.replace(/[\s\/\-\.]+/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+    var MAP = {
+      'LOGISTICA':'LOGISTICA',
+      'MANUTENCAO':'MANUTENCAO','MANUTENCAO_FROTA':'MANUTENCAO','FROTA':'MANUTENCAO',
+      'RH':'RH','RH_DP':'RH','DP':'RH',
+      'FINANCEIRO':'FINANCEIRO','FINANCEIRO_COMPRAS':'FINANCEIRO','COMPRAS':'FINANCEIRO',
+      'EXPEDICAO':'EXPEDICAO',
+      'MOTORISTA':'MOTORISTA',
+      'DESENVOLVIMENTO':'DESENVOLVIMENTO','DEV':'DESENVOLVIMENTO','TI':'DESENVOLVIMENTO',
+      'CD_ICARA':'CD_ICARA','ICARA':'CD_ICARA','CD':'CD_ICARA'
+    };
+    if(MAP[v]) return MAP[v];
+    return PERMISSOES[v] ? v : '';
+  }
   function perfilAtual(){
     var p='';
     try{ p=sessionStorage.getItem(PERFIL_KEY)||''; }catch(e){}
-    return PERMISSOES[p] ? p : 'OPERACAO';
+    p = normalizarSetor(p);
+    return p || 'OPERACAO';
   }
   function podeModulo(mod){
     return PERMISSOES[perfilAtual()].modulos.indexOf(mod) !== -1;
@@ -1465,7 +1515,7 @@
   function aplicarPermissoes(){
     var perfil=perfilAtual();
     var el=document.getElementById('user-perfil');
-    if(el) el.textContent=perfil;
+    if(el) el.textContent = SETOR_LABEL[perfil] || perfil;
     document.querySelectorAll('[data-modulo]').forEach(function(c){
       c.style.display = podeModulo(c.getAttribute('data-modulo')) ? '' : 'none';
     });
@@ -1540,9 +1590,15 @@
       .then(function(r){ return r.json(); })
       .then(function(res){
         if(res && res.ok){
+          var setor = normalizarSetor(res.perfil || res.setor || 'OPERACAO') || 'OPERACAO';
+          if(setor === 'MOTORISTA'){
+            err.textContent='Seu cadastro é do setor Motorista e não possui acesso à Área Administrativa. Use a Área do Motorista na tela inicial.';
+            err.style.display='block';
+            return;
+          }
           try{
             sessionStorage.setItem(SESSAO_KEY, res.usuario || u);
-            sessionStorage.setItem(PERFIL_KEY, (res.perfil||'OPERACAO').toUpperCase());
+            sessionStorage.setItem(PERFIL_KEY, setor);
           }catch(e){}
           aplicarSessao();
         } else {
@@ -1584,11 +1640,16 @@
       email:document.getElementById('c-email').value.trim(),
       nome:document.getElementById('c-nome').value.trim(),
       funcao:document.getElementById('c-funcao').value.trim(),
+      setor:document.getElementById('c-setor').value,
+      perfil:document.getElementById('c-setor').value,
       usuario:document.getElementById('c-usuario').value.trim(),
       senha:document.getElementById('c-senha').value
     };
     if(!dados.email||!dados.nome||!dados.funcao||!dados.usuario||!dados.senha){
       err.textContent='Preencha todos os campos.'; err.style.display='block'; return;
+    }
+    if(!dados.setor){
+      err.textContent='Selecione o setor / área.'; err.style.display='block'; return;
     }
     var btn=document.getElementById('criar-btn');
     btn.disabled=true; btn.textContent='Criando...';
@@ -1598,7 +1659,7 @@
         if(res && res.ok){
           ok.textContent='Solicitação enviada! Seu acesso será liberado após a aprovação da Logística — você receberá um e-mail.';
           ok.style.display='block';
-          ['c-email','c-nome','c-funcao','c-usuario','c-senha'].forEach(function(id){ document.getElementById(id).value=''; });
+          ['c-email','c-nome','c-funcao','c-setor','c-usuario','c-senha'].forEach(function(id){ document.getElementById(id).value=''; });
         } else {
           err.textContent=(res && res.erro)?res.erro:'Não foi possível criar o usuário.';
           err.style.display='block';
@@ -2373,9 +2434,15 @@
       .then(function(r){ return r.json(); })
       .then(function(res){
         if(res && res.ok){
+          var setor = normalizarSetor(res.perfil || res.setor || 'OPERACAO') || 'OPERACAO';
+          if(setor === 'MOTORISTA'){
+            err.textContent='Seu cadastro é do setor Motorista e não possui acesso à Área Administrativa. Use a Área do Motorista na tela inicial.';
+            err.style.display='block';
+            return;
+          }
           try{
             sessionStorage.setItem(SESSAO_KEY, res.usuario || u);
-            sessionStorage.setItem(PERFIL_KEY, (res.perfil||'OPERACAO').toUpperCase());
+            sessionStorage.setItem(PERFIL_KEY, setor);
           }catch(e){}
           aplicarSessao();
         } else {
@@ -2417,11 +2484,16 @@
       email:document.getElementById('c-email').value.trim(),
       nome:document.getElementById('c-nome').value.trim(),
       funcao:document.getElementById('c-funcao').value.trim(),
+      setor:document.getElementById('c-setor').value,
+      perfil:document.getElementById('c-setor').value,
       usuario:document.getElementById('c-usuario').value.trim(),
       senha:document.getElementById('c-senha').value
     };
     if(!dados.email||!dados.nome||!dados.funcao||!dados.usuario||!dados.senha){
       err.textContent='Preencha todos os campos.'; err.style.display='block'; return;
+    }
+    if(!dados.setor){
+      err.textContent='Selecione o setor / área.'; err.style.display='block'; return;
     }
     var btn=document.getElementById('criar-btn');
     btn.disabled=true; btn.textContent='Criando...';
@@ -2431,7 +2503,7 @@
         if(res && res.ok){
           ok.textContent='Solicitação enviada! Seu acesso será liberado após a aprovação da Logística — você receberá um e-mail.';
           ok.style.display='block';
-          ['c-email','c-nome','c-funcao','c-usuario','c-senha'].forEach(function(id){ document.getElementById(id).value=''; });
+          ['c-email','c-nome','c-funcao','c-setor','c-usuario','c-senha'].forEach(function(id){ document.getElementById(id).value=''; });
         } else {
           err.textContent=(res && res.erro)?res.erro:'Não foi possível criar o usuário.';
           err.style.display='block';
