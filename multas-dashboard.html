@@ -9,14 +9,21 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="stylesheet" href="multas.css?v=10">
 <style>
-  /* barra com duas colunas de numero: valor somado + quantidade */
-  .bar-row.two{grid-template-columns:150px 1fr 108px 52px;}
+  /* barra com duas colunas de numero: valor somado + quantidade.
+     colunas de numero em 'auto' (encolhem ao conteudo) e a barra fica com 1fr,
+     assim os numeros nunca vazam para fora do card, mesmo em coluna estreita. */
+  .bar-row.two{
+    grid-template-columns:minmax(80px,auto) minmax(40px,1fr) auto auto;
+    column-gap:10px;align-items:center;
+  }
+  .bar-row.two .bar-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bar-row .bar-money{
     text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;
     color:var(--accent);font-weight:600;font-size:12.5px;
   }
+  .bar-row.two .bar-val{text-align:right;white-space:nowrap;}
   @media (max-width:720px){
-    .bar-row.two{grid-template-columns:92px 1fr 92px 42px;}
+    .bar-row.two{column-gap:8px;}
     .bar-row .bar-money{font-size:11.5px;}
   }
 </style>
@@ -118,8 +125,12 @@ function render() {
   const lista = aplicarFiltros(dados, { de: fde.value, ate: fate.value });
   const totalGeral = lista.reduce((s, m) => s + numero(m.valor), 0);
   const pagas = lista.filter(m => m.status === 'PAGA');
-  const aPagar = lista.filter(m => m.status === 'A_PAGAR');
+  /* em aberto = tudo que ainda nao foi quitado nem cancelado.
+     Multa em RECEBIDA / INDICACAO / RECURSO segue sendo valor devido. */
+  const aPagar = lista.filter(m => m.status !== 'PAGA' && m.status !== 'CANCELADA');
   const vencidas = aPagar.filter(m => { const d = diasAte(m.vencimento); return d !== null && d < 0; });
+  /* quantas ja tem o valor preenchido — sem isso o total fica subestimado */
+  const semValor = lista.filter(m => !numero(m.valor)).length;
   const pontos = lista.filter(m => m.statusIndicacao !== 'ACEITA').reduce((s, m) => s + numero(m.pontos), 0);
   const ticket = lista.length ? totalGeral / lista.length : 0;
 
@@ -128,7 +139,8 @@ function render() {
 
   document.getElementById('kpis').innerHTML = [
     ['accent', 'Total de multas', lista.length, 'ticket médio ' + brl(ticket)],
-    ['warn', 'Valor a pagar', brl(aPagar.reduce((s, m) => s + numero(m.valor), 0)), aPagar.length + ' em aberto'],
+    ['warn', 'Valor a pagar', brl(aPagar.reduce((s, m) => s + numero(m.valor), 0)),
+      aPagar.length + ' em aberto' + (semValor ? ' · ' + semValor + ' sem valor' : '')],
     ['ok', 'Já pago', brl(pagas.reduce((s, m) => s + numero(m.valor), 0)), pagas.length + ' quitada(s)'],
     ['danger', 'Vencidas', vencidas.length, brl(vencidas.reduce((s, m) => s + numero(m.valor), 0)) + ' em atraso'],
     ['accent', 'Pontos na empresa', pontos, 'não transferidos ao condutor']
