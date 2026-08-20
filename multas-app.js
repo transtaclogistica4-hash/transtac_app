@@ -87,6 +87,15 @@ const PLACA_SETOR = {
   'REA6G65':'FROTA','RDV3G15':'FROTA'
 };
 
+/** Setor de uma multa: so aceita o valor salvo se for uma das 6 opcoes.
+    Valor antigo (nome de pessoa, texto livre) e ignorado e a placa decide. */
+function responsavelDaMulta(m) {
+  if (!m) return '';
+  const salvo = String(m.responsavel || '').trim().toUpperCase();
+  if (SETORES_RESP.indexOf(salvo) !== -1) return salvo;
+  return setorDaPlaca(m.placa);
+}
+
 /** Setor responsavel pela placa; placa da frota sem vinculo cai em FROTA. */
 function setorDaPlaca(placa) {
   const p = normPlaca(placa);
