@@ -572,6 +572,17 @@ async function enviarSilencioso(payload){
   }catch(e){ toast(e.message||'Erro ao enviar.',true); return false; }
 }
 
+// igual ao enviarSilencioso, mas devolve a resposta inteira (para adotar a sessao real)
+async function enviarSilenciosoResp(payload){
+  if(SCRIPT_URL.indexOf('__')===0){ toast('Conexão com a planilha não configurada.',true); return {ok:false}; }
+  try{
+    const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.erro||'Erro');
+    return d;
+  }catch(e){ toast(e.message||'Erro ao enviar.',true); return {ok:false}; }
+}
+
 /* ================= NAV ================= */
 function nav(v){
   ['home','cadastro','lancamento','baixa','conferencia','inventario','nfpdf'].forEach(x=>$('view-'+x).classList.toggle('hidden',x!==v));
@@ -1047,10 +1058,14 @@ async function enviarItem(equipe,idx){
     await puxarContagem(true);
   }
   const eqNum = equipe==='eq1'?1:2;
-  const payload={action:'contagem_item', sessao:contagem.sessao||invSessao,
+  const sessaoAtual = contagem.sessao || invSessao || '';
+  const payload={action:'contagem_item', sessao:sessaoAtual,
     equipe:eqNum, codigo:it.codigo, qtd:it[equipe], avaria:(equipe==='eq1'?it.av1:it.av2)||0};
-  const ok=await enviarSilencioso(payload);
-  if(ok){ it[equipe==='eq1'?'s1':'s2']=true; marcarLinha(equipe,idx); toast('Item enviado.'); }
+  const resp=await enviarSilenciosoResp(payload);
+  if(resp && resp.ok){
+    if(resp.sessao){ contagem.sessao=resp.sessao; invSessao=resp.sessao; } // adota a sessao real do servidor
+    it[equipe==='eq1'?'s1':'s2']=true; marcarLinha(equipe,idx); toast('Item enviado.');
+  } else { toast('Não foi possível enviar o item.',true); }
 }
 async function enviarTudoEquipe(equipe){
   const eqNum=equipe==='eq1'?1:2;
@@ -1059,10 +1074,13 @@ async function enviarTudoEquipe(equipe){
   if(!itens.length){ toast('Nenhum item contado para enviar.',true); return; }
   if(!contagem.sessao) await puxarContagem(true);
   loading(true);
-  const ok=await enviarSilencioso({action:'contagem_lote', sessao:contagem.sessao||invSessao, equipe:eqNum, itens:itens});
+  const resp=await enviarSilenciosoResp({action:'contagem_lote', sessao:(contagem.sessao||invSessao||''), equipe:eqNum, itens:itens});
   loading(false);
-  if(ok){ contagem.itens.forEach(it=>{ if(it[equipe]!==null) it[equipe==='eq1'?'s1':'s2']=true; });
-    renderEquipe(equipe); toast(itens.length+' item(ns) da Equipe '+eqNum+' enviados.'); }
+  if(resp && resp.ok){
+    if(resp.sessao){ contagem.sessao=resp.sessao; invSessao=resp.sessao; }
+    contagem.itens.forEach(it=>{ if(it[equipe]!==null) it[equipe==='eq1'?'s1':'s2']=true; });
+    renderEquipe(equipe); toast(itens.length+' item(ns) da Equipe '+eqNum+' enviados.');
+  } else { toast('Não foi possível enviar a contagem.',true); }
 }
 
 /* ---- LEITURA ao vivo (polling) ---- */
@@ -1165,7 +1183,7 @@ async function finalizarInventario(){
 }
 function cancelarInventario(){ if(confirm('Cancelar contagem neste aparelho? Os valores locais não enviados serão perdidos (o que já foi enviado continua no servidor).')){ pararPoll(); contagem=null; renderInvHome(); } }
 
-/* ================= RENDER GERAL ================= */
+
 function renderTudo(){
   renderConf();
   if(!$('view-cadastro').classList.contains('hidden')) renderCadastro();
@@ -1173,7 +1191,7 @@ function renderTudo(){
   if(!$('view-lancamento').classList.contains('hidden')){ fillDatalist(); renderMov('tbody-entradas','ENTRADA'); }
 }
 
-/* ================= UTIL ================= */
+
 function hoje(){ return new Date().toISOString().slice(0,10); }
 function baixarCSV(rows,nome){
   const csv='﻿'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
