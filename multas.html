@@ -42,17 +42,17 @@
     </a>
   </div>
 
-  <div class="section-title">DADOS</div>
+  <div class="section-title">Relatórios</div>
   <div class="hub-grid" style="margin-top:0">
     <a class="hub-card" href="multas-dashboard.html">
-      <span class="tag">DADOS</span>
+      <span class="tag">Relatório</span>
       <h2>Dashboard de Multas</h2>
       <p>Valores, reincidência por motorista e veículo, vencimentos e status da carteira.</p>
     </a>
-    <a class="hub-card" href="https://docs.google.com/spreadsheets/d/1vmTSWcJ15IeoO0hfcLMqID_qLegdB0eU03umSP9W1b8/edit?gid=194646415#gid=194646415" id="linkPlanilha">
-      <span class="tag">DADOS</span>
-      <h2>Base De Dados</h2>
-      <p>Base com todos os registros, anexos e histórico do controle de multas.</p>
+    <a class="hub-card" href="#" id="linkPlanilha">
+      <span class="tag">Planilha</span>
+      <h2>Base no Google Sheets</h2>
+      <p>Planilha com todos os registros, anexos e histórico do controle de multas.</p>
     </a>
   </div>
 
@@ -73,18 +73,19 @@ if (modoDemo()) document.getElementById('avisoDemo').style.display = 'block';
   let lista = [];
   try { lista = await api('listar'); } catch (e) { toast('Falha ao carregar: ' + e.message); }
 
-  const abertas = lista.filter(m => ['RECEBIDA', 'INDICACAO', 'RECURSO', 'A_PAGAR'].includes(m.status));
-  const aPagar  = lista.filter(m => m.status === 'A_PAGAR');
+  // Mesmo criterio do dashboard: em aberto = tudo que nao foi pago nem cancelado.
+  const aPagar  = lista.filter(m => m.status !== 'PAGA' && m.status !== 'CANCELADA');
   const vencidas = aPagar.filter(m => diasAte(m.vencimento) !== null && diasAte(m.vencimento) < 0);
   const indPend = lista.filter(m => m.statusIndicacao === 'PENDENTE');
   const indUrg  = indPend.filter(m => { const d = diasAte(m.prazoIndicacao); return d !== null && d <= 7; });
   const total   = aPagar.reduce((s, m) => s + numero(m.valor), 0);
+  const semValor = lista.filter(m => m.status !== 'PAGA' && m.status !== 'CANCELADA' && !numero(m.valor)).length;
 
   document.getElementById('kpis').innerHTML = [
-    kpi('accent', 'Multas em aberto', abertas.length, lista.length + ' registros no total'),
-    kpi('warn',   'Valor a pagar', brl(total), aPagar.length + ' multa(s) aguardando pagamento'),
+    kpi('warn',   'Valor a pagar', brl(total), aPagar.length + ' em aberto' + (semValor ? ' · ' + semValor + ' sem valor' : '')),
     kpi('danger', 'Vencidas', vencidas.length, 'pagamento em atraso'),
-    kpi('ok',     'Indicações pendentes', indPend.length, indUrg.length + ' com prazo em até 7 dias')
+    kpi('ok',     'Pagas', lista.filter(m => m.status === 'PAGA').length, brl(lista.filter(m => m.status === 'PAGA').reduce((s, m) => s + numero(m.valor), 0))),
+    kpi('accent', 'Indicações pendentes', indPend.length, indUrg.length + ' com prazo em até 7 dias')
   ].join('');
 
   function kpi(cls, label, valor, sub) {
