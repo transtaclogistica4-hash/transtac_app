@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- TRANSTAC COMPRAS | build v1-2026-08 | pagina=compras -->
+<!-- TRANSTAC COMPRAS | build v2-OC | pagina=compras -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -9,31 +9,37 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="stylesheet" href="multas.css?v=10">
 <style>
-  .cp-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 4px;border-bottom:1px solid var(--border);padding-bottom:10px;}
-  .cp-tab{background:var(--panel-2);border:1px solid var(--border);color:var(--muted);
-    border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .cp-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 4px;border-bottom:1px solid var(--border);padding-bottom:10px;align-items:center;}
+  .cp-tab{background:var(--panel-2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
   .cp-tab.active{background:var(--accent);color:#14171A;border-color:var(--accent);}
   .cp-tab .badge-count{background:var(--danger);color:#14171A;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:6px;}
   .cp-panel{display:none;margin-top:16px;}
   .cp-panel.active{display:block;}
-  .cp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  @media(max-width:720px){ .cp-grid{grid-template-columns:1fr;} }
+  .cp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:820px){ .cp-grid{grid-template-columns:1fr 1fr;} }
+  @media(max-width:520px){ .cp-grid{grid-template-columns:1fr;} }
   .cp-field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;}
-  .cp-field input,.cp-field select,.cp-field textarea{
-    width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;
-    background:var(--panel-2);color:var(--text);font-size:13.5px;font-family:inherit;}
-  .cp-field textarea{min-height:60px;resize:vertical;}
+  .cp-field input,.cp-field select,.cp-field textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13.5px;font-family:inherit;}
+  .cp-field textarea{min-height:52px;resize:vertical;}
   .cp-nivel{font-size:12px;padding:2px 9px;border-radius:10px;font-weight:700;white-space:nowrap;}
   .cp-nivel.N1{background:rgba(96,165,250,.15);color:var(--info);}
   .cp-nivel.N2{background:rgba(251,191,36,.15);color:var(--warn);}
   .cp-nivel.N3{background:rgba(248,113,113,.15);color:var(--danger);}
   .st{font-size:11.5px;padding:2px 9px;border-radius:10px;font-weight:700;white-space:nowrap;}
   .st.SOLICITADA{background:rgba(96,165,250,.15);color:var(--info);}
-  .st.APROVADA,.st.RECEBIDA{background:rgba(34,197,94,.15);color:var(--ok);}
+  .st.APROVADA,.st.PAGA{background:rgba(34,197,94,.15);color:var(--ok);}
   .st.REPROVADA{background:rgba(248,113,113,.15);color:var(--danger);}
   .st.EM_COTACAO{background:rgba(251,191,36,.15);color:var(--warn);}
   .st.COMPRADA{background:var(--accent-soft);color:var(--accent);}
-  .cp-alcada-info{font-size:12.5px;color:var(--muted);margin:8px 0 4px;}
+  /* tabela de itens da OC */
+  .itens-tbl{width:100%;border-collapse:collapse;margin-top:8px;}
+  .itens-tbl th,.itens-tbl td{padding:6px;border-bottom:1px solid var(--border-soft);font-size:12.5px;text-align:left;}
+  .itens-tbl th{color:var(--muted);font-weight:600;}
+  .itens-tbl input,.itens-tbl select{width:100%;padding:6px 7px;border:1px solid var(--border);border-radius:6px;background:var(--panel-2);color:var(--text);font-size:12.5px;font-family:inherit;}
+  .itens-tbl .num{text-align:right;}
+  .oc-total{text-align:right;font-size:15px;font-weight:700;margin-top:10px;}
+  .oc-total .cp-nivel{margin-left:8px;vertical-align:middle;}
+  .lixo{background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;}
 </style>
 </head>
 <body>
@@ -44,98 +50,110 @@
 </div>
 <script>setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove();},6000);</script>
 <header></header>
+<datalist id="dlMateriais"></datalist>
 
 <main>
   <div class="kpi-grid" id="kpis" style="margin-top:20px"></div>
 
   <div class="cp-tabs" id="cpTabs">
-    <button class="cp-tab active" data-tab="req">Minhas requisições</button>
+    <button class="cp-tab active" data-tab="nova">Nova OC</button>
+    <button class="cp-tab" data-tab="minhas">Minhas OCs</button>
     <button class="cp-tab" data-tab="aprov" id="tabAprov" style="display:none">Aprovações <span class="badge-count hidden" id="bAprov">0</span></button>
     <button class="cp-tab" data-tab="cot" id="tabCot" style="display:none">Cotações</button>
-    <button class="cp-tab" data-tab="ped" id="tabPed" style="display:none">Pedidos</button>
+    <button class="cp-tab" data-tab="pgto" id="tabPgto" style="display:none">Pagamentos</button>
     <button class="reload" id="btnReload" style="margin-left:auto">Atualizar</button>
   </div>
 
-  <!-- ===== 1. MINHAS REQUISIÇÕES ===== -->
-  <section class="cp-panel active" data-panel="req">
-    <div class="card" style="margin-bottom:16px">
-      <div class="route-name">Nova requisição de compra</div>
+  <!-- ===== NOVA OC ===== -->
+  <section class="cp-panel active" data-panel="nova">
+    <div class="card">
+      <div class="route-name">Nova ordem de compra</div>
       <div class="cp-grid" style="margin-top:8px">
-        <div class="cp-field"><label>Item / material *</label><input id="r_item" placeholder="O que precisa comprar"></div>
-        <div class="cp-field"><label>Quantidade *</label><input id="r_qtd" type="number" min="1" value="1"></div>
-        <div class="cp-field"><label>Unidade</label>
-          <select id="r_unidade"><option>un</option><option>cx</option><option>kg</option><option>L</option><option>m</option><option>pç</option><option>serviço</option></select>
+        <div class="cp-field"><label>Tipo de solicitação *</label>
+          <select id="o_tipo">
+            <option value="">Selecione...</option>
+            <option>Manutenção de veículo</option>
+            <option>Requisição de peças</option>
+            <option>Pagamento de documento</option>
+            <option>Pneus e recapagem</option>
+            <option>Combustível / Arla</option>
+            <option>Material de escritório</option>
+            <option>EPI / Uniforme</option>
+            <option>Serviço terceirizado</option>
+            <option>Frete / Pedágio</option>
+            <option>Outros</option>
+          </select>
         </div>
-        <div class="cp-field"><label>Valor estimado (R$) *</label><input id="r_valor" type="number" step="0.01" min="0" placeholder="0,00"></div>
-        <div class="cp-field"><label>Urgência</label>
-          <select id="r_urgencia"><option value="NORMAL">Normal</option><option value="URGENTE">Urgente</option></select>
+        <div class="cp-field"><label>Centro de custo *</label>
+          <select id="o_cc"><option value="">Selecione...</option></select>
         </div>
-        <div class="cp-field"><label>Nível de aprovação</label><input id="r_nivel" disabled placeholder="definido pelo valor"></div>
-        <div class="cp-field" style="grid-column:1/-1"><label>Justificativa</label><textarea id="r_just" placeholder="Para que será usado"></textarea></div>
+        <div class="cp-field"><label>Placa do veículo</label><input id="o_placa" placeholder="Se aplicável"></div>
+        <div class="cp-field"><label>Fornecedor</label><input id="o_forn" placeholder="Nome do fornecedor"></div>
+        <div class="cp-field"><label>Solicitante</label><input id="o_solic" readonly></div>
+        <div class="cp-field"><label>Data de geração</label><input id="o_datager" readonly></div>
+        <div class="cp-field"><label>Data de pagamento (prevista)</label><input type="date" id="o_datapag"></div>
+        <div class="cp-field" style="grid-column:1/-1"><label>Observações</label><textarea id="o_obs"></textarea></div>
       </div>
-      <div class="modal-actions" style="margin-top:12px">
-        <button class="save-btn" id="btnCriarReq">Enviar requisição</button>
-      </div>
-    </div>
-    <div class="section-title">Requisições</div>
-    <div class="table-wrap">
-      <table class="data">
-        <thead><tr><th>Data</th><th>Item</th><th class="num">Qtd</th><th class="num">Valor est.</th><th>Nível</th><th>Solicitante</th><th>Status</th></tr></thead>
-        <tbody id="tbReq"></tbody>
+
+      <div class="route-name" style="margin-top:16px">Itens da OC</div>
+      <table class="itens-tbl" id="tblItens">
+        <thead><tr><th style="width:38%">Material *</th><th style="width:12%">Qtd</th><th style="width:12%">Un.</th><th style="width:17%">Valor unit.</th><th style="width:17%">Total</th><th></th></tr></thead>
+        <tbody id="tbItens"></tbody>
       </table>
-      <div class="empty" id="vazioReq" style="display:none">Nenhuma requisição ainda.</div>
+      <button class="ghost-btn" id="btnAddItem" style="margin-top:8px">+ Adicionar item</button>
+
+      <div class="oc-total" id="ocTotal">Total: R$ 0,00 <span class="cp-nivel N1" id="ocNivel">N1</span></div>
+      <div class="modal-actions" style="margin-top:8px">
+        <button class="save-btn" id="btnCriarOC">Gerar ordem de compra</button>
+      </div>
     </div>
   </section>
 
-  <!-- ===== 2. APROVAÇÕES ===== -->
+  <!-- ===== MINHAS OCs ===== -->
+  <section class="cp-panel" data-panel="minhas">
+    <div class="section-title">Minhas ordens de compra</div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Nº</th><th>Data</th><th>Tipo</th><th>Fornecedor</th><th>C. Custo</th><th>Placa</th><th class="num">Total</th><th>Nível</th><th>Status</th><th></th></tr></thead>
+      <tbody id="tbMinhas"></tbody>
+    </table><div class="empty" id="vazioMinhas" style="display:none">Nenhuma OC ainda.</div></div>
+  </section>
+
+  <!-- ===== APROVAÇÕES ===== -->
   <section class="cp-panel" data-panel="aprov">
-    <div class="section-title">Requisições aguardando sua aprovação</div>
-    <div class="table-wrap">
-      <table class="data">
-        <thead><tr><th>Data</th><th>Item</th><th class="num">Qtd</th><th class="num">Valor</th><th>Nível</th><th>Solicitante</th><th>Setor</th><th></th></tr></thead>
-        <tbody id="tbAprov"></tbody>
-      </table>
-      <div class="empty" id="vazioAprov" style="display:none">Nada aguardando sua aprovação.</div>
-    </div>
+    <div class="section-title">OCs aguardando sua aprovação</div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Nº</th><th>Tipo</th><th>Solicitante</th><th>C. Custo</th><th>Placa</th><th class="num">Total</th><th>Nível</th><th></th></tr></thead>
+      <tbody id="tbAprov"></tbody>
+    </table><div class="empty" id="vazioAprov" style="display:none">Nada aguardando sua aprovação.</div></div>
   </section>
 
-  <!-- ===== 3. COTAÇÕES ===== -->
+  <!-- ===== COTAÇÕES ===== -->
   <section class="cp-panel" data-panel="cot">
-    <div class="section-title">Requisições aprovadas — lançar cotações</div>
-    <div class="table-wrap">
-      <table class="data">
-        <thead><tr><th>Item</th><th class="num">Qtd</th><th>Solicitante</th><th>Cotações</th><th></th></tr></thead>
-        <tbody id="tbCot"></tbody>
-      </table>
-      <div class="empty" id="vazioCot" style="display:none">Nenhuma requisição aprovada aguardando cotação.</div>
-    </div>
+    <div class="section-title">OCs aprovadas — cotações</div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Nº</th><th>Tipo</th><th>Fornecedor</th><th class="num">Total OC</th><th>Cotações</th><th></th></tr></thead>
+      <tbody id="tbCot"></tbody>
+    </table><div class="empty" id="vazioCot" style="display:none">Nenhuma OC aprovada aguardando cotação.</div></div>
   </section>
 
-  <!-- ===== 4. PEDIDOS ===== -->
-  <section class="cp-panel" data-panel="ped">
-    <div class="section-title">Pedidos fechados</div>
-    <div class="table-wrap">
-      <table class="data">
-        <thead><tr><th>Data compra</th><th>Item</th><th class="num">Qtd</th><th>Fornecedor</th><th class="num">Valor</th><th>NF</th><th>Status</th><th></th></tr></thead>
-        <tbody id="tbPed"></tbody>
-      </table>
-      <div class="empty" id="vazioPed" style="display:none">Nenhum pedido fechado ainda.</div>
-    </div>
+  <!-- ===== PAGAMENTOS ===== -->
+  <section class="cp-panel" data-panel="pgto">
+    <div class="section-title">OCs compradas — pagamento</div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Nº</th><th>Fornecedor</th><th class="num">Total</th><th>Data pgto prevista</th><th>Status</th><th></th></tr></thead>
+      <tbody id="tbPgto"></tbody>
+    </table><div class="empty" id="vazioPgto" style="display:none">Nenhuma OC aguardando pagamento.</div></div>
   </section>
 </main>
 
-<!-- MODAL DECISÃO -->
-<div class="modal-backdrop" id="mDecidir">
-  <div class="modal" style="max-width:480px">
-    <h3 id="mdTitulo">Aprovar requisição</h3>
-    <p class="modal-sub" id="mdSub"></p>
-    <div class="cp-field" id="mdMotivoWrap" style="display:none;margin-top:8px">
-      <label>Motivo da reprovação</label><textarea id="md_motivo"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button class="ghost-btn" id="mdReprovar">Reprovar</button>
-      <button class="save-btn" id="mdAprovar">Aprovar</button>
-    </div>
+<!-- MODAL VER OC / DECISÃO -->
+<div class="modal-backdrop" id="mOC">
+  <div class="modal" style="max-width:600px">
+    <h3 id="mocTitulo">Ordem de compra</h3>
+    <p class="modal-sub" id="mocSub"></p>
+    <div id="mocItens"></div>
+    <div class="cp-field" id="mocMotivoWrap" style="display:none;margin-top:8px"><label>Motivo da reprovação</label><textarea id="moc_motivo"></textarea></div>
+    <div class="modal-actions" id="mocAcoes"></div>
   </div>
 </div>
 
@@ -144,265 +162,266 @@
   <div class="modal" style="max-width:520px">
     <h3>Lançar cotação</h3>
     <p class="modal-sub" id="mcSub"></p>
-    <div class="cp-grid">
+    <div class="cp-grid" style="grid-template-columns:1fr 1fr">
       <div class="cp-field" style="grid-column:1/-1"><label>Fornecedor *</label><input id="c_forn"></div>
-      <div class="cp-field"><label>Valor unitário (R$) *</label><input id="c_unit" type="number" step="0.01" min="0"></div>
-      <div class="cp-field"><label>Prazo entrega</label><input id="c_prazo" placeholder="ex.: 5 dias"></div>
-      <div class="cp-field" style="grid-column:1/-1"><label>Condição de pagamento</label><input id="c_cond" placeholder="ex.: 30 dias / à vista"></div>
+      <div class="cp-field"><label>Valor total (R$) *</label><input id="c_total" type="number" step="0.01" min="0"></div>
+      <div class="cp-field"><label>Prazo entrega</label><input id="c_prazo"></div>
+      <div class="cp-field" style="grid-column:1/-1"><label>Condição de pagamento</label><input id="c_cond"></div>
     </div>
-    <div class="modal-actions">
-      <button class="ghost-btn" id="mcFechar">Cancelar</button>
-      <button class="save-btn" id="mcSalvar">Adicionar cotação</button>
-    </div>
-    <div class="section-title" style="margin-top:16px">Cotações desta requisição</div>
-    <div class="table-wrap"><table class="data"><thead>
-      <tr><th>Fornecedor</th><th class="num">Unit.</th><th class="num">Total</th><th>Prazo</th><th></th></tr>
-    </thead><tbody id="mcLista"></tbody></table></div>
+    <div class="modal-actions"><button class="ghost-btn" id="mcFechar">Cancelar</button><button class="save-btn" id="mcSalvar">Adicionar cotação</button></div>
+    <div class="section-title" style="margin-top:16px">Cotações desta OC</div>
+    <div class="table-wrap"><table class="data"><thead><tr><th>Fornecedor</th><th class="num">Total</th><th>Prazo</th><th></th></tr></thead><tbody id="mcLista"></tbody></table></div>
   </div>
 </div>
 
 <script src="multas-app.js?v=10"></script>
 <script>
-/* ================= CONFIG ================= */
-const SCRIPT_URL_COMPRAS = '__COLE_A_URL_DO_APPS_SCRIPT_DE_COMPRAS__'; // /exec do projeto Compras
-const SESSAO_KEY = 'transtac_sessao_homolog_v1';
-const PERFIL_KEY = 'transtac_perfil_homolog_v1';
-const ALCADA_KEY = 'transtac_alcada_homolog_v1';
+const SCRIPT_URL_COMPRAS = '__COLE_A_URL_DO_APPS_SCRIPT_DE_COMPRAS__';
+const SESSAO_KEY='transtac_sessao_homolog_v1', PERFIL_KEY='transtac_perfil_homolog_v1', ALCADA_KEY='transtac_alcada_homolog_v1';
 
-montarHeader('COMPRAS TRANSTAC', 'Requisições, aprovação por alçada e pedidos.', 'index.html');
+/* ==== CENTRO DE CUSTO — LISTA PROVISÓRIA. Troque pelos reais da TRANSTAC ==== */
+const CENTROS_CUSTO = ['Logística','Manutenção/Frota','Expedição','Administrativo','CD Içara','CD RS','Comercial','RH/DP'];
 
-/* quem sou eu (herdado do portal) */
+montarHeader('COMPRAS TRANSTAC','Ordens de compra, aprovação por alçada e pagamentos.','index.html');
+
 function meuNome(){ try{ return sessionStorage.getItem(SESSAO_KEY)||''; }catch(e){ return ''; } }
 function meuSetor(){ try{ return (sessionStorage.getItem(PERFIL_KEY)||'').toUpperCase(); }catch(e){ return ''; } }
 function minhaAlcada(){ try{ return (sessionStorage.getItem(ALCADA_KEY)||'').toUpperCase(); }catch(e){ return ''; } }
-
-/* alcada N3 enxerga tudo; N2 aprova N2; N1 aprova N1 */
-function podeAprovarNivel(nivelReq){
-  const a = minhaAlcada();
-  if(a==='N3') return true;
-  return a===nivelReq;
-}
-function temAlcadaCompras(){ return ['N1','N2','N3'].includes(minhaAlcada()); }
-
-let estado = { requisicoes:[], cotacoes:[], compras:[] }, cotarReqId=null, decidirId=null;
-
+function temAlcada(){ return ['N1','N2','N3'].includes(minhaAlcada()); }
+function podeAprovarNivel(n){ const a=minhaAlcada(); return a==='N3'||a===n; }
 function nivelPorValor(v){ v=Number(v)||0; return v<=300?'N1':(v<=2000?'N2':'N3'); }
-function rotuloNivel(n){ return {N1:'até R$ 300 (Gabryel)',N2:'R$ 300–2.000 (Ger. Geral)',N3:'acima de R$ 2.000 (Diretoria)'}[n]||n; }
 
-/* valor estimado -> nivel na tela */
-r_valor.addEventListener('input', ()=>{ r_nivel.value = rotuloNivel(nivelPorValor(r_valor.value)); });
+let estado={ordens:[],itens:[],cotacoes:[],materiais:[]}, cotarOcId=null, ocAberta=null;
 
-/* ================= CARREGAR ================= */
+/* preenche selects e campos fixos */
+CENTROS_CUSTO.forEach(c=> o_cc.add(new Option(c,c)));
+o_solic.value = meuNome();
+o_datager.value = new Date().toLocaleDateString('pt-BR');
+
+/* ---- itens dinâmicos ---- */
+function linhaItem(){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input class="it-mat" list="dlMateriais" placeholder="Material"></td>
+    <td><input class="it-qtd num" type="number" min="0" step="0.01" value="1"></td>
+    <td><select class="it-un"><option>un</option><option>cx</option><option>kg</option><option>L</option><option>m</option><option>pç</option><option>serviço</option></select></td>
+    <td><input class="it-vu num" type="number" min="0" step="0.01" placeholder="0,00"></td>
+    <td class="num it-tot">R$ 0,00</td>
+    <td><button class="lixo" title="Remover">×</button></td>`;
+  tr.querySelector('.lixo').onclick=()=>{ tr.remove(); if(!tbItens.children.length) addItem(); recalc(); };
+  tr.querySelector('.it-qtd').oninput=recalc;
+  tr.querySelector('.it-vu').oninput=recalc;
+  tr.querySelector('.it-mat').oninput=e=>{ // preenche valor conhecido do material
+    const m=(estado.materiais||[]).find(x=>String(x.material).toLowerCase()===e.target.value.toLowerCase());
+    const vu=tr.querySelector('.it-vu'); if(m && !vu.value){ vu.value=Number(m.ultimo_valor)||''; recalc(); }
+  };
+  return tr;
+}
+function addItem(){ tbItens.appendChild(linhaItem()); }
+function recalc(){
+  let total=0;
+  tbItens.querySelectorAll('tr').forEach(tr=>{
+    const q=Number(tr.querySelector('.it-qtd').value)||0, vu=Number(tr.querySelector('.it-vu').value)||0;
+    const t=q*vu; total+=t;
+    tr.querySelector('.it-tot').textContent=brl(t);
+  });
+  const nv=nivelPorValor(total);
+  ocTotal.innerHTML='Total: '+brl(total)+' <span class="cp-nivel '+nv+'">'+nv+'</span>';
+}
+btnAddItem.onclick=addItem;
+addItem();
+
+/* ---- carregar ---- */
 async function carregar(){
-  try{
-    const r = await fetch(SCRIPT_URL_COMPRAS, {method:'GET'});
-    estado = await r.json();
-  }catch(e){ toast('Erro ao carregar: '+e.message, true); }
+  try{ const r=await fetch(SCRIPT_URL_COMPRAS,{method:'GET'}); estado=await r.json(); }
+  catch(e){ toast('Erro ao carregar: '+e.message,true); }
+  // datalist de materiais
+  dlMateriais.innerHTML=(estado.materiais||[]).map(m=>'<option value="'+esc(m.material)+'">').join('');
   render();
 }
 
 function render(){
-  // abas conforme alcada
-  const admin = temAlcadaCompras();
-  tabAprov.style.display = admin ? '' : 'none';
-  tabCot.style.display   = admin ? '' : 'none';
-  tabPed.style.display   = admin ? '' : 'none';
+  const admin=temAlcada();
+  tabAprov.style.display=admin?'':'none';
+  tabCot.style.display=admin?'':'none';
+  tabPgto.style.display=admin?'':'none';
 
-  const reqs = estado.requisicoes||[];
-  const meAprovar = reqs.filter(r=> r.status==='SOLICITADA' && podeAprovarNivel(r.nivel));
-  bAprov.textContent = meAprovar.length;
-  bAprov.classList.toggle('hidden', meAprovar.length===0);
+  const ocs=estado.ordens||[];
+  const aprovar=ocs.filter(o=>o.status==='SOLICITADA'&&podeAprovarNivel(o.nivel));
+  bAprov.textContent=aprovar.length; bAprov.classList.toggle('hidden',!aprovar.length);
 
-  // KPIs
-  const pend = reqs.filter(r=>r.status==='SOLICITADA').length;
-  const cot  = reqs.filter(r=>r.status==='EM_COTACAO').length;
-  const mesGasto = (estado.compras||[]).reduce((s,c)=> s+(Number(c.valor_total)||0), 0);
-  kpis.innerHTML = [
-    ['accent','Aguardando aprovação', pend, 'requisições'],
-    ['warn','Sua fila de aprovação', meAprovar.length, admin? 'na sua alçada':'—'],
-    ['info','Em cotação', cot, 'aguardando fornecedor'],
-    ['ok','Comprado (total)', brl(mesGasto), (estado.compras||[]).length+' pedido(s)']
+  const pend=ocs.filter(o=>o.status==='SOLICITADA').length;
+  const cot=ocs.filter(o=>o.status==='EM_COTACAO'||o.status==='APROVADA').length;
+  const gasto=ocs.filter(o=>o.status==='PAGA').reduce((s,o)=>s+(Number(o.valor_total)||0),0);
+  kpis.innerHTML=[
+    ['accent','Aguardando aprovação',pend,'ordens'],
+    ['warn','Sua fila',aprovar.length,admin?'na sua alçada':'—'],
+    ['info','Em cotação',cot,'aprovadas'],
+    ['ok','Pago (total)',brl(gasto),ocs.filter(o=>o.status==='PAGA').length+' OC(s)']
   ].map(([c,l,v,s])=>`<div class="kpi ${c}"><div class="kpi-label">${l}</div><div class="kpi-value">${v}</div><div class="kpi-sub">${s}</div></div>`).join('');
 
-  renderReq(); renderAprov(meAprovar); renderCot(); renderPed();
+  renderMinhas(); renderAprov(aprovar); renderCot(); renderPgto();
 }
 
-function renderReq(){
-  const meu = meuNome();
-  const reqs = (estado.requisicoes||[]).slice().reverse();
-  tbReq.innerHTML = reqs.map(r=>`<tr>
-    <td class="mono">${esc(r.data||'')}</td>
-    <td>${esc(r.item||'')}</td>
-    <td class="num">${r.qtd||0} ${esc(r.unidade||'')}</td>
-    <td class="num">${brl(Number(r.valor_estimado)||0)}</td>
-    <td><span class="cp-nivel ${esc(r.nivel)}">${esc(r.nivel)}</span></td>
-    <td>${esc(r.solicitante||'')}</td>
-    <td><span class="st ${esc(r.status)}">${esc((r.status||'').replace('_',' '))}</span>${r.status==='REPROVADA'&&r.motivo_reprova?'<br><small class="muted">'+esc(r.motivo_reprova)+'</small>':''}</td>
-  </tr>`).join('');
-  vazioReq.style.display = reqs.length?'none':'block';
+function linhaOC(o, acaoBtn){
+  return `<tr>
+    <td class="mono"><b>${esc(o.numero||'')}</b></td>
+    <td class="mono">${esc(o.data_geracao||'')}</td>
+    <td>${esc(o.tipo_solicitacao||'')}</td>
+    <td>${esc(o.fornecedor||'—')}</td>
+    <td>${esc(o.centro_custo||'')}</td>
+    <td class="mono">${esc(o.placa||'—')}</td>
+    <td class="num">${brl(Number(o.valor_total)||0)}</td>
+    <td><span class="cp-nivel ${esc(o.nivel)}">${esc(o.nivel)}</span></td>
+    <td><span class="st ${esc(o.status)}">${esc((o.status||'').replace('_',' '))}</span></td>
+    <td>${acaoBtn||''}</td></tr>`;
 }
-
+function renderMinhas(){
+  const ocs=(estado.ordens||[]).slice().reverse();
+  tbMinhas.innerHTML=ocs.map(o=>linhaOC(o,`<button class="linkish" style="background:none;border:none;cursor:pointer" data-ver="${esc(o.id)}">Ver</button>`)).join('');
+  vazioMinhas.style.display=ocs.length?'none':'block';
+  tbMinhas.querySelectorAll('[data-ver]').forEach(b=>b.onclick=()=>abrirOC(b.dataset.ver,false));
+}
 function renderAprov(lista){
-  tbAprov.innerHTML = lista.map(r=>`<tr>
-    <td class="mono">${esc(r.data||'')}</td>
-    <td>${esc(r.item||'')}${r.justificativa?'<br><small class="muted">'+esc(r.justificativa)+'</small>':''}</td>
-    <td class="num">${r.qtd||0}</td>
-    <td class="num">${brl(Number(r.valor_estimado)||0)}</td>
-    <td><span class="cp-nivel ${esc(r.nivel)}">${esc(r.nivel)}</span></td>
-    <td>${esc(r.solicitante||'')}</td>
-    <td>${esc(r.setor||'')}</td>
-    <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-dec="${esc(r.id)}">Analisar</button></td>
-  </tr>`).join('');
-  vazioAprov.style.display = lista.length?'none':'block';
-  tbAprov.querySelectorAll('[data-dec]').forEach(b=> b.onclick=()=>abrirDecidir(b.dataset.dec));
+  tbAprov.innerHTML=lista.map(o=>`<tr>
+    <td class="mono"><b>${esc(o.numero)}</b></td><td>${esc(o.tipo_solicitacao||'')}</td>
+    <td>${esc(o.solicitante||'')}</td><td>${esc(o.centro_custo||'')}</td>
+    <td class="mono">${esc(o.placa||'—')}</td><td class="num">${brl(Number(o.valor_total)||0)}</td>
+    <td><span class="cp-nivel ${esc(o.nivel)}">${esc(o.nivel)}</span></td>
+    <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-dec="${esc(o.id)}">Analisar</button></td></tr>`).join('');
+  vazioAprov.style.display=lista.length?'none':'block';
+  tbAprov.querySelectorAll('[data-dec]').forEach(b=>b.onclick=()=>abrirOC(b.dataset.dec,true));
 }
-
 function renderCot(){
-  const aprovadas = (estado.requisicoes||[]).filter(r=> r.status==='APROVADA' || r.status==='EM_COTACAO');
-  tbCot.innerHTML = aprovadas.map(r=>{
-    const cots = (estado.cotacoes||[]).filter(c=> String(c.req_id)===String(r.id));
-    return `<tr>
-      <td>${esc(r.item||'')}</td>
-      <td class="num">${r.qtd||0}</td>
-      <td>${esc(r.solicitante||'')}</td>
-      <td class="num">${cots.length}</td>
-      <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-cot="${esc(r.id)}">Cotar / escolher</button></td>
-    </tr>`;
+  const ocs=(estado.ordens||[]).filter(o=>o.status==='APROVADA'||o.status==='EM_COTACAO');
+  tbCot.innerHTML=ocs.map(o=>{
+    const c=(estado.cotacoes||[]).filter(x=>String(x.oc_id)===String(o.id)).length;
+    return `<tr><td class="mono"><b>${esc(o.numero)}</b></td><td>${esc(o.tipo_solicitacao||'')}</td>
+      <td>${esc(o.fornecedor||'—')}</td><td class="num">${brl(Number(o.valor_total)||0)}</td><td class="num">${c}</td>
+      <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-cot="${esc(o.id)}">Cotar / fechar</button></td></tr>`;
   }).join('');
-  vazioCot.style.display = aprovadas.length?'none':'block';
-  tbCot.querySelectorAll('[data-cot]').forEach(b=> b.onclick=()=>abrirCotar(b.dataset.cot));
+  vazioCot.style.display=ocs.length?'none':'block';
+  tbCot.querySelectorAll('[data-cot]').forEach(b=>b.onclick=()=>abrirCotar(b.dataset.cot));
+}
+function renderPgto(){
+  const ocs=(estado.ordens||[]).filter(o=>o.status==='COMPRADA'||o.status==='PAGA');
+  tbPgto.innerHTML=ocs.map(o=>`<tr>
+    <td class="mono"><b>${esc(o.numero)}</b></td><td>${esc(o.fornecedor||'—')}</td>
+    <td class="num">${brl(Number(o.valor_total)||0)}</td><td class="mono">${esc(o.data_pagamento||'—')}</td>
+    <td><span class="st ${esc(o.status)}">${esc(o.status)}</span></td>
+    <td>${o.status!=='PAGA'?'<button class="linkish" style="background:none;border:none;cursor:pointer" data-pg="'+esc(o.id)+'">Marcar pago</button>':''}</td></tr>`).join('');
+  vazioPgto.style.display=ocs.length?'none':'block';
+  tbPgto.querySelectorAll('[data-pg]').forEach(b=>b.onclick=()=>marcarPago(b.dataset.pg));
 }
 
-function renderPed(){
-  const ped = (estado.compras||[]).slice().reverse();
-  tbPed.innerHTML = ped.map(c=>`<tr>
-    <td class="mono">${esc(c.data_compra||'')}</td>
-    <td>${esc(c.item||'')}</td>
-    <td class="num">${c.qtd||0}</td>
-    <td>${esc(c.fornecedor||'')}</td>
-    <td class="num">${brl(Number(c.valor_total)||0)}</td>
-    <td class="mono">${esc(c.nf||'—')}</td>
-    <td><span class="st ${c.status==='RECEBIDO'?'RECEBIDA':'COMPRADA'}">${esc(c.status||'')}</span></td>
-    <td>${c.status!=='RECEBIDO'?'<button class="linkish" style="background:none;border:none;cursor:pointer" data-rec="'+esc(c.id)+'">Marcar recebido</button>':esc(c.data_recebimento||'')}</td>
-  </tr>`).join('');
-  vazioPed.style.display = ped.length?'none':'block';
-  tbPed.querySelectorAll('[data-rec]').forEach(b=> b.onclick=()=>receber(b.dataset.rec));
-}
-
-/* ================= AÇÕES ================= */
 async function post(payload){
-  const r = await fetch(SCRIPT_URL_COMPRAS, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-  const d = await r.json();
-  if(!d.ok) throw new Error(d.erro||'Erro');
-  return d;
+  const r=await fetch(SCRIPT_URL_COMPRAS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  const d=await r.json(); if(!d.ok) throw new Error(d.erro||'Erro'); return d;
 }
 
-btnCriarReq.onclick = async ()=>{
-  if(!r_item.value.trim() || !r_valor.value){ toast('Preencha item e valor estimado.',true); return; }
-  btnCriarReq.disabled=true;
+btnCriarOC.onclick=async()=>{
+  if(!o_tipo.value){ toast('Escolha o tipo de solicitação.',true); return; }
+  if(!o_cc.value){ toast('Escolha o centro de custo.',true); return; }
+  const itens=[];
+  let faltou=false;
+  tbItens.querySelectorAll('tr').forEach(tr=>{
+    const mat=tr.querySelector('.it-mat').value.trim();
+    const qtd=Number(tr.querySelector('.it-qtd').value)||0;
+    const vu=Number(tr.querySelector('.it-vu').value)||0;
+    if(!mat) return;
+    if(qtd<=0){ faltou=true; }
+    itens.push({material:mat,qtd,unidade:tr.querySelector('.it-un').value,valorUnit:vu});
+  });
+  if(!itens.length){ toast('Inclua ao menos um item com material.',true); return; }
+  if(faltou){ toast('Há item com quantidade zerada.',true); return; }
+  btnCriarOC.disabled=true;
   try{
-    await post({action:'criar_req', solicitante:meuNome(), setor:meuSetor(),
-      item:r_item.value.trim(), qtd:r_qtd.value, unidade:r_unidade.value,
-      valorEstimado:r_valor.value, justificativa:r_just.value, urgencia:r_urgencia.value});
-    toast('Requisição enviada.');
-    r_item.value=''; r_qtd.value=1; r_valor.value=''; r_just.value=''; r_nivel.value='';
+    const r=await post({action:'criar_oc', solicitante:meuNome(), setor:meuSetor(),
+      fornecedor:o_forn.value.trim(), centroCusto:o_cc.value, tipoSolicitacao:o_tipo.value,
+      placa:o_placa.value.trim().toUpperCase(), dataPagamento:o_datapag.value, obs:o_obs.value, itens});
+    toast('OC '+r.numero+' gerada.');
+    o_forn.value='';o_placa.value='';o_obs.value='';o_datapag.value='';o_tipo.value='';o_cc.value='';
+    tbItens.innerHTML=''; addItem(); recalc();
     await carregar();
+    document.querySelector('.cp-tab[data-tab="minhas"]').click();
   }catch(e){ toast('Erro: '+e.message,true); }
-  finally{ btnCriarReq.disabled=false; }
+  finally{ btnCriarOC.disabled=false; }
 };
 
-function abrirDecidir(id){
-  const r = (estado.requisicoes||[]).find(x=> String(x.id)===String(id));
-  if(!r) return;
-  decidirId=id;
-  mdTitulo.textContent = 'Requisição · '+r.item;
-  mdSub.textContent = `${r.qtd} ${r.unidade} · ${brl(Number(r.valor_estimado)||0)} · ${rotuloNivel(r.nivel)} · por ${r.solicitante}`;
-  md_motivo.value=''; mDecidirMostraMotivo(false);
-  mDecidir.classList.add('show');
+function abrirOC(id, modoAprovar){
+  const o=(estado.ordens||[]).find(x=>String(x.id)===String(id)); if(!o) return;
+  ocAberta=o;
+  const its=(estado.itens||[]).filter(x=>String(x.oc_id)===String(id));
+  mocTitulo.textContent='OC '+o.numero+' · '+(o.tipo_solicitacao||'');
+  mocSub.textContent=`${o.centro_custo||''} · ${o.fornecedor||'sem fornecedor'} · ${o.placa||'sem placa'} · ${brl(Number(o.valor_total)||0)} (nível ${o.nivel})`;
+  mocItens.innerHTML='<table class="itens-tbl"><thead><tr><th>Material</th><th class="num">Qtd</th><th>Un</th><th class="num">Unit.</th><th class="num">Total</th></tr></thead><tbody>'+
+    its.map(i=>`<tr><td>${esc(i.material)}</td><td class="num">${i.qtd}</td><td>${esc(i.unidade)}</td><td class="num">${brl(Number(i.valor_unit)||0)}</td><td class="num">${brl(Number(i.valor_total)||0)}</td></tr>`).join('')+
+    '</tbody></table>';
+  moc_motivo.value=''; mocMotivoWrap.style.display='none';
+  if(modoAprovar && o.status==='SOLICITADA' && podeAprovarNivel(o.nivel)){
+    mocAcoes.innerHTML='<button class="ghost-btn" id="mocReprovar">Reprovar</button><button class="save-btn" id="mocAprovar">Aprovar</button>';
+    document.getElementById('mocAprovar').onclick=()=>decidir('APROVAR');
+    document.getElementById('mocReprovar').onclick=()=>{
+      if(mocMotivoWrap.style.display==='none'){ mocMotivoWrap.style.display='block'; document.getElementById('mocReprovar').textContent='Confirmar reprovação'; return; }
+      decidir('REPROVAR');
+    };
+  } else {
+    mocAcoes.innerHTML='<button class="ghost-btn" id="mocFechar">Fechar</button>';
+    document.getElementById('mocFechar').onclick=()=>mOC.classList.remove('show');
+  }
+  mOC.classList.add('show');
 }
-function mDecidirMostraMotivo(v){ mdMotivoWrap.style.display = v?'block':'none'; }
-mdReprovar.onclick = ()=>{
-  if(mdMotivoWrap.style.display==='none'){ mDecidirMostraMotivo(true); mdReprovar.textContent='Confirmar reprovação'; return; }
-  decidir('REPROVAR');
-};
-mdAprovar.onclick = ()=> decidir('APROVAR');
-async function decidir(decisao){
+async function decidir(dec){
   try{
-    await post({action:'decidir_req', id:decidirId, decisao, aprovador:meuNome(),
-      alcada:minhaAlcada(), motivo:md_motivo.value});
-    mDecidir.classList.remove('show'); mdReprovar.textContent='Reprovar';
-    toast(decisao==='APROVAR'?'Requisição aprovada.':'Requisição reprovada.');
+    await post({action:'decidir_oc', id:ocAberta.id, decisao:dec, aprovador:meuNome(), alcada:minhaAlcada(), motivo:moc_motivo.value});
+    mOC.classList.remove('show');
+    toast(dec==='APROVAR'?'OC aprovada.':'OC reprovada.');
     await carregar();
   }catch(e){ toast('Erro: '+e.message,true); }
 }
 
-function abrirCotar(reqId){
-  cotarReqId=reqId;
-  const r = (estado.requisicoes||[]).find(x=> String(x.id)===String(reqId));
-  mcSub.textContent = r ? `${r.item} · ${r.qtd} ${r.unidade}` : '';
-  c_forn.value=''; c_unit.value=''; c_prazo.value=''; c_cond.value='';
-  renderCotacoesModal();
-  mCotar.classList.add('show');
+function abrirCotar(ocId){
+  cotarOcId=ocId;
+  const o=(estado.ordens||[]).find(x=>String(x.id)===String(ocId));
+  mcSub.textContent=o?('OC '+o.numero+' · '+brl(Number(o.valor_total)||0)):'';
+  c_forn.value='';c_total.value='';c_prazo.value='';c_cond.value='';
+  renderCotModal(); mCotar.classList.add('show');
 }
-function renderCotacoesModal(){
-  const cots = (estado.cotacoes||[]).filter(c=> String(c.req_id)===String(cotarReqId));
-  mcLista.innerHTML = cots.map(c=>`<tr>
-    <td>${esc(c.fornecedor||'')}${c.escolhida==='SIM'?' <span class="cp-nivel N1">escolhida</span>':''}</td>
-    <td class="num">${brl(Number(c.valor_unit)||0)}</td>
-    <td class="num">${brl(Number(c.valor_total)||0)}</td>
-    <td>${esc(c.prazo||'')}</td>
-    <td>${c.escolhida!=='SIM'?'<button class="linkish" style="background:none;border:none;cursor:pointer" data-esc="'+esc(c.id)+'">Escolher</button>':''}</td>
-  </tr>`).join('') || '<tr><td colspan="5" class="empty">Nenhuma cotação lançada.</td></tr>';
-  mcLista.querySelectorAll('[data-esc]').forEach(b=> b.onclick=()=>fecharCompra(b.dataset.esc));
+function renderCotModal(){
+  const cots=(estado.cotacoes||[]).filter(c=>String(c.oc_id)===String(cotarOcId));
+  mcLista.innerHTML=cots.map(c=>`<tr><td>${esc(c.fornecedor)}${c.escolhida==='SIM'?' <span class="cp-nivel N1">escolhida</span>':''}</td>
+    <td class="num">${brl(Number(c.valor_total)||0)}</td><td>${esc(c.prazo||'')}</td>
+    <td>${c.escolhida!=='SIM'?'<button class="linkish" style="background:none;border:none;cursor:pointer" data-esc="'+esc(c.id)+'">Escolher</button>':''}</td></tr>`).join('')
+    || '<tr><td colspan="4" class="empty">Nenhuma cotação.</td></tr>';
+  mcLista.querySelectorAll('[data-esc]').forEach(b=>b.onclick=()=>fechar(b.dataset.esc));
 }
-mcSalvar.onclick = async ()=>{
-  if(!c_forn.value.trim()||!c_unit.value){ toast('Fornecedor e valor unitário são obrigatórios.',true); return; }
-  const r = (estado.requisicoes||[]).find(x=> String(x.id)===String(cotarReqId));
-  try{
-    await post({action:'criar_cotacao', reqId:cotarReqId, fornecedor:c_forn.value.trim(),
-      valorUnit:c_unit.value, qtd:r?r.qtd:1, prazo:c_prazo.value, condicao:c_cond.value});
-    c_forn.value=''; c_unit.value=''; c_prazo.value=''; c_cond.value='';
-    await carregar(); renderCotacoesModal();
-    toast('Cotação adicionada.');
+mcSalvar.onclick=async()=>{
+  if(!c_forn.value.trim()||!c_total.value){ toast('Fornecedor e valor total obrigatórios.',true); return; }
+  try{ await post({action:'criar_cotacao',ocId:cotarOcId,fornecedor:c_forn.value.trim(),valorTotal:c_total.value,prazo:c_prazo.value,condicao:c_cond.value});
+    c_forn.value='';c_total.value='';c_prazo.value='';c_cond.value=''; await carregar(); renderCotModal(); toast('Cotação adicionada.');
   }catch(e){ toast('Erro: '+e.message,true); }
 };
-async function fecharCompra(cotacaoId){
-  if(!confirm('Fechar a compra com esta cotação? A requisição passa para COMPRADA.')) return;
-  try{
-    await post({action:'fechar_compra', cotacaoId});
-    mCotar.classList.remove('show');
-    toast('Compra fechada. Veja em Pedidos.');
-    await carregar();
-  }catch(e){ toast('Erro: '+e.message,true); }
+async function fechar(cotId){
+  if(!confirm('Fechar a compra com esta cotação?')) return;
+  try{ await post({action:'fechar_compra',cotacaoId:cotId}); mCotar.classList.remove('show'); toast('Compra fechada.'); await carregar(); }
+  catch(e){ toast('Erro: '+e.message,true); }
 }
-async function receber(compraId){
-  const nf = prompt('Número da NF (opcional):','');
-  try{
-    await post({action:'receber', compraId, nf:nf||''});
-    toast('Pedido marcado como recebido.');
-    await carregar();
-  }catch(e){ toast('Erro: '+e.message,true); }
+async function marcarPago(id){
+  const dt=prompt('Data de pagamento (dd/mm/aaaa) — deixe em branco para hoje:','');
+  try{ await post({action:'pagar',id,dataPagamento:dt||''}); toast('OC marcada como paga.'); await carregar(); }
+  catch(e){ toast('Erro: '+e.message,true); }
 }
 
-mcFechar.onclick = ()=> mCotar.classList.remove('show');
-mDecidir.onclick = e=>{ if(e.target===mDecidir) mDecidir.classList.remove('show'); };
-mCotar.onclick = e=>{ if(e.target===mCotar) mCotar.classList.remove('show'); };
+mcFechar.onclick=()=>mCotar.classList.remove('show');
+mOC.onclick=e=>{ if(e.target===mOC) mOC.classList.remove('show'); };
+mCotar.onclick=e=>{ if(e.target===mCotar) mCotar.classList.remove('show'); };
 
-/* abas */
-document.querySelectorAll('.cp-tab').forEach(t=>{
-  if(!t.dataset.tab) return;
-  t.onclick = ()=>{
-    document.querySelectorAll('.cp-tab').forEach(x=>x.classList.remove('active'));
+document.querySelectorAll('.cp-tab').forEach(t=>{ if(!t.dataset.tab) return;
+  t.onclick=()=>{ document.querySelectorAll('.cp-tab').forEach(x=>x.classList.remove('active'));
     document.querySelectorAll('.cp-panel').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    document.querySelector('.cp-panel[data-panel="'+t.dataset.tab+'"]').classList.add('active');
-  };
+    t.classList.add('active'); document.querySelector('.cp-panel[data-panel="'+t.dataset.tab+'"]').classList.add('active'); };
 });
-btnReload.onclick = carregar;
-
-if(SCRIPT_URL_COMPRAS.indexOf('__')===0){
-  toast('Configure a URL do Apps Script de Compras (SCRIPT_URL_COMPRAS).', true);
-}
+btnReload.onclick=carregar;
+if(SCRIPT_URL_COMPRAS.indexOf('__')===0) toast('Configure a URL do Apps Script de Compras.',true);
 carregar();
 </script>
 </body>
