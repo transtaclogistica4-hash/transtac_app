@@ -92,6 +92,7 @@
         <div class="cp-field"><label>Solicitante</label><input id="o_solic" readonly></div>
         <div class="cp-field"><label>Data de geração</label><input id="o_datager" readonly></div>
         <div class="cp-field"><label>Data de pagamento (prevista)</label><input type="date" id="o_datapag"></div>
+        <div class="cp-field"><label>Forma de pagamento</label><select id="o_forma"><option value="">Selecione...</option></select></div>
         <div class="cp-field" style="grid-column:1/-1"><label>Observações</label><textarea id="o_obs"></textarea></div>
       </div>
 
@@ -140,7 +141,7 @@
   <section class="cp-panel" data-panel="pgto">
     <div class="section-title">OCs compradas — pagamento</div>
     <div class="table-wrap"><table class="data">
-      <thead><tr><th>Nº</th><th>Fornecedor</th><th class="num">Total</th><th>Data pgto prevista</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Nº</th><th>Fornecedor</th><th class="num">Total</th><th>Forma</th><th>NF</th><th>Status</th><th></th></tr></thead>
       <tbody id="tbPgto"></tbody>
     </table><div class="empty" id="vazioPgto" style="display:none">Nenhuma OC aguardando pagamento.</div></div>
   </section>
@@ -154,6 +155,25 @@
     <div id="mocItens"></div>
     <div class="cp-field" id="mocMotivoWrap" style="display:none;margin-top:8px"><label>Motivo da reprovação</label><textarea id="moc_motivo"></textarea></div>
     <div class="modal-actions" id="mocAcoes"></div>
+  </div>
+</div>
+
+<!-- MODAL PAGAMENTO / NF -->
+<div class="modal-backdrop" id="mPagar">
+  <div class="modal" style="max-width:480px">
+    <h3 id="mpTitulo">Pagamento</h3>
+    <p class="modal-sub" id="mpSub"></p>
+    <div class="cp-grid" style="grid-template-columns:1fr 1fr">
+      <div class="cp-field"><label>Forma de pagamento</label>
+        <select id="mp_forma"><option value="">Selecione...</option></select></div>
+      <div class="cp-field"><label>Data do pagamento</label><input type="date" id="mp_data"></div>
+    </div>
+    <div class="cp-field" style="margin-top:10px"><label>Anexar nota fiscal (PDF ou foto, até 8 MB)</label>
+      <input type="file" id="mp_arq" accept="application/pdf,image/*">
+      <div class="anexo-atual" id="mpNfAtual" style="font-size:12.5px;margin-top:6px"></div>
+    </div>
+    <p class="muted" id="mpJaPaga" style="display:none;font-size:12px;margin-top:8px">Esta OC já está paga — você pode apenas anexar/atualizar a NF.</p>
+    <div class="modal-actions"><button class="ghost-btn" id="mpFechar">Cancelar</button><button class="save-btn" id="mpSalvar">Salvar</button></div>
   </div>
 </div>
 
@@ -181,6 +201,7 @@ const SESSAO_KEY='transtac_sessao_homolog_v1', PERFIL_KEY='transtac_perfil_homol
 
 /* ==== CENTRO DE CUSTO — LISTA PROVISÓRIA. Troque pelos reais da TRANSTAC ==== */
 const CENTROS_CUSTO = ['Logística','Manutenção/Frota','Expedição','Administrativo','CD Içara','CD RS','Comercial','RH/DP'];
+const FORMAS_PGTO = ['Boleto','PIX','Cartão corporativo','Transferência / TED','Dinheiro','Débito em conta','A combinar'];
 
 montarHeader('COMPRAS TRANSTAC','Ordens de compra, aprovação por alçada e pagamentos.','index.html');
 
@@ -195,6 +216,8 @@ let estado={ordens:[],itens:[],cotacoes:[],materiais:[]}, cotarOcId=null, ocAber
 
 /* preenche selects e campos fixos */
 CENTROS_CUSTO.forEach(c=> o_cc.add(new Option(c,c)));
+FORMAS_PGTO.forEach(f=> o_forma.add(new Option(f,f)));
+FORMAS_PGTO.forEach(f=> mp_forma.add(new Option(f,f)));
 o_solic.value = meuNome();
 o_datager.value = new Date().toLocaleDateString('pt-BR');
 
@@ -306,11 +329,13 @@ function renderPgto(){
   const ocs=(estado.ordens||[]).filter(o=>o.status==='COMPRADA'||o.status==='PAGA');
   tbPgto.innerHTML=ocs.map(o=>`<tr>
     <td class="mono"><b>${esc(o.numero)}</b></td><td>${esc(o.fornecedor||'—')}</td>
-    <td class="num">${brl(Number(o.valor_total)||0)}</td><td class="mono">${esc(o.data_pagamento||'—')}</td>
+    <td class="num">${brl(Number(o.valor_total)||0)}</td>
+    <td>${esc(o.forma_pagamento||'—')}</td>
+    <td class="center">${o.nf_url?'<a class="linkish" target="_blank" rel="noopener" href="'+esc(o.nf_url)+'">Ver NF</a>':'<span class="muted">—</span>'}</td>
     <td><span class="st ${esc(o.status)}">${esc(o.status)}</span></td>
-    <td>${o.status!=='PAGA'?'<button class="linkish" style="background:none;border:none;cursor:pointer" data-pg="'+esc(o.id)+'">Marcar pago</button>':''}</td></tr>`).join('');
+    <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-pg="${esc(o.id)}">${o.status!=='PAGA'?'Pagar / anexar NF':'Anexar NF'}</button></td></tr>`).join('');
   vazioPgto.style.display=ocs.length?'none':'block';
-  tbPgto.querySelectorAll('[data-pg]').forEach(b=>b.onclick=()=>marcarPago(b.dataset.pg));
+  tbPgto.querySelectorAll('[data-pg]').forEach(b=>b.onclick=()=>abrirPagar(b.dataset.pg));
 }
 
 async function post(payload){
@@ -337,9 +362,10 @@ btnCriarOC.onclick=async()=>{
   try{
     const r=await post({action:'criar_oc', solicitante:meuNome(), setor:meuSetor(),
       fornecedor:o_forn.value.trim(), centroCusto:o_cc.value, tipoSolicitacao:o_tipo.value,
-      placa:o_placa.value.trim().toUpperCase(), dataPagamento:o_datapag.value, obs:o_obs.value, itens});
+      placa:o_placa.value.trim().toUpperCase(), dataPagamento:o_datapag.value,
+      formaPagamento:o_forma.value, obs:o_obs.value, itens});
     toast('OC '+r.numero+' gerada.');
-    o_forn.value='';o_placa.value='';o_obs.value='';o_datapag.value='';o_tipo.value='';o_cc.value='';
+    o_forn.value='';o_placa.value='';o_obs.value='';o_datapag.value='';o_tipo.value='';o_cc.value='';o_forma.value='';
     tbItens.innerHTML=''; addItem(); recalc();
     await carregar();
     document.querySelector('.cp-tab[data-tab="minhas"]').click();
@@ -405,13 +431,40 @@ async function fechar(cotId){
   try{ await post({action:'fechar_compra',cotacaoId:cotId}); mCotar.classList.remove('show'); toast('Compra fechada.'); await carregar(); }
   catch(e){ toast('Erro: '+e.message,true); }
 }
-async function marcarPago(id){
-  const dt=prompt('Data de pagamento (dd/mm/aaaa) — deixe em branco para hoje:','');
-  try{ await post({action:'pagar',id,dataPagamento:dt||''}); toast('OC marcada como paga.'); await carregar(); }
-  catch(e){ toast('Erro: '+e.message,true); }
+function lerArquivo(f){ return new Promise((ok,err)=>{ const r=new FileReader(); r.onload=()=>ok(r.result); r.onerror=()=>err(new Error('Falha ao ler '+f.name)); r.readAsDataURL(f); }); }
+let pagarOcId=null;
+function abrirPagar(id){
+  pagarOcId=id;
+  const o=(estado.ordens||[]).find(x=>String(x.id)===String(id)); if(!o) return;
+  mpTitulo.textContent='Pagamento · OC '+o.numero;
+  mpSub.textContent=(o.fornecedor||'')+' · '+brl(Number(o.valor_total)||0);
+  mp_forma.value=o.forma_pagamento||'';
+  mp_data.value='';
+  mp_arq.value='';
+  mpNfAtual.innerHTML=o.nf_url?('NF anexada: <a class="linkish" target="_blank" rel="noopener" href="'+esc(o.nf_url)+'">'+esc(o.nf_nome||'ver')+'</a>'):'<span class="muted">Sem NF anexada.</span>';
+  mpJaPaga.style.display = o.status==='PAGA' ? 'block':'none';
+  mPagar.classList.add('show');
+}
+mpSalvar.onclick=async()=>{
+  const payloadBase={ id:pagarOcId, dataPagamento:mp_data.value, formaPagamento:mp_forma.value };
+  const arq=mp_arq.files&&mp_arq.files[0];
+  if(arq){
+    if(arq.size>8*1024*1024){ toast('Arquivo maior que 8 MB.',true); return; }
+    try{ payloadBase._arquivoNF=await lerArquivo(arq); payloadBase.nfNome=arq.name; }
+    catch(e){ toast('Erro ao ler NF: '+e.message,true); return; }
+  }
+  const jaPaga = mpJaPaga.style.display==='block';
+  const acao = jaPaga ? 'anexar_nf' : 'pagar';
+  mpSalvar.disabled=true;
+  try{ await post(Object.assign({action:acao}, payloadBase));
+    mPagar.classList.remove('show'); toast(jaPaga?'NF anexada.':'OC marcada como paga.'); await carregar();
+  }catch(e){ toast('Erro: '+e.message,true); }
+  finally{ mpSalvar.disabled=false; }
 }
 
 mcFechar.onclick=()=>mCotar.classList.remove('show');
+mpFechar.onclick=()=>mPagar.classList.remove('show');
+mPagar.onclick=e=>{ if(e.target===mPagar) mPagar.classList.remove('show'); };
 mOC.onclick=e=>{ if(e.target===mOC) mOC.classList.remove('show'); };
 mCotar.onclick=e=>{ if(e.target===mCotar) mCotar.classList.remove('show'); };
 
