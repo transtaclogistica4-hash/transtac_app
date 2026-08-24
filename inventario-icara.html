@@ -474,7 +474,7 @@
         <button class="btn btn-green" onclick="finalizarInventario()" id="btn-fin-inv">Finalizar e ajustar estoque</button>
       </div>
       <div class="tablewrap">
-        <table><thead><tr><th>Código</th><th>Mercadoria</th><th>Sistema</th><th>Eq. 1</th><th>Eq. 2</th><th>Avaria</th><th>Status</th></tr></thead>
+        <table><thead><tr><th>Código</th><th>Mercadoria</th><th>Sistema</th><th>Eq. 1</th><th>Eq. 2</th><th>Avaria 1</th><th>Avaria 2</th><th>Status</th></tr></thead>
         <tbody id="tbody-conf-inv"></tbody></table>
       </div>
     </div>
@@ -1161,14 +1161,15 @@ function renderConferencia(){
       : s==='div' ? '<span class="badge badge-low">DIVERGÊNCIA</span>'
       : '<span class="muted">pendente</span>';
     const rowcls = s==='div'?'rowdiv':(s==='ok'?'rowok':'');
-    const avTot=(it.av1||0)+(it.av2||0);
+    const cellAv = v => (v>0 ? '<span class="badge badge-low">'+v+'</span>' : (v===0 ? '0' : '—'));
     return `<tr class="${rowcls}"><td>${esc(it.codigo)}</td><td>${esc(it.nome)}</td>
       <td class="qty">${it.sistema}</td>
       <td class="qty">${it.eq1===null?'—':it.eq1}</td>
       <td class="qty">${it.eq2===null?'—':it.eq2}</td>
-      <td class="qty">${avTot>0?'<span class="badge badge-low">'+avTot+'</span>':'—'}</td>
+      <td class="qty">${cellAv(it.av1===null?null:(it.av1||0))}</td>
+      <td class="qty">${cellAv(it.av2===null?null:(it.av2||0))}</td>
       <td>${badge}</td></tr>`;
-  }).join('') || '<tr><td colspan="7" class="empty">Sem itens para mostrar.</td></tr>';
+  }).join('') || '<tr><td colspan="8" class="empty">Sem itens para mostrar.</td></tr>';
 }
 async function finalizarInventario(){
   const {div,pend}=contarStatus();
@@ -1183,7 +1184,7 @@ async function finalizarInventario(){
 }
 function cancelarInventario(){ if(confirm('Cancelar contagem neste aparelho? Os valores locais não enviados serão perdidos (o que já foi enviado continua no servidor).')){ pararPoll(); contagem=null; renderInvHome(); } }
 
-
+/* ================= RENDER GERAL ================= */
 function renderTudo(){
   renderConf();
   if(!$('view-cadastro').classList.contains('hidden')) renderCadastro();
@@ -1191,7 +1192,7 @@ function renderTudo(){
   if(!$('view-lancamento').classList.contains('hidden')){ fillDatalist(); renderMov('tbody-entradas','ENTRADA'); }
 }
 
-
+/* ================= UTIL ================= */
 function hoje(){ return new Date().toISOString().slice(0,10); }
 function baixarCSV(rows,nome){
   const csv='﻿'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
