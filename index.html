@@ -724,11 +724,10 @@
       <h3>RH</h3>
       <p>Recursos Humanos: controle de horas extras e demais rotinas do setor.</p>
     </a>
-    <a class="card mod-card disabled" data-modulo="compras" href="#" onclick="return false">
+    <a class="card mod-card" data-modulo="compras" href="compras.html" onclick="return abrirModulo('compras')">
       <span class="kicker">Módulo</span>
       <h3>Compras</h3>
-      <p>Gerenciamento de compras e requisições internas.</p>
-      <span class="badge-soon">Em breve</span>
+      <p>Requisições internas, aprovação por alçada e pedidos.</p>
     </a>
     <a class="card mod-card disabled" data-modulo="expedicao" href="#" onclick="return false">
       <span class="kicker">Módulo</span>
@@ -1457,6 +1456,7 @@
   var SCRIPT_URL_LOGIN = "https://script.google.com/macros/s/AKfycbzAfk74fdSU-JQ5Jyvw0UIq_6Wz3mViwnlWcgq33ErtWr5qmSqBfZui_Bt2FUyjqQiMpQ/exec";
   var SESSAO_KEY = "transtac_sessao_homolog_v1";
   var PERFIL_KEY = "transtac_perfil_homolog_v1";
+  var ALCADA_KEY = "transtac_alcada_homolog_v1";
   /* ===== Permissões por SETOR (coluna PERFIL/SETOR da planilha de acessos) =====
      O setor e escolhido pelo usuario no cadastro e gravado na planilha.
      A liberacao continua sendo manual (aprovacao na planilha de senhas);
@@ -1467,7 +1467,7 @@
     MANUTENCAO:     {modulos:['manutencao'],                                   telas:TELAS_MANUTENCAO},
     RH:             {modulos:['rh','manutencao','multas'],                     telas:TELAS_MANUTENCAO},
     FINANCEIRO:     {modulos:['compras'],                                      telas:[]},
-    EXPEDICAO:      {modulos:['expedicao'],                                    telas:[]},
+    EXPEDICAO:      {modulos:['expedicao','multas'],                          telas:[]},
     MOTORISTA:      {modulos:[],                                               telas:[]},
     DESENVOLVIMENTO:{modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
     CD_ICARA:       {modulos:['inventario','multas','manutencao'],             telas:TELAS_MANUTENCAO},
@@ -1578,7 +1578,7 @@
     if(!SCRIPT_URL_LOGIN){
       /* sem script de login publicado: acesso provisorio */
       if(u.toLowerCase()==='admin' && s==='transtac123'){
-        try{ sessionStorage.setItem(SESSAO_KEY,'admin'); sessionStorage.setItem(PERFIL_KEY,'ADMIN'); }catch(e){}
+        try{ sessionStorage.setItem(SESSAO_KEY,'admin'); sessionStorage.setItem(PERFIL_KEY,'ADMIN'); sessionStorage.setItem(ALCADA_KEY,'N3'); }catch(e){}
         aplicarSessao();
       } else {
         err.textContent='Usuário ou senha incorretos.'; err.style.display='block';
@@ -1599,6 +1599,7 @@
           try{
             sessionStorage.setItem(SESSAO_KEY, res.usuario || u);
             sessionStorage.setItem(PERFIL_KEY, setor);
+            sessionStorage.setItem(ALCADA_KEY, String(res.alcada||'').toUpperCase());
           }catch(e){}
           aplicarSessao();
         } else {
@@ -2422,7 +2423,7 @@
     if(!SCRIPT_URL_LOGIN){
       /* sem script de login publicado: acesso provisorio */
       if(u.toLowerCase()==='admin' && s==='transtac123'){
-        try{ sessionStorage.setItem(SESSAO_KEY,'admin'); sessionStorage.setItem(PERFIL_KEY,'ADMIN'); }catch(e){}
+        try{ sessionStorage.setItem(SESSAO_KEY,'admin'); sessionStorage.setItem(PERFIL_KEY,'ADMIN'); sessionStorage.setItem(ALCADA_KEY,'N3'); }catch(e){}
         aplicarSessao();
       } else {
         err.textContent='Usuário ou senha incorretos.'; err.style.display='block';
@@ -2443,6 +2444,7 @@
           try{
             sessionStorage.setItem(SESSAO_KEY, res.usuario || u);
             sessionStorage.setItem(PERFIL_KEY, setor);
+            sessionStorage.setItem(ALCADA_KEY, String(res.alcada||'').toUpperCase());
           }catch(e){}
           aplicarSessao();
         } else {
