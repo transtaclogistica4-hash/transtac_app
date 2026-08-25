@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<!-- TRANSTAC PREVENTIVA | build v1 | pagina=preventiva -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0c">
+<title>Manutenção Preventiva · TRANSTAC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="multas.css?v=10">
+<style>
+  .pv-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 4px;border-bottom:1px solid var(--border);padding-bottom:10px;align-items:center;}
+  .pv-tab{background:var(--panel-2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .pv-tab.active{background:var(--accent);color:#14171A;border-color:var(--accent);}
+  .pv-tab.soon{opacity:.5;cursor:default;}
+  .pv-panel{display:none;margin-top:16px;}
+  .pv-panel.active{display:block;}
+  .pv-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:820px){ .pv-grid{grid-template-columns:1fr 1fr;} }
+  @media(max-width:520px){ .pv-grid{grid-template-columns:1fr;} }
+  .pv-field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;}
+  .pv-field input,.pv-field select,.pv-field textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13.5px;font-family:inherit;}
+  .pv-field input[readonly]{color:var(--muted);}
+  .calc-box{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;}
+  .calc-box b{color:var(--text);}
+  .st{font-size:11.5px;padding:2px 10px;border-radius:10px;font-weight:700;white-space:nowrap;}
+  .st.VENCIDO{background:rgba(248,113,113,.18);color:var(--danger);}
+  .st.ATENCAO{background:rgba(251,191,36,.18);color:var(--warn);}
+  .st.OK{background:rgba(34,197,94,.15);color:var(--ok);}
+  .filtro-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+</style>
+</head>
+<body>
+<div id="splash">
+  <img class="splash-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="splash-bar"><i></i></div>
+  <div class="splash-txt">Carregando</div>
+</div>
+<script>setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove();},6000);</script>
+<header></header>
+
+<main>
+  <div class="kpi-grid" id="kpis" style="margin-top:20px"></div>
+
+  <div class="pv-tabs" id="pvTabs">
+    <button class="pv-tab active" data-tab="prev">Preventiva</button>
+    <button class="pv-tab soon" disabled title="Em breve">Pneus NV</button>
+    <button class="pv-tab soon" disabled title="Em breve">Pneus Recap.</button>
+    <button class="pv-tab soon" disabled title="Em breve">Tacógrafo</button>
+    <button class="pv-tab soon" disabled title="Em breve">Lavação</button>
+    <button class="pv-tab soon" disabled title="Em breve">Recapadoras</button>
+    <button class="reload" id="btnReload" style="margin-left:auto">Atualizar</button>
+  </div>
+
+  <section class="pv-panel active" data-panel="prev">
+    <div class="card">
+      <div class="route-name" id="formTitulo">Nova preventiva</div>
+      <div class="pv-grid" style="margin-top:8px">
+        <div class="pv-field"><label>Placa *</label><input id="p_placa" list="dlPlacas" placeholder="ABC1D23"></div>
+        <div class="pv-field"><label>Modelo</label><input id="p_modelo" placeholder="preenche pela placa"></div>
+        <div class="pv-field"><label>Alocado (unidade)</label><input id="p_aloc"></div>
+        <div class="pv-field"><label>Fornecedor</label><input id="p_forn" list="dlForn"></div>
+        <div class="pv-field"><label>Caract. / Tipo</label>
+          <select id="p_caract"><option value="">Selecione...</option>
+            <option>TRUCK</option><option>3/4 TON</option><option>UTILITÁRIO</option><option>PASSEIO</option><option>ADM</option>
+            <option>OLEO DO MOTOR E FILTROS</option><option>OLEO DA CAIXA E DIFERENCIAL</option>
+            <option>NOVO 2ºREVISÃO</option><option>NOVO 3ºREVISÃO</option>
+          </select>
+        </div>
+        <div class="pv-field"><label>Data de entrada</label><input type="date" id="p_data"></div>
+        <div class="pv-field"><label>Km última troca *</label><input id="p_kmult" type="number" min="0" step="1"></div>
+        <div class="pv-field"><label>Km plano de troca *</label><input id="p_kmplano" type="number" min="0" step="1" placeholder="ex.: 30000"></div>
+        <div class="pv-field"><label>Km atual *</label><input id="p_kmatual" type="number" min="0" step="1"></div>
+        <div class="pv-field" style="grid-column:1/-1"><label>Observação</label><input id="p_obs" placeholder="ex.: PROXIMA TROCA, TROCAR OLEO DA CAIXA"></div>
+      </div>
+      <div class="calc-box">
+        <span>Km próxima troca: <b id="c_prox">—</b></span>
+        <span>Km vencido/faltando: <b id="c_venc">—</b></span>
+        <span>Status: <span class="st OK" id="c_stat">—</span></span>
+      </div>
+      <div class="modal-actions" style="margin-top:10px">
+        <button class="ghost-btn" id="btnLimpar" style="display:none">Cancelar edição</button>
+        <button class="save-btn" id="btnSalvar">Salvar preventiva</button>
+      </div>
+    </div>
+
+    <div class="section-title">Preventivas cadastradas</div>
+    <div class="filtro-row">
+      <input id="fBusca" placeholder="Buscar placa, modelo..." style="flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13px;">
+      <select id="fStatus" style="padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13px;">
+        <option value="">Todos os status</option><option value="VENCIDO">Vencido</option><option value="ATENÇÃO">Atenção</option><option value="OK">Em dia</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Placa</th><th>Modelo</th><th>Unidade</th><th>Fornecedor</th><th class="num">Últ.</th><th class="num">Plano</th><th class="num">Próx.</th><th class="num">Atual</th><th class="num">Venc.</th><th>Caract.</th><th>Status</th><th></th></tr></thead>
+      <tbody id="tbPrev"></tbody>
+    </table><div class="empty" id="vazioPrev" style="display:none">Nenhuma preventiva cadastrada.</div></div>
+  </section>
+</main>
+
+<datalist id="dlPlacas"></datalist>
+<datalist id="dlForn"></datalist>
+
+<script src="multas-app.js?v=10"></script>
+<script>
+const SCRIPT_URL_PREV = '__COLE_A_URL_DO_APPS_SCRIPT_DE_PREVENTIVA__';
+const LIMITE_ATENCAO = 2000;
+
+/* base placa -> modelo / unidade (extraida da planilha Preventiva_base) */
+const FROTA_PREV = {
+  'MHX9E42':['MERCEDES 710','Blumenau'],'RFR0J72':['FIAT/FIORINO ENDURANCE','Tubarão'],
+  'EFX8F56':['FIORINO HD WK','Criciuma'],'MLW7H26':['VW 8.160 DRC','Criciuma'],
+  'MLZ0E33':['FORD/CARGO 1119','Criciuma'],'QID7F05':['VW 8.160 DRC 4x2','Criciuma'],
+  'QIR4A73':['FORD/CARGO 1119','Criciuma'],'TPS0D14':['HR','Criciuma'],
+  'RBD9A22':['MERCEDES / ATEGO2426','Curitiba'],'RDS7B12':['VW 24.280 CRM 6X2','Curitiba'],
+  'PLU4G47':['VW 24.280 CRM 6X2','Itajai'],'QHO5J49':['VW 10.160 DRC 4X2','Joinville'],
+  'ISH2A69':['MERCEDES 710','Tubarão'],'MIS5H27':['MERCEDES 710','Tubarão'],
+  'GDD4J40':['M.BENZ/ATEGO 2430','Tubarão'],'MEK8F00':['CORSA WIND','Tubarão'],
+  'MMB6D44':['VW 24.280 CONSTELLATION','Tubarão'],'MMB7I20':['M.BENZ/ACCELO 1016','Tubarão'],
+  'QJV4E36':['VW 11.180 DRC 4X2','Tubarão'],'QRM9C65':['M.BENZ/ATEGO 2430','Tubarão'],
+  'RAA2E77':['M.BENZ/ATEGO 2426 CE','Tubarão'],'RAJ7B50':['VW 9.170 DRC 4X2','Tubarão'],
+  'RDV3G15':['BONGO','Tubarão'],'REA6G65':['VW NOVA SAVEIRO RB MBVS','Tubarão'],
+  'RLB6E83':['VW 24.280 CRM 6X2','Tubarão'],'RLD2B13':['VW 24.280 CRM 6X2','Tubarão'],
+  'RMD6G25':['FIORINO HD WK','Tubarão'],'RMS1B82':['FIAT/FIORINO ENDURANCE','Tubarão'],
+  'RMZ0C93':['FIAT/FIORINO ENDURANCE','Tubarão'],'RMZ0D07':['FIAT/FIORINO ENDURANCE','Tubarão'],
+  'RMZ0D10':['FIAT/FIORINO ENDURANCE','Tubarão'],'RXU3I20':['M.BENZ/ATEGO 2426 CE','Tubarão'],
+  'RXU6H46':['M.BENZ/ATEGO 2430','Tubarão'],'RXV6D60':['M.BENZ/ATEGO 2426 CE','Tubarão'],
+  'RYF4J27':['M.BENZ/ATEGO 2426 CE','Tubarão'],'RYF5E77':['M.BENZ/ATEGO 2426 CE','Tubarão'],
+  'SXJ7H57':['KWID OUTSIDE 2','Tubarão'],'SXP0G64':['I/PEUGEOT 2008 ALLU T200','Tubarão'],
+  'TPW6J49':['M.BENZ/ATEGO 2439','Tubarão'],'TQC4A61':['FOTON AUMARK S1217A','Tubarão'],
+  'RDU2C00':['PORSCHE MACAN F','Tubarão']
+};
+
+montarHeader('MANUTENÇÃO PREVENTIVA','Cronograma de trocas por km, com alerta de vencimento.','index.html');
+
+function normPlaca(p){ return String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+let dados=[], editandoId=null;
+
+/* datalists */
+dlPlacas.innerHTML = Object.keys(FROTA_PREV).map(p=>'<option value="'+p+'">').join('');
+
+/* placa -> modelo/unidade */
+p_placa.addEventListener('input', ()=>{
+  const f = FROTA_PREV[normPlaca(p_placa.value)];
+  if(f){ if(!p_modelo.value) p_modelo.value=f[0]; if(!p_aloc.value) p_aloc.value=f[1]; }
+});
+
+/* recalculo ao vivo */
+function recalc(){
+  const u=Number(p_kmult.value)||0, pl=Number(p_kmplano.value)||0, a=Number(p_kmatual.value)||0;
+  const prox=u+pl, venc=a-prox;
+  c_prox.textContent = prox?prox.toLocaleString('pt-BR'):'—';
+  let st='OK', lbl='Em dia';
+  if(a>0&&prox>0){ if(a>=prox){st='VENCIDO';lbl='VENCIDO';} else if(prox-a<=LIMITE_ATENCAO){st='ATENCAO';lbl='ATENÇÃO';} }
+  c_venc.textContent = prox? (venc>=0? '+'+venc.toLocaleString('pt-BR')+' (passou)' : (Math.abs(venc)).toLocaleString('pt-BR')+' faltando') : '—';
+  c_stat.className='st '+st; c_stat.textContent=lbl;
+}
+[p_kmult,p_kmplano,p_kmatual].forEach(el=>el.addEventListener('input',recalc));
+
+async function carregar(){
+  try{ const r=await fetch(SCRIPT_URL_PREV,{method:'GET'}); const j=await r.json(); dados=j.preventivas||[]; }
+  catch(e){ toast('Erro ao carregar: '+e.message,true); }
+  dlForn.innerHTML=[...new Set(dados.map(d=>d.fornecedor).filter(Boolean))].map(f=>'<option value="'+esc(f)+'">').join('');
+  render();
+}
+
+function statusDe(d){
+  const a=Number(String(d.km_atual).replace(/\./g,''))||0, prox=Number(String(d.km_proxima).replace(/\./g,''))||0;
+  if(a>0&&prox>0){ if(a>=prox) return 'VENCIDO'; if(prox-a<=LIMITE_ATENCAO) return 'ATENÇÃO'; }
+  return 'OK';
+}
+function render(){
+  const venc=dados.filter(d=>statusDe(d)==='VENCIDO').length;
+  const at=dados.filter(d=>statusDe(d)==='ATENÇÃO').length;
+  kpis.innerHTML=[
+    ['danger','Vencidas',venc,'troca em atraso'],
+    ['warn','Atenção',at,'próximas do limite'],
+    ['ok','Em dia',dados.length-venc-at,'dentro do prazo'],
+    ['accent','Total da frota',dados.length,'veículos monitorados']
+  ].map(([c,l,v,s])=>`<div class="kpi ${c}"><div class="kpi-label">${l}</div><div class="kpi-value">${v}</div><div class="kpi-sub">${s}</div></div>`).join('');
+
+  const bq=(fBusca.value||'').toLowerCase(), fs=fStatus.value;
+  const lista=dados.filter(d=>{
+    const s=statusDe(d);
+    if(fs && s!==fs) return false;
+    if(bq && !((d.placa+' '+d.modelo+' '+d.alocado).toLowerCase().includes(bq))) return false;
+    return true;
+  });
+  tbPrev.innerHTML=lista.map(d=>{
+    const s=statusDe(d), cls=s==='ATENÇÃO'?'ATENCAO':s;
+    return `<tr>
+      <td class="mono"><b>${esc(d.placa)}</b></td><td>${esc(d.modelo||'')}</td><td>${esc(d.alocado||'')}</td>
+      <td>${esc(d.fornecedor||'')}</td>
+      <td class="num">${esc(String(d.km_ultima||''))}</td><td class="num">${esc(String(d.km_plano||''))}</td>
+      <td class="num">${esc(String(d.km_proxima||''))}</td><td class="num">${esc(String(d.km_atual||''))}</td>
+      <td class="num">${esc(String(d.km_vencido||''))}</td><td>${esc(d.caract||'')}</td>
+      <td><span class="st ${cls}">${s==='OK'?'Em dia':s}</span></td>
+      <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-ed="${esc(d.id)}">Editar</button></td>
+    </tr>`;
+  }).join('');
+  vazioPrev.style.display=lista.length?'none':'block';
+  tbPrev.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editar(b.dataset.ed));
+}
+fBusca.addEventListener('input',render); fStatus.addEventListener('change',render);
+
+function editar(id){
+  const d=dados.find(x=>String(x.id)===String(id)); if(!d) return;
+  editandoId=id; formTitulo.textContent='Editar preventiva · '+d.placa;
+  p_placa.value=d.placa; p_modelo.value=d.modelo||''; p_aloc.value=d.alocado||'';
+  p_forn.value=d.fornecedor||''; p_caract.value=d.caract||''; p_obs.value=d.km_atualizado||'';
+  p_kmult.value=String(d.km_ultima||'').replace(/\./g,''); p_kmplano.value=String(d.km_plano||'').replace(/\./g,'');
+  p_kmatual.value=String(d.km_atual||'').replace(/\./g,'');
+  btnLimpar.style.display='inline-block'; btnSalvar.textContent='Salvar alterações';
+  recalc(); window.scrollTo(0,0);
+}
+btnLimpar.onclick=()=>{ editandoId=null; formTitulo.textContent='Nova preventiva';
+  ['p_placa','p_modelo','p_aloc','p_forn','p_obs','p_kmult','p_kmplano','p_kmatual'].forEach(id=>document.getElementById(id).value='');
+  p_caract.value=''; p_data.value=''; btnLimpar.style.display='none'; btnSalvar.textContent='Salvar preventiva'; recalc(); };
+
+btnSalvar.onclick=async()=>{
+  if(!p_placa.value.trim()){ toast('Informe a placa.',true); return; }
+  if(!p_kmult.value||!p_kmplano.value||!p_kmatual.value){ toast('Preencha os km (última, plano e atual).',true); return; }
+  if(SCRIPT_URL_PREV.indexOf('__')===0){ alert('Configure a URL do Apps Script de Preventiva no preventiva.html.'); return; }
+  btnSalvar.disabled=true;
+  try{
+    await fetch(SCRIPT_URL_PREV,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({
+      action:'salvar_preventiva', id:editandoId||'',
+      placa:normPlaca(p_placa.value), modelo:p_modelo.value, alocado:p_aloc.value, fornecedor:p_forn.value,
+      caract:p_caract.value, data_entrada:p_data.value,
+      km_ultima:p_kmult.value, km_plano:p_kmplano.value, km_atual:p_kmatual.value, km_atualizado:p_obs.value
+    })}).then(r=>r.json()).then(j=>{ if(!j.ok) throw new Error(j.erro||'Erro'); });
+    toast(editandoId?'Preventiva atualizada.':'Preventiva cadastrada.');
+    btnLimpar.onclick(); await carregar();
+  }catch(e){ toast('Erro: '+e.message,true); }
+  finally{ btnSalvar.disabled=false; }
+};
+
+btnReload.onclick=carregar;
+if(SCRIPT_URL_PREV.indexOf('__')===0){
+  const a=document.createElement('div'); a.className='hint';
+  a.style.cssText='background:rgba(248,113,113,.12);border:1px solid var(--danger);margin:14px 0';
+  a.innerHTML='<b>Módulo não conectado.</b> Cole a URL do Apps Script de Preventiva em <b>SCRIPT_URL_PREV</b> no preventiva.html.';
+  document.querySelector('main').prepend(a);
+}
+carregar();
+</script>
+</body>
+</html>
