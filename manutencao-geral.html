@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<!-- TRANSTAC MANUTENÇÃO GERAL | build v1 -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0c">
+<title>Manutenção Geral · TRANSTAC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="multas.css?v=10">
+<style>
+  .mg-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px;}
+  @media(max-width:820px){ .mg-grid{grid-template-columns:1fr 1fr;} }
+  @media(max-width:520px){ .mg-grid{grid-template-columns:1fr;} }
+  .mg-field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;}
+  .mg-field input,.mg-field select,.mg-field textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13.5px;font-family:inherit;}
+  .mg-field textarea{min-height:54px;resize:vertical;}
+  .filtro-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+  .oc-badge{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-weight:700;}
+</style>
+</head>
+<body>
+<div id="splash"><img class="splash-logo" src="logo-transtac.png" alt="TRANSTAC"><div class="splash-bar"><i></i></div><div class="splash-txt">Carregando</div></div>
+<script>setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove();},6000);</script>
+<header></header>
+
+<main>
+  <div class="kpi-grid" id="kpis" style="margin-top:20px"></div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="route-name" id="formTitulo">Nova ocorrência de manutenção</div>
+    <div class="mg-grid">
+      <div class="mg-field"><label>Placa *</label><input id="m_placa" list="dlPlacas" placeholder="ABC1D23"></div>
+      <div class="mg-field"><label>Modelo</label><input id="m_modelo" placeholder="preenche pela placa"></div>
+      <div class="mg-field"><label>Fornecedor / Prestador</label><input id="m_forn" list="dlForn"></div>
+      <div class="mg-field"><label>Ocorrência *</label>
+        <select id="m_ocor"><option value="">Selecione...</option>
+          <option>CORRETIVA</option><option>PREVENTIVA</option><option>COMPRA</option><option>SOCORRO</option>
+          <option>CHECKLIST</option><option>SINISTRO</option><option>LAVAÇÃO</option><option>BORRACHARIA</option>
+          <option>TAG</option><option>CARTÃO</option><option>SEGURO</option><option>VISTORIA</option>
+          <option>INSTALAÇÃO</option><option>ASSINATURA</option><option>TACOGRAFO</option><option>CADASTRO</option><option>OUTROS</option>
+        </select>
+      </div>
+      <div class="mg-field"><label>Status</label><input id="m_status" placeholder="ex.: REALIZAR ORÇAMENTO PARA APROVAÇÃO"></div>
+      <div class="mg-field"><label>Nível de serviço</label><input id="m_nivel" placeholder="ex.: 100%"></div>
+      <div class="mg-field" style="grid-column:1/-1"><label>Plano de ação / Ocorrência (descrição)</label><textarea id="m_plano"></textarea></div>
+      <div class="mg-field"><label>Data entrada</label><input type="date" id="m_dtent"></div>
+      <div class="mg-field"><label>Previsão de entrega</label><input type="date" id="m_dtprev"></div>
+      <div class="mg-field"><label>Data saída</label><input type="date" id="m_dtsai"></div>
+      <div class="mg-field"><label>Nº OC</label><input id="m_oc"></div>
+      <div class="mg-field"><label>Total R$</label><input id="m_total" type="number" step="0.01" min="0" placeholder="0,00"></div>
+      <div class="mg-field" style="grid-column:1/-1"><label>Observações</label><textarea id="m_obs"></textarea></div>
+    </div>
+    <div class="modal-actions" style="margin-top:10px">
+      <button class="ghost-btn" id="btnCancelar" style="display:none">Cancelar edição</button>
+      <button class="save-btn" id="btnSalvar">Salvar ocorrência</button>
+    </div>
+  </div>
+
+  <div class="section-title">Ocorrências registradas</div>
+  <div class="filtro-row">
+    <input id="fBusca" placeholder="Buscar placa, prestador, ocorrência..." style="flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13px;">
+    <select id="fOcor" style="padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13px;">
+      <option value="">Todas as ocorrências</option>
+    </select>
+  </div>
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Placa</th><th>Modelo</th><th>Prestador</th><th>Ocorrência</th><th>Descrição</th><th>Status</th><th>Entrada</th><th>Saída</th><th>OC</th><th class="num">Total</th><th></th></tr></thead>
+    <tbody id="tb"></tbody></table><div class="empty" id="vazio" style="display:none">Nenhuma ocorrência.</div></div>
+</main>
+
+<datalist id="dlPlacas"></datalist>
+<datalist id="dlForn"></datalist>
+
+<script src="multas-app.js?v=10"></script>
+<script>
+const SCRIPT_URL_MG = '__COLE_A_URL_DO_APPS_SCRIPT_DE_MANUTENCAO_GERAL__';
+
+const FROTA_PREV = {
+  'MHX9E42':['MERCEDES 710'],'RFR0J72':['FIAT/FIORINO ENDURANCE'],'EFX8F56':['FIORINO HD WK'],
+  'MLW7H26':['VW 8.160 DRC'],'MLZ0E33':['FORD/CARGO 1119'],'QID7F05':['VW 8.160 DRC 4x2'],
+  'QIR4A73':['FORD/CARGO 1119'],'TPS0D14':['HR'],'RBD9A22':['MERCEDES / ATEGO2426'],
+  'RDS7B12':['VW 24.280 CRM 6X2'],'PLU4G47':['VW 24.280 CRM 6X2'],'QHO5J49':['VW 10.160 DRC 4X2'],
+  'ISH2A69':['MERCEDES 710'],'MIS5H27':['MERCEDES 710'],'GDD4J40':['M.BENZ/ATEGO 2430'],
+  'MEK8F00':['CORSA WIND'],'MMB6D44':['VW 24.280 CONSTELLATION'],'MMB7I20':['M.BENZ/ACCELO 1016'],
+  'QJV4E36':['VW 11.180 DRC 4X2'],'QRM9C65':['M.BENZ/ATEGO 2430'],'RAA2E77':['M.BENZ/ATEGO 2426 CE'],
+  'RAJ7B50':['VW 9.170 DRC 4X2'],'RDV3G15':['BONGO'],'REA6G65':['VW NOVA SAVEIRO'],
+  'RLB6E83':['VW 24.280 CRM 6X2'],'RLD2B13':['VW 24.280 CRM 6X2'],'RMD6G25':['FIORINO HD WK'],
+  'RMS1B82':['FIAT/FIORINO ENDURANCE'],'RMZ0C93':['FIAT/FIORINO ENDURANCE'],'RMZ0D07':['FIAT/FIORINO ENDURANCE'],
+  'RMZ0D10':['FIAT/FIORINO ENDURANCE'],'RXU3I20':['M.BENZ/ATEGO 2426 CE'],'RXU6H46':['M.BENZ/ATEGO 2430'],
+  'RXV6D60':['M.BENZ/ATEGO 2426 CE'],'RYF4J27':['M.BENZ/ATEGO 2426 CE'],'RYF5E77':['M.BENZ/ATEGO 2426 CE'],
+  'RYV4I19':['ATEGO 2426'],'SXJ7H57':['KWID'],'TPW6J49':['M.BENZ/ATEGO 2439'],'TQC4A61':['FOTON AUMARK S1217A']
+};
+
+montarHeader('MANUTENÇÃO GERAL','Ordens de serviço da frota: prestador, ocorrência, status e custo.','index.html');
+function normPlaca(p){ return String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+let dados=[], editId=null;
+
+dlPlacas.innerHTML = Object.keys(FROTA_PREV).map(p=>'<option value="'+p+'">').join('');
+m_placa.addEventListener('input',()=>{ const f=FROTA_PREV[normPlaca(m_placa.value)]; if(f && !m_modelo.value) m_modelo.value=f[0]; });
+
+async function carregar(){
+  try{ const r=await fetch(SCRIPT_URL_MG,{method:'GET'}); const j=await r.json(); dados=j.registros||[]; }
+  catch(e){ toast('Erro ao carregar: '+e.message,true); }
+  dlForn.innerHTML=[...new Set(dados.map(d=>d.fornecedor).filter(Boolean))].map(f=>'<option value="'+esc(f)+'">').join('');
+  // filtro de ocorrencias
+  const ocs=[...new Set(dados.map(d=>d.ocorrencia).filter(Boolean))].sort();
+  fOcor.innerHTML='<option value="">Todas as ocorrências</option>'+ocs.map(o=>'<option>'+esc(o)+'</option>').join('');
+  render();
+}
+
+function render(){
+  const abertas=dados.filter(d=>!/REALIZAD|100%/i.test(d.status+' '+d.nivel)).length;
+  const total=dados.reduce((s,d)=>s+(Number(String(d.total).replace(/[^\d,.-]/g,'').replace('.','').replace(',','.'))||0),0);
+  kpis.innerHTML=[
+    ['accent','Total de ocorrências',dados.length,'na planilha'],
+    ['warn','Em aberto',abertas,'não concluídas'],
+    ['ok','Concluídas',dados.length-abertas,'serviço realizado'],
+    ['info','Custo total',brl(total),'somatório R$']
+  ].map(([c,l,v,s])=>`<div class="kpi ${c}"><div class="kpi-label">${l}</div><div class="kpi-value">${v}</div><div class="kpi-sub">${s}</div></div>`).join('');
+
+  const bq=(fBusca.value||'').toLowerCase(), fo=fOcor.value;
+  const lista=dados.filter(d=>{
+    if(fo && d.ocorrencia!==fo) return false;
+    if(bq && !((d.placa+' '+d.modelo+' '+d.fornecedor+' '+d.ocorrencia+' '+d.plano).toLowerCase().includes(bq))) return false;
+    return true;
+  }).slice().reverse();
+  tb.innerHTML=lista.map(d=>`<tr>
+    <td class="mono"><b>${esc(d.placa)}</b></td><td>${esc(d.modelo||'')}</td><td>${esc(d.fornecedor||'')}</td>
+    <td><span class="oc-badge">${esc(d.ocorrencia||'')}</span></td>
+    <td>${esc((d.plano||'').slice(0,60))}${(d.plano||'').length>60?'…':''}</td>
+    <td>${esc((d.status||'').slice(0,32))}</td>
+    <td class="mono">${esc(d.data_entrada||'')}</td><td class="mono">${esc(d.data_saida||'')}</td>
+    <td class="mono">${esc(d.oc||'')}</td><td class="num">${esc(String(d.total||''))}</td>
+    <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-ed="${esc(d.id)}">Editar</button></td>
+  </tr>`).join('');
+  vazio.style.display=lista.length?'none':'block';
+  tb.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editar(b.dataset.ed));
+}
+fBusca.addEventListener('input',render); fOcor.addEventListener('change',render);
+
+function editar(id){
+  const d=dados.find(x=>String(x.id)===String(id)); if(!d) return; editId=id;
+  formTitulo.textContent='Editar · '+d.placa+' · '+d.ocorrencia;
+  m_placa.value=d.placa||''; m_modelo.value=d.modelo||''; m_forn.value=d.fornecedor||'';
+  m_ocor.value=d.ocorrencia||''; m_status.value=d.status||''; m_nivel.value=d.nivel||'';
+  m_plano.value=d.plano||''; m_oc.value=d.oc||''; m_total.value=String(d.total||'').replace(/[^\d,.-]/g,'').replace('.','').replace(',','.');
+  m_obs.value=d.obs||'';
+  btnCancelar.style.display='inline-block'; btnSalvar.textContent='Salvar alterações'; window.scrollTo(0,0);
+}
+btnCancelar.onclick=()=>{ editId=null; formTitulo.textContent='Nova ocorrência de manutenção';
+  ['m_placa','m_modelo','m_forn','m_status','m_nivel','m_plano','m_dtent','m_dtprev','m_dtsai','m_oc','m_total','m_obs'].forEach(id=>document.getElementById(id).value='');
+  m_ocor.value=''; btnCancelar.style.display='none'; btnSalvar.textContent='Salvar ocorrência'; };
+
+btnSalvar.onclick=async()=>{
+  if(!m_placa.value.trim()){ toast('Placa é obrigatória.',true); return; }
+  if(!m_ocor.value){ toast('Selecione a ocorrência.',true); return; }
+  if(SCRIPT_URL_MG.indexOf('__')===0){ alert('Configure a URL do Apps Script de Manutenção Geral.'); return; }
+  btnSalvar.disabled=true;
+  try{
+    await fetch(SCRIPT_URL_MG,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({
+      action:'salvar_mg', id:editId||'', placa:normPlaca(m_placa.value), modelo:m_modelo.value, fornecedor:m_forn.value,
+      ocorrencia:m_ocor.value, status:m_status.value, plano:m_plano.value, nivel:m_nivel.value,
+      data_entrada:m_dtent.value, previsao:m_dtprev.value, data_saida:m_dtsai.value,
+      oc:m_oc.value, total:m_total.value, obs:m_obs.value
+    })}).then(r=>r.json()).then(j=>{ if(!j.ok) throw new Error(j.erro||'Erro'); });
+    toast(editId?'Ocorrência atualizada.':'Ocorrência cadastrada.'); btnCancelar.onclick(); await carregar();
+  }catch(e){ toast('Erro: '+e.message,true); }
+  finally{ btnSalvar.disabled=false; }
+};
+
+if(SCRIPT_URL_MG.indexOf('__')===0){
+  const a=document.createElement('div'); a.className='hint';
+  a.style.cssText='background:rgba(248,113,113,.12);border:1px solid var(--danger);margin:14px 0';
+  a.innerHTML='<b>Módulo não conectado.</b> Cole a URL do Apps Script em <b>SCRIPT_URL_MG</b> no manutencao-geral.html.';
+  document.querySelector('main').prepend(a);
+}
+carregar();
+</script>
+</body>
+</html>
