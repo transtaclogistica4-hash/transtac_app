@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- TRANSTAC PREVENTIVA | build v2 | pagina=preventiva -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -209,7 +210,7 @@
 
 <script src="multas-app.js?v=10"></script>
 <script>
-const SCRIPT_URL_PREV = 'https://script.google.com/macros/s/AKfycbyvzBHNOfDE0fLOcRWPLit_uwmp_sA_g9vNsxLLg6MnqoAxJ9Mtd3rZKo7-lFOajcUr/exec';
+const SCRIPT_URL_PREV = '__COLE_A_URL_DO_APPS_SCRIPT_DE_PREVENTIVA__';
 const LIMITE_ATENCAO = 2000;
 
 /* base placa -> modelo / unidade (extraida da planilha Preventiva_base) */
@@ -449,6 +450,20 @@ function editLv(id){ const r=extras.lavacao.find(x=>String(x.id)===String(id)); 
   for(let i=0;i<12;i++){ const vl=c[b+5+i*2]; rows[i].querySelector('.lv-valor').value=vl!=null&&vl!==''?String(vl).replace(',','.'):''; /* data fica em texto na planilha, nao setavel em input date */ }
   lvCancelar.style.display='inline-block'; window.scrollTo(0,0); }
 lvCancelar.onclick=()=>{ edLv=null; ['lv_placa','lv_modelo','lv_aloc','lv_caract'].forEach(id=>document.getElementById(id).value=''); lvPares.querySelectorAll('input').forEach(i=>i.value=''); lvCancelar.style.display='none'; };
+
+/* ---- troca de abas ---- */
+document.querySelectorAll('.pv-tab').forEach(t=>{
+  if(!t.dataset.tab) return;               // pula o botao "Atualizar"
+  t.addEventListener('click', ()=>{
+    if(t.classList.contains('soon')) return;
+    document.querySelectorAll('.pv-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.pv-panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const alvo=document.querySelector('.pv-panel[data-panel="'+t.dataset.tab+'"]');
+    if(alvo) alvo.classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
 
 btnReload.onclick=carregar;
 if(SCRIPT_URL_PREV.indexOf('__')===0){
