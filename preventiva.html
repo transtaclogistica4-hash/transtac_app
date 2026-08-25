@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TRANSTAC PREVENTIVA | build v1 | pagina=preventiva -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -44,10 +43,10 @@
 
   <div class="pv-tabs" id="pvTabs">
     <button class="pv-tab active" data-tab="prev">Preventiva</button>
-    <button class="pv-tab soon" disabled title="Em breve">Pneus NV</button>
-    <button class="pv-tab soon" disabled title="Em breve">Pneus Recap.</button>
-    <button class="pv-tab soon" disabled title="Em breve">Tacógrafo</button>
-    <button class="pv-tab soon" disabled title="Em breve">Lavação</button>
+    <button class="pv-tab" data-tab="pneusnv">Pneus NV</button>
+    <button class="pv-tab" data-tab="pneusrecap">Pneus Recap.</button>
+    <button class="pv-tab" data-tab="tacografo">Tacógrafo</button>
+    <button class="pv-tab" data-tab="lavacao">Lavação</button>
     <button class="pv-tab soon" disabled title="Em breve">Recapadoras</button>
     <button class="reload" id="btnReload" style="margin-left:auto">Atualizar</button>
   </div>
@@ -96,6 +95,113 @@
       <tbody id="tbPrev"></tbody>
     </table><div class="empty" id="vazioPrev" style="display:none">Nenhuma preventiva cadastrada.</div></div>
   </section>
+
+  <!-- ===== PNEUS NV ===== -->
+  <section class="pv-panel" data-panel="pneusnv">
+    <div class="card">
+      <div class="route-name" id="nvTitulo">Movimentação de pneus novos</div>
+      <div class="pv-grid" style="margin-top:8px">
+        <div class="pv-field"><label>Placa *</label><input id="nv_placa" list="dlPlacas"></div>
+        <div class="pv-field"><label>Modelo</label><input id="nv_modelo"></div>
+        <div class="pv-field"><label>Alocado</label><input id="nv_aloc"></div>
+        <div class="pv-field"><label>Caract.</label><input id="nv_caract"></div>
+        <div class="pv-field"><label>Quant.</label><input id="nv_quant" type="number" min="0"></div>
+        <div class="pv-field"><label>Marca</label><input id="nv_marca"></div>
+        <div class="pv-field"><label>Medida</label><input id="nv_medida" placeholder="ex.: 275/80 R22.5"></div>
+        <div class="pv-field"><label>Marca de fogo</label><input id="nv_fogo"></div>
+        <div class="pv-field"><label>Data montagem</label><input type="date" id="nv_data"></div>
+        <div class="pv-field"><label>Km montagem</label><input id="nv_km" type="number" min="0"></div>
+        <div class="pv-field"><label>Km próximo alinhamento</label><input id="nv_alinh" type="number" min="0"></div>
+        <div class="pv-field"><label>Km rodado</label><input id="nv_rodado" type="number" min="0"></div>
+        <div class="pv-field" style="grid-column:1/-1"><label>Obs.</label><input id="nv_obs"></div>
+      </div>
+      <div class="modal-actions" style="margin-top:10px">
+        <button class="ghost-btn" id="nvCancelar" style="display:none">Cancelar edição</button>
+        <button class="save-btn" id="nvSalvar">Salvar</button>
+      </div>
+    </div>
+    <div class="section-title">Pneus novos cadastrados</div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Placa</th><th>Modelo</th><th>Quant.</th><th>Marca</th><th>Medida</th><th>Marca fogo</th><th>Data mont.</th><th>Km mont.</th><th>Próx. alinh.</th><th></th></tr></thead>
+      <tbody id="tbNv"></tbody></table><div class="empty" id="vazioNv" style="display:none">Nenhum registro.</div></div>
+  </section>
+
+  <!-- ===== PNEUS RECAP ===== -->
+  <section class="pv-panel" data-panel="pneusrecap">
+    <div class="card">
+      <div class="route-name" id="rcTitulo">Movimentação de pneus recapados</div>
+      <div class="pv-grid" style="margin-top:8px">
+        <div class="pv-field"><label>Placa *</label><input id="rc_placa" list="dlPlacas"></div>
+        <div class="pv-field"><label>Modelo</label><input id="rc_modelo"></div>
+        <div class="pv-field"><label>Alocado</label><input id="rc_aloc"></div>
+        <div class="pv-field"><label>Caract.</label><input id="rc_caract"></div>
+        <div class="pv-field"><label>Quant.</label><input id="rc_quant" type="number" min="0"></div>
+        <div class="pv-field"><label>Marca</label><input id="rc_marca"></div>
+        <div class="pv-field"><label>Medida</label><input id="rc_medida"></div>
+        <div class="pv-field"><label>Marca de fogo</label><input id="rc_fogo"></div>
+        <div class="pv-field"><label>Data montagem</label><input type="date" id="rc_data"></div>
+        <div class="pv-field"><label>Km montagem</label><input id="rc_km" type="number" min="0"></div>
+        <div class="pv-field" style="grid-column:1/-1"><label>Obs.</label><input id="rc_obs"></div>
+      </div>
+      <div class="modal-actions" style="margin-top:10px">
+        <button class="ghost-btn" id="rcCancelar" style="display:none">Cancelar edição</button>
+        <button class="save-btn" id="rcSalvar">Salvar</button>
+      </div>
+    </div>
+    <div class="section-title">Pneus recapados cadastrados</div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Placa</th><th>Modelo</th><th>Quant.</th><th>Marca</th><th>Medida</th><th>Marca fogo</th><th>Data mont.</th><th>Km mont.</th><th></th></tr></thead>
+      <tbody id="tbRc"></tbody></table><div class="empty" id="vazioRc" style="display:none">Nenhum registro.</div></div>
+  </section>
+
+  <!-- ===== TACÓGRAFO ===== -->
+  <section class="pv-panel" data-panel="tacografo">
+    <div class="card">
+      <div class="route-name" id="tgTitulo">Certificado de tacógrafos</div>
+      <div class="pv-grid" style="margin-top:8px">
+        <div class="pv-field"><label>Placa *</label><input id="tg_placa" list="dlPlacas"></div>
+        <div class="pv-field"><label>GRU Nº</label><input id="tg_gru"></div>
+        <div class="pv-field"><label>Número do certificado</label><input id="tg_num"></div>
+        <div class="pv-field"><label>Data emissão</label><input type="date" id="tg_emissao"></div>
+        <div class="pv-field"><label>Data validade</label><input type="date" id="tg_validade"></div>
+        <div class="pv-field" style="grid-column:1/-1"><label>Obs.</label><input id="tg_obs"></div>
+      </div>
+      <div class="modal-actions" style="margin-top:10px">
+        <button class="ghost-btn" id="tgCancelar" style="display:none">Cancelar edição</button>
+        <button class="save-btn" id="tgSalvar">Salvar</button>
+      </div>
+    </div>
+    <div class="section-title">Certificados cadastrados</div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Placa</th><th>GRU Nº</th><th>Nº Certificado</th><th>Emissão</th><th>Validade</th><th>Obs.</th><th></th></tr></thead>
+      <tbody id="tbTg"></tbody></table><div class="empty" id="vazioTg" style="display:none">Nenhum registro.</div></div>
+  </section>
+
+  <!-- ===== LAVAÇÃO ===== -->
+  <section class="pv-panel" data-panel="lavacao">
+    <div class="card">
+      <div class="route-name" id="lvTitulo">Lavação 2026</div>
+      <div class="pv-grid" style="margin-top:8px">
+        <div class="pv-field"><label>Placa *</label><input id="lv_placa" list="dlPlacas"></div>
+        <div class="pv-field"><label>Modelo</label><input id="lv_modelo"></div>
+        <div class="pv-field"><label>Alocado</label><input id="lv_aloc"></div>
+        <div class="pv-field"><label>Caract.</label><input id="lv_caract"></div>
+      </div>
+      <div class="route-name" style="margin-top:14px">Lavações (data e valor)</div>
+      <table class="itens-tbl" id="lvTbl" style="width:100%;border-collapse:collapse;margin-top:6px">
+        <thead><tr><th style="text-align:left;font-size:12px;color:var(--muted)">#</th><th style="text-align:left;font-size:12px;color:var(--muted)">Data</th><th style="text-align:left;font-size:12px;color:var(--muted)">Valor (R$)</th></tr></thead>
+        <tbody id="lvPares"></tbody>
+      </table>
+      <div class="modal-actions" style="margin-top:10px">
+        <button class="ghost-btn" id="lvCancelar" style="display:none">Cancelar edição</button>
+        <button class="save-btn" id="lvSalvar">Salvar</button>
+      </div>
+    </div>
+    <div class="section-title">Veículos com lavação</div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Placa</th><th>Modelo</th><th>Alocado</th><th>Nº lavações</th><th class="num">Total gasto</th><th></th></tr></thead>
+      <tbody id="tbLv"></tbody></table><div class="empty" id="vazioLv" style="display:none">Nenhum registro.</div></div>
+  </section>
 </main>
 
 <datalist id="dlPlacas"></datalist>
@@ -103,7 +209,7 @@
 
 <script src="multas-app.js?v=10"></script>
 <script>
-const SCRIPT_URL_PREV = 'https://script.google.com/macros/s/AKfycbyvzBHNOfDE0fLOcRWPLit_uwmp_sA_g9vNsxLLg6MnqoAxJ9Mtd3rZKo7-lFOajcUr/exec';
+const SCRIPT_URL_PREV = '__COLE_A_URL_DO_APPS_SCRIPT_DE_PREVENTIVA__';
 const LIMITE_ATENCAO = 2000;
 
 /* base placa -> modelo / unidade (extraida da planilha Preventiva_base) */
@@ -158,10 +264,11 @@ function recalc(){
 [p_kmult,p_kmplano,p_kmatual].forEach(el=>el.addEventListener('input',recalc));
 
 async function carregar(){
-  try{ const r=await fetch(SCRIPT_URL_PREV,{method:'GET'}); const j=await r.json(); dados=j.preventivas||[]; }
+  try{ const r=await fetch(SCRIPT_URL_PREV,{method:'GET'}); const j=await r.json(); dados=j.preventivas||[]; extras=j.extras||extras; }
   catch(e){ toast('Erro ao carregar: '+e.message,true); }
   dlForn.innerHTML=[...new Set(dados.map(d=>d.fornecedor).filter(Boolean))].map(f=>'<option value="'+esc(f)+'">').join('');
   render();
+  if(typeof renderExtras==='function') renderExtras();
 }
 
 function statusDe(d){
@@ -234,6 +341,114 @@ btnSalvar.onclick=async()=>{
   }catch(e){ toast('Erro: '+e.message,true); }
   finally{ btnSalvar.disabled=false; }
 };
+
+
+
+/* ================= ABAS EXTRAS ================= */
+let extras = { pneus_nv:[], pneus_recap:[], tacografo:[], lavacao:[] };
+let edNv=null, edRc=null, edTg=null, edLv=null;
+
+function autoFrota(placaEl, modeloEl, alocEl){
+  const f=FROTA_PREV[normPlaca(placaEl.value)];
+  if(f){ if(!modeloEl.value) modeloEl.value=f[0]; if(alocEl && !alocEl.value) alocEl.value=f[1]; }
+}
+nv_placa.addEventListener('input',()=>autoFrota(nv_placa,nv_modelo,nv_aloc));
+rc_placa.addEventListener('input',()=>autoFrota(rc_placa,rc_modelo,rc_aloc));
+lv_placa.addEventListener('input',()=>autoFrota(lv_placa,lv_modelo,lv_aloc));
+
+/* linhas de lavação: 12 pares */
+for(let i=0;i<12;i++){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td style="color:var(--muted);font-size:12px">${i+1}</td>
+    <td><input type="date" class="lv-data" style="padding:6px;border:1px solid var(--border);border-radius:6px;background:var(--panel-2);color:var(--text);font-size:12.5px"></td>
+    <td><input type="number" step="0.01" min="0" class="lv-valor" placeholder="0,00" style="padding:6px;border:1px solid var(--border);border-radius:6px;background:var(--panel-2);color:var(--text);font-size:12.5px"></td>`;
+  lvPares.appendChild(tr);
+}
+
+async function postExtra(payload){
+  const r=await fetch(SCRIPT_URL_PREV,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  const d=await r.json(); if(!d.ok) throw new Error(d.erro||'Erro'); return d;
+}
+
+function renderExtras(){
+  // pega colBase para saber onde comecam os campos (a placa)
+  const nvB = extras.pneus_nv[0]?extras.pneus_nv[0].colBase:0;
+  tbNv.innerHTML = extras.pneus_nv.map(r=>{ const c=r.cells,b=r.colBase;
+    return `<tr><td class="mono">${esc(c[b]||'')}</td><td>${esc(c[b+1]||'')}</td><td>${esc(c[b+4]||'')}</td>
+      <td>${esc(c[b+5]||'')}</td><td>${esc(c[b+6]||'')}</td><td>${esc(c[b+7]||'')}</td>
+      <td class="mono">${esc(c[b+8]||'')}</td><td class="num">${esc(c[b+9]||'')}</td><td class="num">${esc(c[b+10]||'')}</td>
+      <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-ednv="${esc(r.id)}">Editar</button></td></tr>`;
+  }).join(''); vazioNv.style.display=extras.pneus_nv.length?'none':'block';
+  tbNv.querySelectorAll('[data-ednv]').forEach(x=>x.onclick=()=>editNv(x.dataset.ednv));
+
+  tbRc.innerHTML = extras.pneus_recap.map(r=>{ const c=r.cells,b=r.colBase;
+    return `<tr><td class="mono">${esc(c[b]||'')}</td><td>${esc(c[b+1]||'')}</td><td>${esc(c[b+4]||'')}</td>
+      <td>${esc(c[b+5]||'')}</td><td>${esc(c[b+6]||'')}</td><td>${esc(c[b+7]||'')}</td>
+      <td class="mono">${esc(c[b+8]||'')}</td><td class="num">${esc(c[b+9]||'')}</td>
+      <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-edrc="${esc(r.id)}">Editar</button></td></tr>`;
+  }).join(''); vazioRc.style.display=extras.pneus_recap.length?'none':'block';
+  tbRc.querySelectorAll('[data-edrc]').forEach(x=>x.onclick=()=>editRc(x.dataset.edrc));
+
+  tbTg.innerHTML = extras.tacografo.map(r=>{ const c=r.cells,b=r.colBase;
+    return `<tr><td class="mono">${esc(c[b]||'')}</td><td>${esc(c[b+1]||'')}</td><td>${esc(c[b+2]||'')}</td>
+      <td class="mono">${esc(c[b+3]||'')}</td><td class="mono">${esc(c[b+4]||'')}</td><td>${esc(c[b+5]||'')}</td>
+      <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-edtg="${esc(r.id)}">Editar</button></td></tr>`;
+  }).join(''); vazioTg.style.display=extras.tacografo.length?'none':'block';
+  tbTg.querySelectorAll('[data-edtg]').forEach(x=>x.onclick=()=>editTg(x.dataset.edtg));
+
+  tbLv.innerHTML = extras.lavacao.map(r=>{ const c=r.cells,b=r.colBase;
+    let n=0,tot=0;
+    for(let i=0;i<12;i++){ const dt=c[b+4+i*2], vl=parseFloat(String(c[b+5+i*2]).toString().replace(',','.'))||0; if(dt){n++;tot+=vl;} }
+    return `<tr><td class="mono">${esc(c[b]||'')}</td><td>${esc(c[b+1]||'')}</td><td>${esc(c[b+2]||'')}</td>
+      <td class="num">${n}</td><td class="num">${brl(tot)}</td>
+      <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-edlv="${esc(r.id)}">Editar</button></td></tr>`;
+  }).join(''); vazioLv.style.display=extras.lavacao.length?'none':'block';
+  tbLv.querySelectorAll('[data-edlv]').forEach(x=>x.onclick=()=>editLv(x.dataset.edlv));
+}
+
+/* ---- salvar ---- */
+nvSalvar.onclick=async()=>{ if(!nv_placa.value.trim()){toast('Informe a placa.',true);return;} if(chkURL())return;
+  try{ await postExtra({action:'salvar_pneus_nv',id:edNv||'',placa:normPlaca(nv_placa.value),modelo:nv_modelo.value,alocado:nv_aloc.value,caract:nv_caract.value,quant:nv_quant.value,marca:nv_marca.value,medida:nv_medida.value,marca_fogo:nv_fogo.value,data_montagem:nv_data.value,km_montagem:nv_km.value,km_prox_alinh:nv_alinh.value,obs:nv_obs.value,km_rodado:nv_rodado.value});
+    toast('Salvo.'); nvCancelar.onclick(); await carregar();
+  }catch(e){toast('Erro: '+e.message,true);} };
+rcSalvar.onclick=async()=>{ if(!rc_placa.value.trim()){toast('Informe a placa.',true);return;} if(chkURL())return;
+  try{ await postExtra({action:'salvar_pneus_recap',id:edRc||'',placa:normPlaca(rc_placa.value),modelo:rc_modelo.value,alocado:rc_aloc.value,caract:rc_caract.value,quant:rc_quant.value,marca:rc_marca.value,medida:rc_medida.value,marca_fogo:rc_fogo.value,data_montagem:rc_data.value,km_montagem:rc_km.value,obs:rc_obs.value});
+    toast('Salvo.'); rcCancelar.onclick(); await carregar();
+  }catch(e){toast('Erro: '+e.message,true);} };
+tgSalvar.onclick=async()=>{ if(!tg_placa.value.trim()){toast('Informe a placa.',true);return;} if(chkURL())return;
+  try{ await postExtra({action:'salvar_tacografo',id:edTg||'',placa:normPlaca(tg_placa.value),gru:tg_gru.value,num_certificado:tg_num.value,data_emissao:tg_emissao.value,data_validade:tg_validade.value,obs:tg_obs.value});
+    toast('Salvo.'); tgCancelar.onclick(); await carregar();
+  }catch(e){toast('Erro: '+e.message,true);} };
+lvSalvar.onclick=async()=>{ if(!lv_placa.value.trim()){toast('Informe a placa.',true);return;} if(chkURL())return;
+  const pares=[]; lvPares.querySelectorAll('tr').forEach(tr=>{ pares.push({data:tr.querySelector('.lv-data').value,valor:tr.querySelector('.lv-valor').value}); });
+  try{ await postExtra({action:'salvar_lavacao',id:edLv||'',placa:normPlaca(lv_placa.value),modelo:lv_modelo.value,alocado:lv_aloc.value,caract:lv_caract.value,pares});
+    toast('Salvo.'); lvCancelar.onclick(); await carregar();
+  }catch(e){toast('Erro: '+e.message,true);} };
+
+function chkURL(){ if(SCRIPT_URL_PREV.indexOf('__')===0){ alert('Configure a URL do Apps Script de Preventiva.'); return true;} return false; }
+
+/* ---- editar ---- */
+function editNv(id){ const r=extras.pneus_nv.find(x=>String(x.id)===String(id)); if(!r)return; const c=r.cells,b=r.colBase; edNv=id;
+  nv_placa.value=c[b]||'';nv_modelo.value=c[b+1]||'';nv_aloc.value=c[b+2]||'';nv_caract.value=c[b+3]||'';nv_quant.value=c[b+4]||'';nv_marca.value=c[b+5]||'';nv_medida.value=c[b+6]||'';nv_fogo.value=c[b+7]||'';nv_km.value=c[b+9]||'';nv_alinh.value=c[b+10]||'';nv_obs.value=c[b+11]||'';nv_rodado.value=c[b+12]||'';
+  nvCancelar.style.display='inline-block'; window.scrollTo(0,0); }
+nvCancelar.onclick=()=>{ edNv=null; ['nv_placa','nv_modelo','nv_aloc','nv_caract','nv_quant','nv_marca','nv_medida','nv_fogo','nv_data','nv_km','nv_alinh','nv_obs','nv_rodado'].forEach(id=>document.getElementById(id).value=''); nvCancelar.style.display='none'; };
+
+function editRc(id){ const r=extras.pneus_recap.find(x=>String(x.id)===String(id)); if(!r)return; const c=r.cells,b=r.colBase; edRc=id;
+  rc_placa.value=c[b]||'';rc_modelo.value=c[b+1]||'';rc_aloc.value=c[b+2]||'';rc_caract.value=c[b+3]||'';rc_quant.value=c[b+4]||'';rc_marca.value=c[b+5]||'';rc_medida.value=c[b+6]||'';rc_fogo.value=c[b+7]||'';rc_km.value=c[b+9]||'';rc_obs.value=c[b+10]||'';
+  rcCancelar.style.display='inline-block'; window.scrollTo(0,0); }
+rcCancelar.onclick=()=>{ edRc=null; ['rc_placa','rc_modelo','rc_aloc','rc_caract','rc_quant','rc_marca','rc_medida','rc_fogo','rc_data','rc_km','rc_obs'].forEach(id=>document.getElementById(id).value=''); rcCancelar.style.display='none'; };
+
+function editTg(id){ const r=extras.tacografo.find(x=>String(x.id)===String(id)); if(!r)return; const c=r.cells,b=r.colBase; edTg=id;
+  tg_placa.value=c[b]||'';tg_gru.value=c[b+1]||'';tg_num.value=c[b+2]||'';tg_obs.value=c[b+5]||'';
+  tgCancelar.style.display='inline-block'; window.scrollTo(0,0); }
+tgCancelar.onclick=()=>{ edTg=null; ['tg_placa','tg_gru','tg_num','tg_emissao','tg_validade','tg_obs'].forEach(id=>document.getElementById(id).value=''); tgCancelar.style.display='none'; };
+
+function editLv(id){ const r=extras.lavacao.find(x=>String(x.id)===String(id)); if(!r)return; const c=r.cells,b=r.colBase; edLv=id;
+  lv_placa.value=c[b]||'';lv_modelo.value=c[b+1]||'';lv_aloc.value=c[b+2]||'';lv_caract.value=c[b+3]||'';
+  const rows=lvPares.querySelectorAll('tr');
+  for(let i=0;i<12;i++){ const vl=c[b+5+i*2]; rows[i].querySelector('.lv-valor').value=vl!=null&&vl!==''?String(vl).replace(',','.'):''; /* data fica em texto na planilha, nao setavel em input date */ }
+  lvCancelar.style.display='inline-block'; window.scrollTo(0,0); }
+lvCancelar.onclick=()=>{ edLv=null; ['lv_placa','lv_modelo','lv_aloc','lv_caract'].forEach(id=>document.getElementById(id).value=''); lvPares.querySelectorAll('input').forEach(i=>i.value=''); lvCancelar.style.display='none'; };
 
 btnReload.onclick=carregar;
 if(SCRIPT_URL_PREV.indexOf('__')===0){
