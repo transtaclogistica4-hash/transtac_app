@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TRANSTAC MANUTENÇÃO GERAL | build v1 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -16,7 +15,26 @@
   .mg-field input,.mg-field select,.mg-field textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13.5px;font-family:inherit;}
   .mg-field textarea{min-height:54px;resize:vertical;}
   .filtro-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
-  .oc-badge{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-weight:700;}
+  /* ----- listagem mais organizada ----- */
+  #tb td{ padding:9px 10px; vertical-align:middle; border-bottom:1px solid var(--border-soft); }
+  #tb tr:hover{ background:var(--panel-2); }
+  .col-placa{ font-weight:700; white-space:nowrap; }
+  .col-desc{ max-width:280px; font-size:12.5px; color:var(--text); }
+  .col-desc .desc-txt{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .col-status{ max-width:180px; font-size:12px; color:var(--muted); }
+  .oc-badge{ display:inline-block; font-size:10.5px; padding:3px 9px; border-radius:20px; font-weight:700; white-space:nowrap; letter-spacing:.3px; }
+  .oc-CORRETIVA{ background:rgba(248,113,113,.16); color:var(--danger); }
+  .oc-PREVENTIVA{ background:rgba(34,197,94,.15); color:var(--ok); }
+  .oc-COMPRA{ background:rgba(96,165,250,.16); color:var(--info); }
+  .oc-CHECKLIST{ background:rgba(251,191,36,.15); color:var(--warn); }
+  .oc-SOCORRO,.oc-SINISTRO{ background:rgba(248,113,113,.22); color:var(--danger); }
+  .oc-outro{ background:var(--panel-3); color:var(--muted); }
+  .oc-vazio{ color:var(--border); font-size:12px; }
+  .col-oc-num{ font-family:ui-monospace,monospace; color:var(--muted); white-space:nowrap; }
+  .col-total{ text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .btn-edit{ background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:5px 12px; font-size:12px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .btn-edit:hover{ border-color:var(--accent); color:var(--accent); }
+  #tb .data-cel{ font-family:ui-monospace,monospace; font-size:11.5px; color:var(--muted); white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -65,7 +83,7 @@
     </select>
   </div>
   <div class="table-wrap"><table class="data">
-    <thead><tr><th>Placa</th><th>Modelo</th><th>Prestador</th><th>Ocorrência</th><th>Descrição</th><th>Status</th><th>Entrada</th><th>Saída</th><th>OC</th><th class="num">Total</th><th></th></tr></thead>
+    <thead><tr><th>Placa / Modelo</th><th>Prestador</th><th>Ocorrência</th><th>Descrição</th><th>Status</th><th>Entrada</th><th>OC</th><th class="num">Total R$</th><th></th></tr></thead>
     <tbody id="tb"></tbody></table><div class="empty" id="vazio" style="display:none">Nenhuma ocorrência.</div></div>
 </main>
 
@@ -125,14 +143,19 @@ function render(){
     if(bq && !((d.placa+' '+d.modelo+' '+d.fornecedor+' '+d.ocorrencia+' '+d.plano).toLowerCase().includes(bq))) return false;
     return true;
   }).slice().reverse();
+  const ocClasse=o=>{ const k=(o||'').toUpperCase();
+    return ['CORRETIVA','PREVENTIVA','COMPRA','CHECKLIST','SOCORRO','SINISTRO'].includes(k)?('oc-'+k):(o?'oc-outro':''); };
+  const brlNum=t=>{ const n=Number(String(t).replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'))||0; return n?brl(n):'—'; };
   tb.innerHTML=lista.map(d=>`<tr>
-    <td class="mono"><b>${esc(d.placa)}</b></td><td>${esc(d.modelo||'')}</td><td>${esc(d.fornecedor||'')}</td>
-    <td><span class="oc-badge">${esc(d.ocorrencia||'')}</span></td>
-    <td>${esc((d.plano||'').slice(0,60))}${(d.plano||'').length>60?'…':''}</td>
-    <td>${esc((d.status||'').slice(0,32))}</td>
-    <td class="mono">${esc(d.data_entrada||'')}</td><td class="mono">${esc(d.data_saida||'')}</td>
-    <td class="mono">${esc(d.oc||'')}</td><td class="num">${esc(String(d.total||''))}</td>
-    <td><button class="linkish" style="background:none;border:none;cursor:pointer" data-ed="${esc(d.id)}">Editar</button></td>
+    <td class="col-placa">${esc(d.placa||'—')}<div style="font-weight:400;font-size:11.5px;color:var(--muted)">${esc(d.modelo||'')}</div></td>
+    <td>${esc(d.fornecedor||'—')}</td>
+    <td>${d.ocorrencia?`<span class="oc-badge ${ocClasse(d.ocorrencia)}">${esc(d.ocorrencia)}</span>`:'<span class="oc-vazio">—</span>'}</td>
+    <td class="col-desc"><div class="desc-txt" title="${esc(d.plano||'')}">${esc(d.plano||'')}</div></td>
+    <td class="col-status">${esc(d.status||'')}</td>
+    <td class="data-cel">${esc(d.data_entrada||'')}</td>
+    <td class="col-oc-num">${esc(d.oc||'')}</td>
+    <td class="col-total">${brlNum(d.total)}</td>
+    <td><button class="btn-edit" data-ed="${esc(d.id)}">Editar</button></td>
   </tr>`).join('');
   vazio.style.display=lista.length?'none':'block';
   tb.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editar(b.dataset.ed));
