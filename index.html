@@ -711,8 +711,8 @@
     </a>
     <a class="card mod-card" data-modulo="inventario" href="inventario-icara.html" onclick="return abrirModulo('inventario')">
       <span class="kicker">Módulo</span>
-      <h3>CD Içara</h3>
-      <p>Modulo de controles e gerenciamentos da unidade de IÇARA</p>
+      <h3>Inventário Içara</h3>
+      <p>Controle de estoque da unidade Içara: contagem, entradas, saídas e conferência.</p>
     </a>
     <a class="card mod-card" data-modulo="multas" href="multas.html" onclick="return abrirModulo('multas')">
       <span class="kicker">Módulo</span>
@@ -721,8 +721,8 @@
     </a>
     <a class="card mod-card" data-modulo="rh" href="rh.html" onclick="return abrirModulo('rh')">
       <span class="kicker">Módulo</span>
-      <h3>RH/DP</h3>
-      <p>Recursos Humanos: controle de vagas, candidatos, status de contratação, verificação de pontos e demais serviços do setor.</p>
+      <h3>RH</h3>
+      <p>Recursos Humanos: controle de horas extras e demais rotinas do setor.</p>
     </a>
     <a class="card mod-card" data-modulo="compras" href="compras.html" onclick="return abrirModulo('compras')">
       <span class="kicker">Módulo</span>
@@ -778,7 +778,7 @@
   </section>
 
   <section>
-    <h2>Relatórios/base</h2>
+    <h2>Relatórios</h2>
     <p class="desc">Acompanhe os checklists e a manutenção da frota.</p>
     <div class="grid">
       <a class="card" data-tela="planilhas" href="https://docs.google.com/spreadsheets/d/1YPIG2NCqYit8brAmCltcoCoUAhp8RWZxSSu2j_AeLBY/edit" target="_blank" rel="noopener">
@@ -787,17 +787,17 @@
         <p>Google Sheets com todos os checklists diários enviados pelos motoristas.</p>
       </a>
       <a class="card" data-tela="dashboard" href="#" onclick="return openGraficos()">
-        <span class="kicker">DADOS</span>
+        <span class="kicker">Relatório</span>
         <h3>Dashboard de Checklists</h3>
         <p>Checklists por operação, por dia, rotas, motoristas, tipos de veículo e detalhamento completo.</p>
       </a>
       <a class="card" data-tela="ponto" href="#" onclick="return openPontoReport()">
-        <span class="kicker">DADOS</span>
+        <span class="kicker">Relatório</span>
         <h3>Relatório de Pontos Motoristas</h3>
         <p>Controles de ponto registrados pelos motoristas, com filtro por motorista e por data.</p>
       </a>
       <div class="card disabled">
-        <span class="kicker">DADOS</span>
+        <span class="kicker">Relatório</span>
         <h3>Painel de Manutenção</h3>
         <p>Custos, itens recorrentes e status por veículo.</p>
         <span class="badge-soon">Em breve</span>
@@ -1459,7 +1459,7 @@
      O setor e escolhido pelo usuario no cadastro e gravado na planilha.
      A liberacao continua sendo manual (aprovacao na planilha de senhas);
      aprovado o e-mail, o acesso segue a matriz abaixo. */
-  var TELAS_MANUTENCAO = ['checklist','preenchidos','validacao','frota','ponto'];
+  var TELAS_MANUTENCAO = ['checklist','preenchidos','validacao','preventiva','manutencao-geral','frota','ponto','dashboard'];
   var PERMISSOES = {
     LOGISTICA:      {modulos:['logistica','manutencao','multas','inventario'], telas:'*'},
     MANUTENCAO:     {modulos:['manutencao'],                                   telas:TELAS_MANUTENCAO},
