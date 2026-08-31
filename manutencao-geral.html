@@ -128,9 +128,21 @@ async function carregar(){
   render();
 }
 
+function moedaParaNumero(t){
+  var str=String(t==null?'':t).trim();
+  if(!str) return 0;
+  // remove tudo que nao for digito, virgula, ponto ou sinal
+  str=str.replace(/[^0-9.,-]/g,'');
+  if(!str) return 0;
+  // formato BR: ponto = milhar, virgula = centavos.
+  // remove todos os pontos (milhar) e troca a virgula por ponto decimal.
+  str=str.replace(/\./g,'').replace(',','.');
+  var n=parseFloat(str);
+  return isNaN(n)?0:n;
+}
 function render(){
   const abertas=dados.filter(d=>!/REALIZAD|100%/i.test(d.status+' '+d.nivel)).length;
-  const total=dados.reduce((s,d)=>s+(Number(String(d.total).replace(/[^\d,.-]/g,'').replace('.','').replace(',','.'))||0),0);
+  const total=dados.reduce((s,d)=>s+moedaParaNumero(d.total),0);
   kpis.innerHTML=[
     ['accent','Total de ocorrências',dados.length,'na planilha'],
     ['warn','Em aberto',abertas,'não concluídas'],
@@ -146,7 +158,7 @@ function render(){
   }).slice().reverse();
   const ocClasse=o=>{ const k=(o||'').toUpperCase();
     return ['CORRETIVA','PREVENTIVA','COMPRA','CHECKLIST','SOCORRO','SINISTRO'].includes(k)?('oc-'+k):(o?'oc-outro':''); };
-  const brlNum=t=>{ const n=Number(String(t).replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'))||0; return n?brl(n):'—'; };
+  const brlNum=t=>{ const n=moedaParaNumero(t); return n?brl(n):'—'; };
   tb.innerHTML=lista.map(d=>`<tr>
     <td class="col-placa">${esc(d.placa||'—')}<div style="font-weight:400;font-size:11.5px;color:var(--muted)">${esc(d.modelo||'')}</div></td>
     <td>${esc(d.fornecedor||'—')}</td>
