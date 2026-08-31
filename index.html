@@ -2781,8 +2781,8 @@
   }
   /* uma carga é GAM? (cliente ou rota contém GAM) */
   function ehGAM(e){
-    var t=((e.cliente||'')+' '+(e.rota||'')).toUpperCase();
-    return t.indexOf('GAM')!==-1;
+    var t=((e.categoria||'')+' '+(e.cliente||'')+' '+(e.rota||'')).toUpperCase();
+    return /\bGAM\b/.test(t) || t.indexOf('GAM')!==-1;
   }
   /* viagens do dia — mesma base da Programação Diária (planilha de embarques).
      REGRA GAM: carga GAM carrega num dia e descarrega no dia seguinte; o motorista
