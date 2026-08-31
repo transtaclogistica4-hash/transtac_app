@@ -2772,23 +2772,51 @@
     for(var j=0;j<reg.length;j++){ if((reg[j].nome||'').trim().toUpperCase()===alvo) return reg[j].fone||''; }
     return '';
   }
-  /* viagens do dia — mesma base da Programação Diária (planilha de embarques) */
+  /* dia anterior de uma data ISO (AAAA-MM-DD) */
+  function diaAnteriorISO(iso){
+    var p=String(iso||'').split('-'); if(p.length!==3) return '';
+    var d=new Date(+p[0], +p[1]-1, +p[2]);
+    d.setDate(d.getDate()-1);
+    return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  }
+  /* uma carga é GAM? (cliente ou rota contém GAM) */
+  function ehGAM(e){
+    var t=((e.cliente||'')+' '+(e.rota||'')).toUpperCase();
+    return t.indexOf('GAM')!==-1;
+  }
+  /* viagens do dia — mesma base da Programação Diária (planilha de embarques).
+     REGRA GAM: carga GAM carrega num dia e descarrega no dia seguinte; o motorista
+     só faz o checklist na volta. Então, além das viagens de HOJE, trazemos as
+     cargas GAM de ONTEM para o checklist de hoje, marcadas com a data original. */
   function viagensDoDia(dataRef){
     var st=loadStatusViagens(), vistos={}, out=[];
-    EMBARQUES_SHEET.filter(function(e){ return e.data===dataRef; }).forEach(function(e){
+
+    function addViagem(e, dataViagem, gamDoDiaAnterior){
       var chave=e.placa+'|'+e.motorista;
       if(vistos[chave]) return;
       vistos[chave]=1;
       var fez=CHECKLISTS_SHEET.some(function(c){
-        return c.data===dataRef && ((c.placa && c.placa===e.placa) ||
+        var casaPlacaMot=((c.placa && c.placa===e.placa) ||
                (c.motorista||'').trim().toUpperCase()===(e.motorista||'').trim().toUpperCase());
+        return casaPlacaMot && (c.data===dataRef || c.data===dataViagem);
       });
-      var id='v|'+e.placa+'|'+dataRef;
+      var id='v|'+e.placa+'|'+dataViagem;
       var extra=st[id]||{};
-      out.push({id:id, nome:e.motorista, placa:e.placa, viagem:dataRef, rota:e.rota||'',
+      out.push({id:id, nome:e.motorista, placa:e.placa, viagem:dataViagem, rota:e.rota||'',
                 fone:foneDoMotorista(e.motorista),
                 feito:(fez||extra.preenchido)?true:false,
+                gam:gamDoDiaAnterior?true:false,
                 cobradoEm:extra.cobradoEm||'', obs:extra.obs||''});
+    }
+
+    /* 1) viagens de hoje (todas as operações) */
+    EMBARQUES_SHEET.filter(function(e){ return e.data===dataRef; }).forEach(function(e){
+      addViagem(e, dataRef, false);
+    });
+    /* 2) cargas GAM de ontem — descarregam hoje, checklist feito hoje */
+    var ontem=diaAnteriorISO(dataRef);
+    EMBARQUES_SHEET.filter(function(e){ return e.data===ontem && ehGAM(e); }).forEach(function(e){
+      addViagem(e, ontem, true);
     });
     return out;
   }
@@ -2799,6 +2827,7 @@
         (v.fone?'<span>'+escHtml(fmtFone(v.fone))+'</span>':'<span style="color:#F2700D;">sem WhatsApp cadastrado</span>')+
         '<span class="placa-chip">'+escHtml(v.placa)+'</span>'+
         '<span>Viagem: '+fmtBR(v.viagem)+'</span>'+
+        (v.gam?'<span style="background:rgba(242,112,13,.18);border:1px solid rgba(242,112,13,.5);color:#F2700D;border-radius:20px;padding:2px 9px;font-size:10.5px;font-weight:700;">GAM · descarga hoje</span>':'')+
         (v.rota?'<span>'+escHtml(v.rota)+'</span>':'')+
       '</div>'+
       (j?'<div style="margin-top:4px;font-size:11.5px;color:#F2700D;">📝 Justificativa ('+fmtBR(j.data)+'): '+escHtml(j.justificativa)+'</div>':'')+
