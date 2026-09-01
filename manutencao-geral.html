@@ -109,7 +109,7 @@
 
 <script src="multas-app.js?v=11"></script>
 <script>
-const SCRIPT_URL_MG = 'https://script.google.com/macros/s/AKfycbxEnHMJoKDItvFZw6ppOcexC8kFvKO9G_-TrI4hB6r2qkZKNE7C5TrrSM2LC8JNczJmeQ/exec';
+const SCRIPT_URL_MG = 'https://script.google.com/macros/s/AKfycbxMCm1D_AD29cSB8SvoWvfRlHYWt6RABcwme1o-cXFd2YjJG8ezm9IHTqB3XHlqZx6d/exec';
 
 const FROTA_PREV = {
   'MHX9E42':['MERCEDES 710'],'RFR0J72':['FIAT/FIORINO ENDURANCE'],'EFX8F56':['FIORINO HD WK'],
@@ -187,12 +187,17 @@ function statusOcorHtml(d){
   return '<span class="sto-badge '+cls+'">'+esc(st)+'</span>';
 }
 function render(){
-  const abertas=dados.filter(d=>!/REALIZAD|100%/i.test(d.status+' '+d.nivel)).length;
+  // Realizadas = status_ocorrencia REALIZADO ou tem data de saída (mesma regra do backend)
+  const realizadas=dados.filter(d=>{
+    const st=(d.status_ocorrencia||'').toUpperCase();
+    return st==='REALIZADO' || String(d.data_saida||'').trim()!=='';
+  }).length;
+  const abertas=dados.length-realizadas;
   const total=dados.reduce((s,d)=>s+moedaParaNumero(d.total),0);
   kpis.innerHTML=[
     ['accent','Total de ocorrências',dados.length,'na planilha'],
-    ['warn','Em aberto',abertas,'não concluídas'],
-    ['ok','Concluídas',dados.length-abertas,'serviço realizado'],
+    ['warn','Em aberto',abertas,'sem data de saída'],
+    ['ok','Realizadas',realizadas,'serviço concluído'],
     ['info','Custo total',brl(total),'somatório R$']
   ].map(([c,l,v,s])=>`<div class="kpi ${c}"><div class="kpi-label">${l}</div><div class="kpi-value">${v}</div><div class="kpi-sub">${s}</div></div>`).join('');
 
