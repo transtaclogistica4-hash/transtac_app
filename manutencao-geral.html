@@ -36,6 +36,15 @@
   .btn-edit{ background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:5px 12px; font-size:12px; cursor:pointer; font-family:inherit; white-space:nowrap; }
   .btn-edit:hover{ border-color:var(--accent); color:var(--accent); }
   #tb .data-cel{ font-family:ui-monospace,monospace; font-size:11.5px; color:var(--muted); white-space:nowrap; }
+  .dias-adiant{ color:var(--ok); font-weight:700; }
+  .dias-atraso{ color:var(--danger); font-weight:700; }
+  .dias-neutro{ color:var(--muted); }
+  .sto-badge{ font-size:10.5px; padding:3px 9px; border-radius:20px; font-weight:700; white-space:nowrap; }
+  .sto-REALIZADO{ background:rgba(34,197,94,.15); color:var(--ok); }
+  .sto-CANCELADO{ background:rgba(248,113,113,.16); color:var(--danger); }
+  .sto-NAO{ background:rgba(251,191,36,.15); color:var(--warn); }
+  .sto-EM{ background:rgba(96,165,250,.16); color:var(--info); }
+  .sto-vazio{ color:var(--border); }
 </style>
 </head>
 <body>
@@ -62,6 +71,13 @@
       </div>
       <div class="mg-field"><label>Status</label><input id="m_status" placeholder="ex.: REALIZAR ORÇAMENTO PARA APROVAÇÃO"></div>
       <div class="mg-field"><label>Nível de serviço</label><input id="m_nivel" placeholder="ex.: 100%"></div>
+      <div class="mg-field"><label>Status da ocorrência</label>
+        <select id="m_stocor">
+          <option value="">Selecione...</option>
+          <option>REALIZADO</option><option>EM ANDAMENTO</option><option>NÃO REALIZADO</option><option>CANCELADO</option>
+        </select>
+        <small style="display:block;margin-top:4px;color:var(--muted);font-size:11px;">Preencher a data de saída marca REALIZADO automaticamente.</small>
+      </div>
       <div class="mg-field" style="grid-column:1/-1"><label>Plano de ação / Ocorrência (descrição)</label><textarea id="m_plano"></textarea></div>
       <div class="mg-field"><label>Data entrada</label><input type="date" id="m_dtent"></div>
       <div class="mg-field"><label>Previsão de entrega</label><input type="date" id="m_dtprev"></div>
@@ -84,7 +100,7 @@
     </select>
   </div>
   <div class="table-wrap"><table class="data">
-    <thead><tr><th>Placa / Modelo</th><th>Prestador</th><th>Ocorrência</th><th>Descrição</th><th>Status</th><th>Entrada</th><th>OC</th><th class="num">Total R$</th><th></th></tr></thead>
+    <thead><tr><th>Placa / Modelo</th><th>Prestador</th><th>Ocorrência</th><th>Descrição</th><th>Entrada</th><th>Previsão</th><th>Saída</th><th class="num">Dias</th><th>Status Ocor.</th><th class="num">Total R$</th><th></th></tr></thead>
     <tbody id="tb"></tbody></table><div class="empty" id="vazio" style="display:none">Nenhuma ocorrência.</div></div>
 </main>
 
@@ -142,6 +158,34 @@ function moedaParaNumero(t){
   if(n>1000000) return 0;
   return n;
 }
+// converte dd/mm/aaaa ou aaaa-mm-dd em Date (meia-noite local)
+function parseDataBR(v){
+  var s=String(v||'').trim(); if(!s) return null;
+  var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if(m){ var a=+m[3]; if(a<100)a+=2000; return new Date(a,+m[2]-1,+m[1]); }
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m){ return new Date(+m[1],+m[2]-1,+m[3]); }
+  return null;
+}
+// dias: adiantado = +, atraso = - (saída vs previsão)
+function diasAtraso(previsao, saida){
+  var p=parseDataBR(previsao), s=parseDataBR(saida);
+  if(!p||!s) return {n:null, html:'<span class="dias-neutro">—</span>'};
+  var diff=Math.round((p - s)/86400000); // previsao - saida: saiu antes => +
+  var cls = diff>0?'dias-adiant':(diff<0?'dias-atraso':'dias-neutro');
+  var txt = diff>0?('+'+diff):(''+diff);
+  return {n:diff, html:'<span class="'+cls+'">'+txt+'</span>'};
+}
+function statusOcorHtml(d){
+  var st=(d.status_ocorrencia||'').toUpperCase().trim();
+  if(!st && String(d.data_saida||'').trim()) st='REALIZADO'; // reflete a regra mesmo antes de re-salvar
+  if(!st) return '<span class="sto-vazio">—</span>';
+  var cls = st.indexOf('REALIZADO')===0?'sto-REALIZADO':
+            (st==='CANCELADO'?'sto-CANCELADO':
+            (st.indexOf('NÃO')===0||st.indexOf('NAO')===0?'sto-NAO':
+            (st.indexOf('EM')===0?'sto-EM':'sto-vazio')));
+  return '<span class="sto-badge '+cls+'">'+esc(st)+'</span>';
+}
 function render(){
   const abertas=dados.filter(d=>!/REALIZAD|100%/i.test(d.status+' '+d.nivel)).length;
   const total=dados.reduce((s,d)=>s+moedaParaNumero(d.total),0);
@@ -161,17 +205,22 @@ function render(){
   const ocClasse=o=>{ const k=(o||'').toUpperCase();
     return ['CORRETIVA','PREVENTIVA','COMPRA','CHECKLIST','SOCORRO','SINISTRO'].includes(k)?('oc-'+k):(o?'oc-outro':''); };
   const brlNum=t=>{ const n=moedaParaNumero(t); return n?brl(n):'—'; };
-  tb.innerHTML=lista.map(d=>`<tr>
+  tb.innerHTML=lista.map(d=>{
+    const dias=diasAtraso(d.previsao, d.data_saida);
+    const sto=statusOcorHtml(d);
+    return `<tr>
     <td class="col-placa">${esc(d.placa||'—')}<div style="font-weight:400;font-size:11.5px;color:var(--muted)">${esc(d.modelo||'')}</div></td>
     <td>${esc(d.fornecedor||'—')}</td>
     <td>${d.ocorrencia?`<span class="oc-badge ${ocClasse(d.ocorrencia)}">${esc(d.ocorrencia)}</span>`:'<span class="oc-vazio">—</span>'}</td>
-    <td class="col-desc"><div class="desc-txt" title="${esc(d.plano||'')}">${esc(d.plano||'')}</div></td>
-    <td class="col-status">${esc(d.status||'')}</td>
+    <td class="col-desc"><div class="desc-txt" title="${esc(d.status||'')}">${esc(d.status||'')}</div></td>
     <td class="data-cel">${esc(d.data_entrada||'')}</td>
-    <td class="col-oc-num">${esc(d.oc||'')}</td>
+    <td class="data-cel">${esc(d.previsao||'')}</td>
+    <td class="data-cel">${esc(d.data_saida||'')}</td>
+    <td class="num">${dias.html}</td>
+    <td>${sto}</td>
     <td class="col-total">${brlNum(d.total)}</td>
     <td><button class="btn-edit" data-ed="${esc(d.id)}">Editar</button></td>
-  </tr>`).join('');
+  </tr>`;}).join('');
   vazio.style.display=lista.length?'none':'block';
   tb.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editar(b.dataset.ed));
 }
@@ -182,12 +231,14 @@ function editar(id){
   formTitulo.textContent='Editar · '+d.placa+' · '+d.ocorrencia;
   m_placa.value=d.placa||''; m_modelo.value=d.modelo||''; m_forn.value=d.fornecedor||'';
   m_ocor.value=d.ocorrencia||''; m_status.value=d.status||''; m_nivel.value=d.nivel||'';
+  m_stocor.value=d.status_ocorrencia||'';
   m_plano.value=d.plano||''; m_oc.value=d.oc||''; m_total.value=String(d.total||'').replace(/[^\d,.-]/g,'').replace('.','').replace(',','.');
   m_obs.value=d.obs||'';
   btnCancelar.style.display='inline-block'; btnSalvar.textContent='Salvar alterações'; window.scrollTo(0,0);
 }
 btnCancelar.onclick=()=>{ editId=null; formTitulo.textContent='Nova ocorrência de manutenção';
   ['m_placa','m_modelo','m_forn','m_status','m_nivel','m_plano','m_dtent','m_dtprev','m_dtsai','m_oc','m_total','m_obs'].forEach(id=>document.getElementById(id).value='');
+  m_stocor.value='';
   m_ocor.value=''; btnCancelar.style.display='none'; btnSalvar.textContent='Salvar ocorrência'; };
 
 btnSalvar.onclick=async()=>{
@@ -199,6 +250,7 @@ btnSalvar.onclick=async()=>{
     await fetch(SCRIPT_URL_MG,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({
       action:'salvar_mg', id:editId||'', placa:normPlaca(m_placa.value), modelo:m_modelo.value, fornecedor:m_forn.value,
       ocorrencia:m_ocor.value, status:m_status.value, plano:m_plano.value, nivel:m_nivel.value,
+      status_ocorrencia:m_stocor.value,
       data_entrada:m_dtent.value, previsao:m_dtprev.value, data_saida:m_dtsai.value,
       oc:m_oc.value, total:m_total.value, obs:m_obs.value
     })}).then(r=>r.json()).then(j=>{ if(!j.ok) throw new Error(j.erro||'Erro'); });
