@@ -1469,6 +1469,7 @@
     MOTORISTA:      {modulos:[],                                               telas:[]},
     DESENVOLVIMENTO:{modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
     CD_ICARA:       {modulos:['inventario','multas','manutencao'],             telas:TELAS_MANUTENCAO},
+    TERCEIRO_GAM:   {modulos:['logistica'],                                    telas:[]},
     /* perfis antigos mantidos por compatibilidade com cadastros ja existentes */
     ADMIN:          {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
     GESTOR:         {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
@@ -1477,7 +1478,7 @@
   var SETOR_LABEL = {
     LOGISTICA:'Logística', MANUTENCAO:'Manutenção/Frota', RH:'RH/DP',
     FINANCEIRO:'Financeiro/Compras', EXPEDICAO:'Expedição', MOTORISTA:'Motorista',
-    DESENVOLVIMENTO:'Desenvolvimento', CD_ICARA:'CD Içara'
+    DESENVOLVIMENTO:'Desenvolvimento', CD_ICARA:'CD Içara', TERCEIRO_GAM:'Terceiro GAM'
   };
   /* aceita variacoes vindas da planilha: acento, espaco, barra, hifen */
   function normalizarSetor(v){
@@ -1492,7 +1493,8 @@
       'EXPEDICAO':'EXPEDICAO',
       'MOTORISTA':'MOTORISTA',
       'DESENVOLVIMENTO':'DESENVOLVIMENTO','DEV':'DESENVOLVIMENTO','TI':'DESENVOLVIMENTO',
-      'CD_ICARA':'CD_ICARA','ICARA':'CD_ICARA','CD':'CD_ICARA'
+      'CD_ICARA':'CD_ICARA','ICARA':'CD_ICARA','CD':'CD_ICARA',
+      'TERCEIRO_GAM':'TERCEIRO_GAM','GAM':'TERCEIRO_GAM','TERCEIRO':'TERCEIRO_GAM'
     };
     if(MAP[v]) return MAP[v];
     return PERMISSOES[v] ? v : '';
