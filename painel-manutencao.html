@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<!-- TRANSTAC PAINEL DE MANUTENÇÃO | build v1 -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0c">
+<title>Painel de Manutenção · TRANSTAC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="multas.css?v=11">
+<style>
+  .pm-filtros{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:18px 0 20px;padding:14px;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;}
+  .pm-filtros label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
+  .pm-filtros input,.pm-filtros select{padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel);color:var(--text);font-size:13px;font-family:inherit;}
+  .pm-quick{display:flex;gap:6px;flex-wrap:wrap;}
+  .pm-quick button{padding:7px 12px;border:1px solid var(--border);border-radius:7px;background:var(--panel);color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;}
+  .pm-quick button:hover,.pm-quick button.active{border-color:var(--accent);color:var(--accent);}
+  .pm-secao{margin-top:26px;}
+  .pm-secao > h2{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.6px;text-transform:uppercase;margin:0 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  .pm-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .pm-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  .pm-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  @media(max-width:900px){ .pm-grid-2,.pm-grid-3,.pm-grid-4{grid-template-columns:1fr 1fr;} }
+  @media(max-width:520px){ .pm-grid-2,.pm-grid-3,.pm-grid-4{grid-template-columns:1fr;} }
+  .pm-card{background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+  .pm-card h3{margin:0 0 10px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+  .pm-num{font-size:28px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.1;}
+  .pm-sub{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  .pm-delta{font-size:12px;font-weight:700;margin-top:6px;display:inline-block;padding:2px 8px;border-radius:12px;}
+  .pm-delta.up{background:rgba(248,113,113,.15);color:var(--danger);}
+  .pm-delta.down{background:rgba(34,197,94,.15);color:var(--ok);}
+  .pm-delta.neutro{background:var(--panel);color:var(--muted);}
+  .pm-tabela{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .pm-tabela th{text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:6px 8px;border-bottom:1px solid var(--border);}
+  .pm-tabela td{padding:8px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+  .pm-tabela tr:last-child td{border-bottom:none;}
+  .pm-tabela .num{text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace;}
+  .pm-tabela .placa{font-weight:700;font-family:ui-monospace,monospace;}
+  .pm-barra{height:6px;background:var(--panel);border-radius:3px;overflow:hidden;margin-top:4px;}
+  .pm-barra > div{height:100%;background:var(--accent);}
+  .pm-donut{display:flex;justify-content:center;align-items:center;padding:8px 0;}
+  .pm-donut-legenda{display:flex;flex-direction:column;gap:8px;font-size:12.5px;padding-left:12px;}
+  .pm-donut-legenda .item{display:flex;align-items:center;gap:8px;}
+  .pm-donut-legenda .swatch{width:12px;height:12px;border-radius:3px;}
+  .pm-chart-box{background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+  .pm-chart-box h3{margin:0 0 10px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+  .prazo-tag{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;}
+  .prazo-ok{background:rgba(34,197,94,.15);color:var(--ok);}
+  .prazo-atr{background:rgba(248,113,113,.16);color:var(--danger);}
+  .prazo-adi{background:rgba(96,165,250,.16);color:var(--info);}
+  .vazio-mini{color:var(--muted);font-size:12px;padding:12px 4px;font-style:italic;}
+  @media print { .pm-filtros{display:none;} body{background:#fff;color:#000;} .pm-card,.pm-chart-box{background:#fff;border:1px solid #ccc;} }
+</style>
+</head>
+<body>
+<div id="splash"><img class="splash-logo" src="logo-transtac.png" alt="TRANSTAC"><div class="splash-bar"><i></i></div><div class="splash-txt">Carregando</div></div>
+<script>setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove();},6000);</script>
+<header></header>
+
+<main>
+  <!-- Filtro de período -->
+  <div class="pm-filtros">
+    <div>
+      <label>De</label>
+      <input type="date" id="fDe">
+    </div>
+    <div>
+      <label>Até</label>
+      <input type="date" id="fAte">
+    </div>
+    <div>
+      <label>Atalhos</label>
+      <div class="pm-quick">
+        <button data-p="mes">Mês atual</button>
+        <button data-p="ant">Mês anterior</button>
+        <button data-p="30">30 dias</button>
+        <button data-p="90">90 dias</button>
+        <button data-p="ytd">Ano (YTD)</button>
+      </div>
+    </div>
+    <div style="margin-left:auto">
+      <label>&nbsp;</label>
+      <button id="btnImprimir" style="padding:8px 14px;border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:7px;cursor:pointer;font-family:inherit;font-size:12.5px;">🖨️ Imprimir / PDF</button>
+    </div>
+  </div>
+
+  <!-- BLOCO 1: CUSTO -->
+  <section class="pm-secao">
+    <h2>Custo</h2>
+    <div class="pm-grid-4">
+      <div class="pm-card"><h3>Custo no período</h3><div class="pm-num" id="c_periodo">—</div><div class="pm-sub" id="c_periodo_sub">—</div></div>
+      <div class="pm-card"><h3>Vs período anterior</h3><div class="pm-num" id="c_ant">—</div><div class="pm-delta neutro" id="c_delta">—</div></div>
+      <div class="pm-card"><h3>Custo YTD (ano)</h3><div class="pm-num" id="c_ytd">—</div><div class="pm-sub" id="c_ytd_sub">acumulado no ano</div></div>
+      <div class="pm-card"><h3>Custo médio por OS</h3><div class="pm-num" id="c_medio">—</div><div class="pm-sub">no período</div></div>
+    </div>
+  </section>
+
+  <!-- BLOCO 2: CUMPRIMENTO DE PRAZO -->
+  <section class="pm-secao">
+    <h2>Cumprimento de prazo (entregas)</h2>
+    <div class="pm-grid-2">
+      <div class="pm-card">
+        <h3>Entregues no período</h3>
+        <div class="pm-num" id="p_entregues">—</div>
+        <div class="pm-sub">com data de saída registrada</div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <div><span class="prazo-tag prazo-ok" id="p_prazo">—</span> <span style="font-size:11.5px;color:var(--muted)">no prazo</span></div>
+          <div><span class="prazo-tag prazo-adi" id="p_adi">—</span> <span style="font-size:11.5px;color:var(--muted)">adiantadas</span></div>
+          <div><span class="prazo-tag prazo-atr" id="p_atr">—</span> <span style="font-size:11.5px;color:var(--muted)">atrasadas</span></div>
+        </div>
+      </div>
+      <div class="pm-card">
+        <h3>Média de dias de atraso</h3>
+        <div class="pm-num" id="p_media">—</div>
+        <div class="pm-sub" id="p_media_sub">só das atrasadas</div>
+        <div style="margin-top:14px;font-size:11.5px;color:var(--muted)">
+          Adiantamento médio: <b id="p_media_adi" style="color:var(--ok)">—</b><br>
+          Maior atraso do período: <b id="p_maior_atr" style="color:var(--danger)">—</b>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCO 3: OPERAÇÃO -->
+  <section class="pm-secao">
+    <h2>Operação (agora)</h2>
+    <div class="pm-grid-3">
+      <div class="pm-card"><h3>Em aberto</h3><div class="pm-num" id="o_aberto">—</div><div class="pm-sub">sem data de saída</div></div>
+      <div class="pm-card"><h3>Vencendo esta semana</h3><div class="pm-num" style="color:var(--warn)" id="o_semana">—</div><div class="pm-sub">previsão nos próximos 7 dias</div></div>
+      <div class="pm-card"><h3>Vencidas em aberto</h3><div class="pm-num" style="color:var(--danger)" id="o_vencidas">—</div><div class="pm-sub">passou da previsão, sem saída</div></div>
+    </div>
+  </section>
+
+  <!-- BLOCO 4: TOP 10 PLACAS -->
+  <section class="pm-secao">
+    <h2>Frota — Top 10 placas do período</h2>
+    <div class="pm-grid-2">
+      <div class="pm-card">
+        <h3>Por volume (nº de OS)</h3>
+        <table class="pm-tabela" id="t_placas_vol"><thead><tr><th>#</th><th>Placa</th><th class="num">OSs</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="pm-card">
+        <h3>Por custo (R$)</h3>
+        <table class="pm-tabela" id="t_placas_custo"><thead><tr><th>#</th><th>Placa</th><th class="num">Custo</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCO 5: FORNECEDORES -->
+  <section class="pm-secao">
+    <h2>Fornecedores</h2>
+    <div class="pm-grid-2">
+      <div class="pm-card">
+        <h3>Top 10 por custo</h3>
+        <table class="pm-tabela" id="t_forn_custo"><thead><tr><th>#</th><th>Prestador</th><th class="num">OSs</th><th class="num">Custo</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="pm-card">
+        <h3>Prazo médio de entrega (dias)</h3>
+        <div class="pm-sub" style="margin-bottom:8px">dias entre entrada e saída — só dos que entregaram</div>
+        <table class="pm-tabela" id="t_forn_prazo"><thead><tr><th>#</th><th>Prestador</th><th class="num">Entregas</th><th class="num">Dias médios</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCO 6: TENDÊNCIAS -->
+  <section class="pm-secao">
+    <h2>Tendências (últimos 6 meses)</h2>
+    <div class="pm-grid-2">
+      <div class="pm-chart-box"><h3>Evolução do custo mensal</h3><canvas id="g_custo" height="140"></canvas></div>
+      <div class="pm-chart-box"><h3>Volume: preventiva × corretiva × outras</h3><canvas id="g_tipos" height="140"></canvas></div>
+    </div>
+  </section>
+</main>
+
+<script src="multas-app.js?v=11"></script>
+<script>
+const SCRIPT_URL_MG = 'https://script.google.com/macros/s/AKfycbxEnHMJoKDItvFZw6ppOcexC8kFvKO9G_-TrI4hB6r2qkZKNE7C5TrrSM2LC8JNczJmeQ/exec';
+
+montarHeader('PAINEL DE MANUTENÇÃO','Visão executiva para apresentação à diretoria.','index.html');
+
+/* -------- utilidades -------- */
+function moedaParaNumero(t){
+  var raw=String(t==null?'':t).trim(); if(!raw) return 0;
+  var m=raw.match(/\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:,\d{1,2})?/); if(!m) return 0;
+  var str=m[0].replace(/\./g,'').replace(',','.'); var n=parseFloat(str);
+  if(isNaN(n)) return 0; if(n>1000000) return 0; return n;
+}
+function parseDataBR(v){
+  var s=String(v||'').trim(); if(!s) return null;
+  var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if(m){ var a=+m[3]; if(a<100)a+=2000; return new Date(a,+m[2]-1,+m[1]); }
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m){ return new Date(+m[1],+m[2]-1,+m[3]); }
+  return null;
+}
+function toIso(d){ if(!d) return ''; return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function brl(n){ return (n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function dentroDe(dataStr, de, ate){
+  var d=parseDataBR(dataStr); if(!d) return false;
+  if(de && d<de) return false; if(ate && d>ate) return false; return true;
+}
+
+/* -------- estado -------- */
+let dados=[];
+const HOJE=new Date(); HOJE.setHours(0,0,0,0);
+
+/* -------- filtros -------- */
+function definirPeriodo(chave){
+  var de=null, ate=new Date(HOJE);
+  if(chave==='mes'){ de=new Date(HOJE.getFullYear(),HOJE.getMonth(),1); }
+  else if(chave==='ant'){ de=new Date(HOJE.getFullYear(),HOJE.getMonth()-1,1); ate=new Date(HOJE.getFullYear(),HOJE.getMonth(),0); }
+  else if(chave==='30'){ de=new Date(HOJE); de.setDate(de.getDate()-29); }
+  else if(chave==='90'){ de=new Date(HOJE); de.setDate(de.getDate()-89); }
+  else if(chave==='ytd'){ de=new Date(HOJE.getFullYear(),0,1); }
+  fDe.value=toIso(de); fAte.value=toIso(ate);
+  document.querySelectorAll('.pm-quick button').forEach(b=>b.classList.toggle('active', b.dataset.p===chave));
+  render();
+}
+document.querySelectorAll('.pm-quick button').forEach(b=>b.onclick=()=>definirPeriodo(b.dataset.p));
+[fDe,fAte].forEach(el=>el.addEventListener('change',render));
+btnImprimir.onclick=()=>window.print();
+
+/* -------- carregamento -------- */
+async function carregar(){
+  try{
+    const r=await fetch(SCRIPT_URL_MG,{method:'GET'});
+    const j=await r.json();
+    dados=j.registros||[];
+  }catch(e){ alert('Erro ao carregar dados: '+e.message); return; }
+  definirPeriodo('mes'); // abre no mês atual
+}
+
+/* -------- render principal -------- */
+function render(){
+  const de=fDe.value?parseDataBR(fDe.value):null;
+  const ate=fAte.value?parseDataBR(fAte.value):null;
+
+  // filtra pelo campo data_entrada
+  const doPer=dados.filter(d=>dentroDe(d.data_entrada, de, ate));
+
+  // === BLOCO 1: CUSTO ===
+  const custoPer=doPer.reduce((s,d)=>s+moedaParaNumero(d.total),0);
+  c_periodo.textContent=brl(custoPer);
+  c_periodo_sub.textContent=doPer.length+' ocorrências no período';
+
+  // período anterior: mesma duração, imediatamente antes
+  let custoAnt=0;
+  if(de && ate){
+    const dias=Math.round((ate-de)/86400000)+1;
+    const deAnt=new Date(de); deAnt.setDate(deAnt.getDate()-dias);
+    const ateAnt=new Date(de); ateAnt.setDate(ateAnt.getDate()-1);
+    custoAnt=dados.filter(d=>dentroDe(d.data_entrada, deAnt, ateAnt)).reduce((s,d)=>s+moedaParaNumero(d.total),0);
+  }
+  c_ant.textContent=brl(custoAnt);
+  const delta = custoAnt>0 ? ((custoPer-custoAnt)/custoAnt*100) : 0;
+  const arrow = delta>0?'▲':(delta<0?'▼':'→');
+  c_delta.textContent = (custoAnt>0? (arrow+' '+Math.abs(delta).toFixed(1)+'%') : '—');
+  c_delta.className = 'pm-delta '+(delta>0?'up':(delta<0?'down':'neutro'));
+
+  // YTD
+  const inicioAno=new Date(HOJE.getFullYear(),0,1);
+  const custoYtd=dados.filter(d=>dentroDe(d.data_entrada, inicioAno, HOJE)).reduce((s,d)=>s+moedaParaNumero(d.total),0);
+  c_ytd.textContent=brl(custoYtd);
+
+  c_medio.textContent = doPer.length ? brl(custoPer/doPer.length) : '—';
+
+  // === BLOCO 2: CUMPRIMENTO DE PRAZO ===
+  // atrasada = tem data de saída E saída > previsão
+  const entregues=doPer.filter(d=>parseDataBR(d.data_saida));
+  let noPrazo=0, adiant=0, atras=0, somaAtras=0, somaAdi=0, maiorAtr=0;
+  entregues.forEach(d=>{
+    const p=parseDataBR(d.previsao), s=parseDataBR(d.data_saida);
+    if(!p||!s) return;
+    const diff=Math.round((s-p)/86400000); // saida - previsao
+    if(diff>0){ atras++; somaAtras+=diff; if(diff>maiorAtr) maiorAtr=diff; }
+    else if(diff<0){ adiant++; somaAdi+=(-diff); }
+    else noPrazo++;
+  });
+  const totalComPrev=noPrazo+adiant+atras;
+  p_entregues.textContent=entregues.length;
+  p_prazo.textContent = totalComPrev? Math.round(noPrazo/totalComPrev*100)+'%' : '—';
+  p_adi.textContent   = totalComPrev? Math.round(adiant/totalComPrev*100)+'%' : '—';
+  p_atr.textContent   = totalComPrev? Math.round(atras/totalComPrev*100)+'%' : '—';
+  p_media.textContent = atras? (somaAtras/atras).toFixed(1).replace('.',',')+' dias' : '0';
+  p_media_sub.textContent = atras+' entrega(s) atrasada(s)';
+  p_media_adi.textContent = adiant? (somaAdi/adiant).toFixed(1).replace('.',',')+' dias' : '—';
+  p_maior_atr.textContent = maiorAtr? maiorAtr+' dias' : '—';
+
+  // === BLOCO 3: OPERAÇÃO (não usa filtro de período — é o "agora") ===
+  const abertas=dados.filter(d=>!parseDataBR(d.data_saida));
+  o_aberto.textContent=abertas.length;
+  const fim=new Date(HOJE); fim.setDate(fim.getDate()+7);
+  o_semana.textContent = abertas.filter(d=>{ const p=parseDataBR(d.previsao); return p && p>=HOJE && p<=fim; }).length;
+  o_vencidas.textContent = abertas.filter(d=>{ const p=parseDataBR(d.previsao); return p && p<HOJE; }).length;
+
+  // === BLOCO 4: TOP 10 PLACAS ===
+  const porPlaca={};
+  doPer.forEach(d=>{ const k=d.placa||'(sem placa)'; if(!porPlaca[k]) porPlaca[k]={n:0,c:0}; porPlaca[k].n++; porPlaca[k].c+=moedaParaNumero(d.total); });
+  const arrPl=Object.entries(porPlaca).map(([k,v])=>({placa:k,...v}));
+  renderTop(t_placas_vol,  arrPl.slice().sort((a,b)=>b.n-a.n).slice(0,10), 'n');
+  renderTop(t_placas_custo,arrPl.slice().sort((a,b)=>b.c-a.c).slice(0,10), 'c');
+
+  // === BLOCO 5: FORNECEDORES ===
+  const porForn={};
+  doPer.forEach(d=>{ const k=(d.fornecedor||'').trim()||'(sem prestador)';
+    if(!porForn[k]) porForn[k]={n:0,c:0,dias:0,ent:0};
+    porForn[k].n++; porForn[k].c+=moedaParaNumero(d.total);
+    const p=parseDataBR(d.data_entrada), s=parseDataBR(d.data_saida);
+    if(p && s){ const diff=Math.round((s-p)/86400000); if(diff>=0){ porForn[k].dias+=diff; porForn[k].ent++; } }
+  });
+  const arrFo=Object.entries(porForn).map(([k,v])=>({forn:k,...v}));
+  renderForn(t_forn_custo, arrFo.slice().sort((a,b)=>b.c-a.c).slice(0,10));
+  const comPrazo=arrFo.filter(f=>f.ent>0).map(f=>({...f, media:f.dias/f.ent})).sort((a,b)=>a.media-b.media).slice(0,10);
+  renderPrazo(t_forn_prazo, comPrazo);
+
+  // === BLOCO 6: TENDÊNCIAS (últimos 6 meses, ignora o filtro) ===
+  renderGraficos();
+}
+
+function renderTop(tbl, lista, campo){
+  const tb=tbl.querySelector('tbody');
+  const max=Math.max(...lista.map(x=>x[campo]),1);
+  if(!lista.length){ tb.innerHTML='<tr><td colspan="3" class="vazio-mini">Sem dados no período.</td></tr>'; return; }
+  tb.innerHTML=lista.map((x,i)=>{
+    const val = campo==='c'?brl(x.c):x.n;
+    const pct = (x[campo]/max*100).toFixed(0);
+    return `<tr><td>${i+1}</td><td class="placa">${x.placa}<div class="pm-barra"><div style="width:${pct}%"></div></div></td><td class="num">${val}</td></tr>`;
+  }).join('');
+}
+function renderForn(tbl, lista){
+  const tb=tbl.querySelector('tbody');
+  if(!lista.length){ tb.innerHTML='<tr><td colspan="4" class="vazio-mini">Sem dados no período.</td></tr>'; return; }
+  tb.innerHTML=lista.map((x,i)=>`<tr><td>${i+1}</td><td>${x.forn}</td><td class="num">${x.n}</td><td class="num">${brl(x.c)}</td></tr>`).join('');
+}
+function renderPrazo(tbl, lista){
+  const tb=tbl.querySelector('tbody');
+  if(!lista.length){ tb.innerHTML='<tr><td colspan="4" class="vazio-mini">Ainda sem entregas com prazo calculável no período.</td></tr>'; return; }
+  tb.innerHTML=lista.map((x,i)=>`<tr><td>${i+1}</td><td>${x.forn}</td><td class="num">${x.ent}</td><td class="num">${x.media.toFixed(1).replace('.',',')}</td></tr>`).join('');
+}
+
+/* -------- gráficos simples em canvas (sem lib externa) -------- */
+function renderGraficos(){
+  // últimos 6 meses (chave AAAA-MM)
+  const meses=[];
+  const base=new Date(HOJE.getFullYear(),HOJE.getMonth(),1);
+  for(let i=5;i>=0;i--){ const m=new Date(base); m.setMonth(m.getMonth()-i); meses.push({d:m, k:m.getFullYear()+'-'+('0'+(m.getMonth()+1)).slice(-2), lbl:('0'+(m.getMonth()+1)).slice(-2)+'/'+String(m.getFullYear()).slice(2)}); }
+
+  const custoMes=meses.map(m=>({...m, v:0}));
+  const tiposMes=meses.map(m=>({...m, prev:0, corr:0, out:0}));
+  dados.forEach(d=>{
+    const dt=parseDataBR(d.data_entrada); if(!dt) return;
+    const k=dt.getFullYear()+'-'+('0'+(dt.getMonth()+1)).slice(-2);
+    const idx=meses.findIndex(m=>m.k===k); if(idx<0) return;
+    custoMes[idx].v += moedaParaNumero(d.total);
+    const oc=(d.ocorrencia||'').toUpperCase();
+    if(oc==='PREVENTIVA') tiposMes[idx].prev++;
+    else if(oc==='CORRETIVA') tiposMes[idx].corr++;
+    else tiposMes[idx].out++;
+  });
+  desenharLinha(document.getElementById('g_custo'), custoMes.map(m=>m.lbl), custoMes.map(m=>m.v), '#f5821f', v=>brl(v));
+  desenharBarrasEmpilhadas(document.getElementById('g_tipos'), tiposMes.map(m=>m.lbl),
+    [{label:'Preventiva',color:'#22c55e',data:tiposMes.map(m=>m.prev)},
+     {label:'Corretiva', color:'#f87171',data:tiposMes.map(m=>m.corr)},
+     {label:'Outras',    color:'#60a5fa',data:tiposMes.map(m=>m.out)}]);
+}
+
+function desenharLinha(canvas, labels, dados, cor, fmt){
+  const dpr=window.devicePixelRatio||1;
+  const w=canvas.clientWidth||canvas.parentElement.clientWidth; const h=140;
+  canvas.width=w*dpr; canvas.height=h*dpr; canvas.style.height=h+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
+  const pad={t:14,r:14,b:22,l:52};
+  const gW=w-pad.l-pad.r, gH=h-pad.t-pad.b;
+  const max=Math.max(...dados,1);
+  ctx.strokeStyle='#2e3138'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,pad.t+gH); ctx.lineTo(pad.l+gW,pad.t+gH); ctx.stroke();
+  ctx.fillStyle='#9aa3af'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++){ const y=pad.t+gH-(gH*i/4); const v=max*i/4; ctx.fillText(fmt(v),pad.l-6,y);
+    ctx.strokeStyle='#26282e'; ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+gW,y); ctx.stroke(); }
+  const step=gW/(labels.length-1||1);
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  labels.forEach((lb,i)=>{ ctx.fillStyle='#9aa3af'; ctx.fillText(lb,pad.l+step*i,pad.t+gH+6); });
+  ctx.strokeStyle=cor; ctx.lineWidth=2.5; ctx.beginPath();
+  dados.forEach((v,i)=>{ const x=pad.l+step*i, y=pad.t+gH-(v/max*gH); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+  ctx.stroke();
+  dados.forEach((v,i)=>{ const x=pad.l+step*i, y=pad.t+gH-(v/max*gH);
+    ctx.fillStyle=cor; ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2); ctx.fill(); });
+}
+function desenharBarrasEmpilhadas(canvas, labels, series){
+  const dpr=window.devicePixelRatio||1;
+  const w=canvas.clientWidth||canvas.parentElement.clientWidth; const h=140;
+  canvas.width=w*dpr; canvas.height=h*dpr; canvas.style.height=h+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
+  const pad={t:14,r:14,b:22,l:32};
+  const gW=w-pad.l-pad.r, gH=h-pad.t-pad.b;
+  const totals=labels.map((_,i)=>series.reduce((s,se)=>s+se.data[i],0));
+  const max=Math.max(...totals,1);
+  ctx.strokeStyle='#2e3138'; ctx.beginPath(); ctx.moveTo(pad.l,pad.t+gH); ctx.lineTo(pad.l+gW,pad.t+gH); ctx.stroke();
+  const bw=gW/labels.length*0.65;
+  labels.forEach((lb,i)=>{
+    const cx=pad.l+gW*(i+0.5)/labels.length;
+    let yBase=pad.t+gH;
+    series.forEach(se=>{
+      const hSeg=(se.data[i]/max)*gH; if(hSeg<=0.4) return;
+      ctx.fillStyle=se.color;
+      ctx.fillRect(cx-bw/2, yBase-hSeg, bw, hSeg);
+      yBase-=hSeg;
+    });
+    ctx.fillStyle='#9aa3af'; ctx.font='10px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(lb, cx, pad.t+gH+6);
+  });
+  // legenda
+  let lx=pad.l; series.forEach(se=>{
+    ctx.fillStyle=se.color; ctx.fillRect(lx,pad.t-8,10,10);
+    ctx.fillStyle='#9aa3af'; ctx.font='10px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText(se.label, lx+14, pad.t-8); lx += ctx.measureText(se.label).width + 32;
+  });
+}
+
+carregar();
+</script>
+</body>
+</html>
