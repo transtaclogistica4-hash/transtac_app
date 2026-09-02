@@ -189,8 +189,8 @@
   <section class="pm-secao">
     <h2>Tendências (últimos 6 meses)</h2>
     <div class="pm-grid-2">
-      <div class="pm-chart-box"><h3>Evolução do custo mensal</h3><canvas id="g_custo" height="140"></canvas></div>
-      <div class="pm-chart-box"><h3>Volume: preventiva × corretiva × outras</h3><canvas id="g_tipos" height="140"></canvas></div>
+      <div class="pm-chart-box"><h3>Evolução do custo mensal</h3><canvas id="g_custo" height="240"></canvas></div>
+      <div class="pm-chart-box"><h3>Volume: preventiva × corretiva × outras</h3><canvas id="g_tipos" height="240"></canvas></div>
     </div>
   </section>
 
@@ -399,55 +399,127 @@ function renderGraficos(){
 
 function desenharLinha(canvas, labels, dados, cor, fmt){
   const dpr=window.devicePixelRatio||1;
-  const w=canvas.clientWidth||canvas.parentElement.clientWidth; const h=140;
+  const w=canvas.clientWidth||canvas.parentElement.clientWidth; const h=240;
   canvas.width=w*dpr; canvas.height=h*dpr; canvas.style.height=h+'px';
   const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
-  const pad={t:14,r:14,b:22,l:52};
-  const gW=w-pad.l-pad.r, gH=h-pad.t-pad.b;
+  // pad.l dinâmico: mede o maior rótulo do eixo Y para caber o valor inteiro
   const max=Math.max(...dados,1);
+  ctx.font='12px sans-serif';
+  let maxLbl=0;
+  for(let i=0;i<=4;i++){ const t=fmt(max*i/4); const wid=ctx.measureText(t).width; if(wid>maxLbl) maxLbl=wid; }
+  const pad={t:20,r:20,b:34,l:Math.ceil(maxLbl)+16};
+  const gW=w-pad.l-pad.r, gH=h-pad.t-pad.b;
+  // eixos
   ctx.strokeStyle='#2e3138'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,pad.t+gH); ctx.lineTo(pad.l+gW,pad.t+gH); ctx.stroke();
-  ctx.fillStyle='#9aa3af'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='middle';
-  for(let i=0;i<=4;i++){ const y=pad.t+gH-(gH*i/4); const v=max*i/4; ctx.fillText(fmt(v),pad.l-6,y);
+  // grid + rótulos Y
+  ctx.fillStyle='#c5cbd3'; ctx.font='12px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++){ const y=pad.t+gH-(gH*i/4); const v=max*i/4;
+    ctx.fillText(fmt(v),pad.l-8,y);
     ctx.strokeStyle='#26282e'; ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+gW,y); ctx.stroke(); }
+  // rótulos X
   const step=gW/(labels.length-1||1);
   ctx.textAlign='center'; ctx.textBaseline='top';
-  labels.forEach((lb,i)=>{ ctx.fillStyle='#9aa3af'; ctx.fillText(lb,pad.l+step*i,pad.t+gH+6); });
-  ctx.strokeStyle=cor; ctx.lineWidth=2.5; ctx.beginPath();
-  dados.forEach((v,i)=>{ const x=pad.l+step*i, y=pad.t+gH-(v/max*gH); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+  ctx.font='12px sans-serif';
+  labels.forEach((lb,i)=>{ ctx.fillStyle='#c5cbd3'; ctx.fillText(lb,pad.l+step*i,pad.t+gH+8); });
+  // linha
+  ctx.strokeStyle=cor; ctx.lineWidth=3; ctx.beginPath();
+  const pts=dados.map((v,i)=>({x:pad.l+step*i, y:pad.t+gH-(v/max*gH), v:v, lb:labels[i]}));
+  pts.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
   ctx.stroke();
-  dados.forEach((v,i)=>{ const x=pad.l+step*i, y=pad.t+gH-(v/max*gH);
-    ctx.fillStyle=cor; ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2); ctx.fill(); });
+  // pontos maiores + valor acima
+  pts.forEach(p=>{
+    ctx.fillStyle=cor; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#0b0b0c'; ctx.beginPath(); ctx.arc(p.x,p.y,2,0,Math.PI*2); ctx.fill();
+    // valor acima do ponto
+    ctx.fillStyle='#f5821f'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+    if(p.v>0) ctx.fillText(fmt(p.v), p.x, p.y-8);
+  });
+  // tooltip interativo
+  canvas._pts=pts; canvas._fmt=fmt;
+  if(!canvas._tooltipInit){
+    canvas._tooltipInit=true;
+    const tip=document.createElement('div');
+    tip.style.cssText='position:absolute;background:rgba(20,23,26,.96);border:1px solid #f5821f;color:#fff;padding:6px 10px;border-radius:6px;font-size:12px;pointer-events:none;display:none;z-index:100;white-space:nowrap;';
+    document.body.appendChild(tip); canvas._tip=tip;
+    canvas.addEventListener('mousemove',ev=>{
+      const r=canvas.getBoundingClientRect(); const x=ev.clientX-r.left, y=ev.clientY-r.top;
+      let near=null,dmin=1e9; canvas._pts.forEach(p=>{ const d=Math.hypot(p.x-x,p.y-y); if(d<dmin){dmin=d;near=p;} });
+      if(near && dmin<28){ tip.style.display='block'; tip.style.left=(ev.pageX+12)+'px'; tip.style.top=(ev.pageY-30)+'px';
+        tip.innerHTML='<b>'+near.lb+'</b><br>'+canvas._fmt(near.v);
+      } else tip.style.display='none';
+    });
+    canvas.addEventListener('mouseleave',()=>tip.style.display='none');
+  }
 }
 function desenharBarrasEmpilhadas(canvas, labels, series){
   const dpr=window.devicePixelRatio||1;
-  const w=canvas.clientWidth||canvas.parentElement.clientWidth; const h=140;
+  const w=canvas.clientWidth||canvas.parentElement.clientWidth; const h=240;
   canvas.width=w*dpr; canvas.height=h*dpr; canvas.style.height=h+'px';
   const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
-  const pad={t:14,r:14,b:22,l:32};
-  const gW=w-pad.l-pad.r, gH=h-pad.t-pad.b;
   const totals=labels.map((_,i)=>series.reduce((s,se)=>s+se.data[i],0));
   const max=Math.max(...totals,1);
-  ctx.strokeStyle='#2e3138'; ctx.beginPath(); ctx.moveTo(pad.l,pad.t+gH); ctx.lineTo(pad.l+gW,pad.t+gH); ctx.stroke();
-  const bw=gW/labels.length*0.65;
+  // pad.l dinâmico para caber rótulos Y (que agora existem)
+  ctx.font='12px sans-serif';
+  let maxLbl=0;
+  for(let i=0;i<=4;i++){ const t=String(Math.round(max*i/4)); const wid=ctx.measureText(t).width; if(wid>maxLbl) maxLbl=wid; }
+  const pad={t:32,r:20,b:34,l:Math.ceil(maxLbl)+16};
+  const gW=w-pad.l-pad.r, gH=h-pad.t-pad.b;
+  // eixos + grid horizontal com valores Y
+  ctx.strokeStyle='#2e3138'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,pad.t+gH); ctx.lineTo(pad.l+gW,pad.t+gH); ctx.stroke();
+  ctx.fillStyle='#c5cbd3'; ctx.font='12px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++){ const y=pad.t+gH-(gH*i/4); const v=Math.round(max*i/4);
+    ctx.fillText(String(v),pad.l-8,y);
+    ctx.strokeStyle='#26282e'; ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+gW,y); ctx.stroke(); }
+  // barras
+  const bw=gW/labels.length*0.62;
+  const barras=[];
   labels.forEach((lb,i)=>{
     const cx=pad.l+gW*(i+0.5)/labels.length;
     let yBase=pad.t+gH;
+    const segs=[];
     series.forEach(se=>{
-      const hSeg=(se.data[i]/max)*gH; if(hSeg<=0.4) return;
-      ctx.fillStyle=se.color;
-      ctx.fillRect(cx-bw/2, yBase-hSeg, bw, hSeg);
-      yBase-=hSeg;
+      const val=se.data[i]; const hSeg=(val/max)*gH;
+      if(hSeg>0.4){ ctx.fillStyle=se.color; ctx.fillRect(cx-bw/2, yBase-hSeg, bw, hSeg); segs.push({label:se.label,color:se.color,val:val,y:yBase-hSeg}); yBase-=hSeg; }
+      else if(val>0) segs.push({label:se.label,color:se.color,val:val,y:yBase});
     });
-    ctx.fillStyle='#9aa3af'; ctx.font='10px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.fillText(lb, cx, pad.t+gH+6);
+    // rótulo do eixo X
+    ctx.fillStyle='#c5cbd3'; ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(lb, cx, pad.t+gH+8);
+    // total no topo da barra
+    const total=totals[i];
+    if(total>0){
+      ctx.fillStyle='#f5821f'; ctx.font='bold 12px sans-serif'; ctx.textBaseline='bottom';
+      ctx.fillText(String(total), cx, pad.t+gH-(total/max*gH)-4);
+    }
+    barras.push({cx,bw,segs,total,lb});
   });
-  // legenda
-  let lx=pad.l; series.forEach(se=>{
-    ctx.fillStyle=se.color; ctx.fillRect(lx,pad.t-8,10,10);
-    ctx.fillStyle='#9aa3af'; ctx.font='10px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='top';
-    ctx.fillText(se.label, lx+14, pad.t-8); lx += ctx.measureText(se.label).width + 32;
+  // legenda maior no topo
+  let lx=pad.l;
+  ctx.font='bold 12px sans-serif'; ctx.textBaseline='middle';
+  series.forEach(se=>{
+    ctx.fillStyle=se.color; ctx.fillRect(lx,pad.t-22,14,14);
+    ctx.fillStyle='#c5cbd3'; ctx.textAlign='left';
+    ctx.fillText(se.label, lx+20, pad.t-15); lx += ctx.measureText(se.label).width + 40;
   });
+  // tooltip interativo
+  canvas._barras=barras;
+  if(!canvas._tooltipInit){
+    canvas._tooltipInit=true;
+    const tip=document.createElement('div');
+    tip.style.cssText='position:absolute;background:rgba(20,23,26,.96);border:1px solid #f5821f;color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;pointer-events:none;display:none;z-index:100;white-space:nowrap;';
+    document.body.appendChild(tip); canvas._tip=tip;
+    canvas.addEventListener('mousemove',ev=>{
+      const r=canvas.getBoundingClientRect(); const x=ev.clientX-r.left;
+      const b=canvas._barras.find(bb=>Math.abs(bb.cx-x)<bb.bw/2);
+      if(b && b.total>0){
+        tip.style.display='block'; tip.style.left=(ev.pageX+12)+'px'; tip.style.top=(ev.pageY-40)+'px';
+        tip.innerHTML='<b>'+b.lb+'</b> — total: '+b.total+'<br>'+b.segs.map(s=>'<span style="color:'+s.color+'">■</span> '+s.label+': '+s.val).join('<br>');
+      } else tip.style.display='none';
+    });
+    canvas.addEventListener('mouseleave',()=>tip.style.display='none');
+  }
 }
 
 /* ---- vida: animação de números ---- */
