@@ -95,9 +95,8 @@
   <div class="section-title">Ocorrências registradas</div>
   <div class="filtro-row">
     <input id="fBusca" placeholder="Buscar placa, prestador, ocorrência..." style="flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13px;">
-    <select id="fOcor" style="padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13px;">
-      <option value="">Todas as ocorrências</option>
-    </select>
+        <input type="date" id="fDataEnt" title="Filtrar por data de entrada" style="padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13px;">
+        <button type="button" id="fLimparData" title="Limpar filtro de data" style="padding:8px 12px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;">Limpar data</button>
   </div>
   <div class="table-wrap"><table class="data">
     <thead><tr><th>Placa / Modelo</th><th>Prestador</th><th>Ocorrência</th><th>Descrição</th><th>Entrada</th><th>Previsão</th><th>Saída</th><th class="num">Dias</th><th>Status Ocor.</th><th class="num">Total R$</th><th></th></tr></thead>
@@ -140,7 +139,6 @@ async function carregar(){
   dlForn.innerHTML=[...new Set(dados.map(d=>d.fornecedor).filter(Boolean))].map(f=>'<option value="'+esc(f)+'">').join('');
   // filtro de ocorrencias
   const ocs=[...new Set(dados.map(d=>d.ocorrencia).filter(Boolean))].sort();
-  fOcor.innerHTML='<option value="">Todas as ocorrências</option>'+ocs.map(o=>'<option>'+esc(o)+'</option>').join('');
   render();
 }
 
@@ -201,9 +199,16 @@ function render(){
     ['info','Custo total',brl(total),'somatório R$']
   ].map(([c,l,v,s])=>`<div class="kpi ${c}"><div class="kpi-label">${l}</div><div class="kpi-value">${v}</div><div class="kpi-sub">${s}</div></div>`).join('');
 
-  const bq=(fBusca.value||'').toLowerCase(), fo=fOcor.value;
+ const bq=(fBusca.value||'').toLowerCase();
+  const fData=fDataEnt.value; // AAAA-MM-DD do <input type=date> ou ''
+  // converte data_entrada da planilha (dd/mm/aaaa ou ISO) para ISO AAAA-MM-DD para comparar
+  const toIso=v=>{ const s=String(v||'').trim();
+    const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if(m){ let a=+m[3]; if(a<100)a+=2000; return a+'-'+('0'+(+m[2])).slice(-2)+'-'+('0'+(+m[1])).slice(-2); }
+    const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m2?m2[0]:'';
+  };
   const lista=dados.filter(d=>{
-    if(fo && d.ocorrencia!==fo) return false;
+    if(fData && toIso(d.data_entrada)!==fData) return false;
     if(bq && !((d.placa+' '+d.modelo+' '+d.fornecedor+' '+d.ocorrencia+' '+d.plano).toLowerCase().includes(bq))) return false;
     return true;
   }).slice().reverse();
@@ -229,7 +234,9 @@ function render(){
   vazio.style.display=lista.length?'none':'block';
   tb.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>editar(b.dataset.ed));
 }
-fBusca.addEventListener('input',render); fOcor.addEventListener('change',render);
+fBusca.addEventListener('input',render);
+fDataEnt.addEventListener('change',render);
+fLimparData.addEventListener('click',()=>{ fDataEnt.value=''; render(); });
 
 function editar(id){
   const d=dados.find(x=>String(x.id)===String(id)); if(!d) return; editId=id;
