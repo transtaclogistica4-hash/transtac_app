@@ -706,12 +706,12 @@
     </a>
     <a class="card mod-card" data-modulo="manutencao" href="#" onclick="return abrirModulo('manutencao')">
       <span class="kicker">Módulo</span>
-      <h3>Manutenção / Checklists</h3>
+      <h3>Controle de Manutenção / Checklists</h3>
       <p>Controle de checklists, de manutenção de veículos e gestão de veículos da frota.</p>
     </a>
     <a class="card mod-card" data-modulo="inventario" href="inventario-icara.html" onclick="return abrirModulo('inventario')">
       <span class="kicker">Módulo</span>
-      <h3>Inventário Içara</h3>
+      <h3>CD Içara</h3>
       <p>Controle de estoque da unidade Içara: contagem, entradas, saídas e conferência.</p>
     </a>
     <a class="card mod-card" data-modulo="multas" href="multas.html" onclick="return abrirModulo('multas')">
@@ -721,7 +721,7 @@
     </a>
     <a class="card mod-card" data-modulo="rh" href="rh.html" onclick="return abrirModulo('rh')">
       <span class="kicker">Módulo</span>
-      <h3>RH</h3>
+      <h3>RH/DP</h3>
       <p>Recursos Humanos: controle de horas extras e demais rotinas do setor.</p>
     </a>
     <a class="card mod-card" data-modulo="compras" href="compras.html" onclick="return abrirModulo('compras')">
@@ -782,27 +782,25 @@
     <p class="desc">Acompanhe os checklists e a manutenção da frota.</p>
     <div class="grid">
       <a class="card" data-tela="planilhas" href="https://docs.google.com/spreadsheets/d/1YPIG2NCqYit8brAmCltcoCoUAhp8RWZxSSu2j_AeLBY/edit" target="_blank" rel="noopener">
-        <span class="kicker">Planilha</span>
+        <span class="kicker">BASE</span>
         <h3>Respostas do Checklist</h3>
         <p>Google Sheets com todos os checklists diários enviados pelos motoristas.</p>
       </a>
       <a class="card" data-tela="dashboard" href="#" onclick="return openGraficos()">
-        <span class="kicker">Relatório</span>
+        <span class="kicker">DADOS</span>
         <h3>Dashboard de Checklists</h3>
         <p>Checklists por operação, por dia, rotas, motoristas, tipos de veículo e detalhamento completo.</p>
       </a>
       <a class="card" data-tela="ponto" href="#" onclick="return openPontoReport()">
-        <span class="kicker">Relatório</span>
+        <span class="kicker">DADOS</span>
         <h3>Relatório de Pontos Motoristas</h3>
         <p>Controles de ponto registrados pelos motoristas, com filtro por motorista e por data.</p>
       </a>
-      <div class="card disabled">
-        <span class="kicker">Relatório</span>
+      <a class="card" data-tela="painel-manutencao" href="painel-manutencao.html">
+        <span class="kicker">DADOS</span>
         <h3>Painel de Manutenção</h3>
-        <p>Custos, itens recorrentes e status por veículo.</p>
-        <span class="badge-soon">Em breve</span>
-      </div>
-    </div>
+        <p>Visão executiva: custo, prazo, top placas e tendências. Para apresentação.</p>
+      </a>
   </section>
 </div>
 
@@ -1459,7 +1457,7 @@
      O setor e escolhido pelo usuario no cadastro e gravado na planilha.
      A liberacao continua sendo manual (aprovacao na planilha de senhas);
      aprovado o e-mail, o acesso segue a matriz abaixo. */
-  var TELAS_MANUTENCAO = ['checklist','preenchidos','validacao','preventiva','manutencao-geral','frota','ponto','dashboard'];
+  var TELAS_MANUTENCAO = ['checklist','preenchidos','validacao','preventiva','manutencao-geral', 'painel-manutencao','frota','ponto','dashboard'];
   var PERMISSOES = {
     LOGISTICA:      {modulos:['logistica','manutencao','multas','inventario'], telas:'*'},
     MANUTENCAO:     {modulos:['manutencao'],                                   telas:TELAS_MANUTENCAO},
@@ -1469,6 +1467,7 @@
     MOTORISTA:      {modulos:[],                                               telas:[]},
     DESENVOLVIMENTO:{modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
     CD_ICARA:       {modulos:['inventario','multas','manutencao'],             telas:TELAS_MANUTENCAO},
+    TERCEIRO_GAM:   {modulos:['logistica'],                                    telas:[]},
     /* perfis antigos mantidos por compatibilidade com cadastros ja existentes */
     ADMIN:          {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
     GESTOR:         {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
@@ -1477,7 +1476,7 @@
   var SETOR_LABEL = {
     LOGISTICA:'Logística', MANUTENCAO:'Manutenção/Frota', RH:'RH/DP',
     FINANCEIRO:'Financeiro/Compras', EXPEDICAO:'Expedição', MOTORISTA:'Motorista',
-    DESENVOLVIMENTO:'Desenvolvimento', CD_ICARA:'CD Içara'
+    DESENVOLVIMENTO:'Desenvolvimento', CD_ICARA:'CD Içara', TERCEIRO_GAM:'Terceiro GAM'
   };
   /* aceita variacoes vindas da planilha: acento, espaco, barra, hifen */
   function normalizarSetor(v){
@@ -1492,7 +1491,8 @@
       'EXPEDICAO':'EXPEDICAO',
       'MOTORISTA':'MOTORISTA',
       'DESENVOLVIMENTO':'DESENVOLVIMENTO','DEV':'DESENVOLVIMENTO','TI':'DESENVOLVIMENTO',
-      'CD_ICARA':'CD_ICARA','ICARA':'CD_ICARA','CD':'CD_ICARA'
+      'CD_ICARA':'CD_ICARA','ICARA':'CD_ICARA','CD':'CD_ICARA',
+      'TERCEIRO_GAM':'TERCEIRO_GAM','GAM':'TERCEIRO_GAM','TERCEIRO':'TERCEIRO_GAM'
     };
     if(MAP[v]) return MAP[v];
     return PERMISSOES[v] ? v : '';
