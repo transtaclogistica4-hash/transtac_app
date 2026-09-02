@@ -12,10 +12,10 @@ Estrutura achatada: tudo na mesma pasta, sem subpastas.
 | Logística | `logistica.html` |
 | Manutenção / Checklists | tela interna do portal |
 | Área do Motorista | tela interna, sem login |
-| Inventário Içara | `inventario-icara.html` |
+| CD Içara | `inventario-icara.html` |
 | Multas | `multas.html` |
 | RH | `rh.html` |
-| Compras / Expedição | Em breve |
+| Compras / Expedição | `compras.html` |
 
 Telas do módulo de Multas: `multas.html`, `multas-cadastro.html`,
 `multas-lista.html`, `multas-indicacao.html`, `multas-dashboard.html`,
