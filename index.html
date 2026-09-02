@@ -782,27 +782,25 @@
     <p class="desc">Acompanhe os checklists e a manutenção da frota.</p>
     <div class="grid">
       <a class="card" data-tela="planilhas" href="https://docs.google.com/spreadsheets/d/1YPIG2NCqYit8brAmCltcoCoUAhp8RWZxSSu2j_AeLBY/edit" target="_blank" rel="noopener">
-        <span class="kicker">Planilha</span>
+        <span class="kicker">BASE</span>
         <h3>Respostas do Checklist</h3>
         <p>Google Sheets com todos os checklists diários enviados pelos motoristas.</p>
       </a>
       <a class="card" data-tela="dashboard" href="#" onclick="return openGraficos()">
-        <span class="kicker">Relatório</span>
+        <span class="kicker">DADOS</span>
         <h3>Dashboard de Checklists</h3>
         <p>Checklists por operação, por dia, rotas, motoristas, tipos de veículo e detalhamento completo.</p>
       </a>
       <a class="card" data-tela="ponto" href="#" onclick="return openPontoReport()">
-        <span class="kicker">Relatório</span>
+        <span class="kicker">DADOS</span>
         <h3>Relatório de Pontos Motoristas</h3>
         <p>Controles de ponto registrados pelos motoristas, com filtro por motorista e por data.</p>
       </a>
-      <div class="card disabled">
-        <span class="kicker">Relatório</span>
+      <a class="card" data-tela="painel-manutencao" href="painel-manutencao.html">
+        <span class="kicker">DADOS</span>
         <h3>Painel de Manutenção</h3>
-        <p>Custos, itens recorrentes e status por veículo.</p>
-        <span class="badge-soon">Em breve</span>
-      </div>
-    </div>
+        <p>Visão executiva: custo, prazo, top placas e tendências. Para apresentação.</p>
+      </a>
   </section>
 </div>
 
@@ -1459,7 +1457,7 @@
      O setor e escolhido pelo usuario no cadastro e gravado na planilha.
      A liberacao continua sendo manual (aprovacao na planilha de senhas);
      aprovado o e-mail, o acesso segue a matriz abaixo. */
-  var TELAS_MANUTENCAO = ['checklist','preenchidos','validacao','preventiva','manutencao-geral','frota','ponto','dashboard'];
+  var TELAS_MANUTENCAO = ['checklist','preenchidos','validacao','preventiva','manutencao-geral', 'painel-manutencao','frota','ponto','dashboard'];
   var PERMISSOES = {
     LOGISTICA:      {modulos:['logistica','manutencao','multas','inventario'], telas:'*'},
     MANUTENCAO:     {modulos:['manutencao'],                                   telas:TELAS_MANUTENCAO},
