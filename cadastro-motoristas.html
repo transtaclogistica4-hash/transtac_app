@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<!-- TRANSTAC CADASTRO DE MOTORISTAS | build v1 -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0c">
+<title>Cadastro de Motoristas · TRANSTAC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="multas.css?v=11">
+<style>
+  .cm-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 16px;padding:14px;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;}
+  .cm-toolbar input.busca{flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--border);border-radius:7px;background:var(--panel);color:var(--text);font-size:13px;font-family:inherit;}
+  .cm-btn{padding:9px 16px;border-radius:7px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;}
+  .cm-btn.primary{background:var(--accent);color:#14171A;border-color:var(--accent);}
+  .cm-btn.primary:hover{filter:brightness(1.08);}
+  .cm-btn.ghost{background:transparent;color:var(--text);border-color:var(--border);}
+  .cm-btn.ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .cm-board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  @media(max-width:1100px){ .cm-board{grid-template-columns:1fr 1fr;} }
+  @media(max-width:640px){ .cm-board{grid-template-columns:1fr;} }
+  .cm-col{background:var(--panel-2);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:200px;display:flex;flex-direction:column;}
+  .cm-col-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+  .cm-col-hd h3{margin:0;font-size:12px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .cm-col-hd .pt{width:10px;height:10px;border-radius:50%;display:inline-block;}
+  .cm-col-hd .qt{background:var(--panel);color:var(--muted);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+  .cm-col[data-setor="LOGISTICA"] .pt{background:#f5821f;} .cm-col[data-setor="LOGISTICA"] h3{color:#f5821f;}
+  .cm-col[data-setor="EXPEDICAO_TUBARAO"] .pt{background:#60a5fa;} .cm-col[data-setor="EXPEDICAO_TUBARAO"] h3{color:#60a5fa;}
+  .cm-col[data-setor="CD_ICARA"] .pt{background:#22c55e;} .cm-col[data-setor="CD_ICARA"] h3{color:#22c55e;}
+  .cm-col[data-setor="TERCEIROS"] .pt{background:#c084fc;} .cm-col[data-setor="TERCEIROS"] h3{color:#c084fc;}
+  .cm-cards{display:flex;flex-direction:column;gap:8px;flex:1;}
+  .cm-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;gap:10px;align-items:flex-start;transition:transform .15s ease, border-color .15s ease;}
+  .cm-card:hover{transform:translateY(-1px);border-color:rgba(245,130,31,.5);}
+  .cm-avatar{width:38px;height:38px;border-radius:50%;background:var(--panel-2);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;border:2px solid var(--border);}
+  .cm-info{flex:1;min-width:0;}
+  .cm-nome{font-weight:700;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cm-meta{font-size:11.5px;color:var(--muted);margin-top:2px;display:flex;flex-wrap:wrap;gap:8px;}
+  .cm-meta .item{display:inline-flex;align-items:center;gap:4px;}
+  .cm-acoes{display:flex;flex-direction:column;gap:4px;}
+  .cm-icon-btn{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 8px;cursor:pointer;font-family:inherit;font-size:11px;}
+  .cm-icon-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .cm-vazio{color:var(--muted);font-size:12px;font-style:italic;padding:20px 4px;text-align:center;border:1px dashed var(--border);border-radius:8px;}
+  .cm-inativo{opacity:.55;}
+  .cm-cnh-tag{font-size:10px;background:rgba(34,197,94,.15);color:var(--ok);padding:1px 6px;border-radius:8px;margin-left:4px;}
+  /* modal */
+  #cmModal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-start;justify-content:center;z-index:9999;padding:40px 20px;overflow-y:auto;}
+  #cmModal.open{display:flex;}
+  .cm-modal-box{background:var(--panel);border:1px solid var(--border);border-radius:14px;max-width:640px;width:100%;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  .cm-modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+  .cm-modal-hd h2{margin:0;font-size:16px;color:var(--accent);}
+  .cm-modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;font-family:inherit;}
+  .cm-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .cm-form .full{grid-column:1/-1;}
+  .cm-form label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;}
+  .cm-form input,.cm-form select{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13px;font-family:inherit;}
+  .cm-cnh-preview{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--muted);}
+  .cm-cnh-preview img{max-height:60px;border-radius:6px;border:1px solid var(--border);}
+  .cm-modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);gap:10px;}
+</style>
+</head>
+<body>
+<div id="splash"><img class="splash-logo" src="logo-transtac.png" alt="TRANSTAC"><div class="splash-bar"><i></i></div><div class="splash-txt">Carregando</div></div>
+<script>setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove();},6000);</script>
+<header></header>
+
+<main>
+  <div class="cm-toolbar">
+    <input class="busca" id="cmBusca" placeholder="Buscar por nome, telefone ou CPF...">
+    <button class="cm-btn ghost" id="cmImportar" title="Importar motoristas de uma planilha existente">📥 Importar</button>
+    <button class="cm-btn primary" id="cmNovo">+ Novo motorista</button>
+  </div>
+
+  <div class="cm-board">
+    <div class="cm-col" data-setor="LOGISTICA">
+      <div class="cm-col-hd"><h3><span class="pt"></span>Logística</h3><span class="qt" id="qt-LOGISTICA">0</span></div>
+      <div class="cm-cards" id="col-LOGISTICA"></div>
+    </div>
+    <div class="cm-col" data-setor="EXPEDICAO_TUBARAO">
+      <div class="cm-col-hd"><h3><span class="pt"></span>Expedição (Tubarão)</h3><span class="qt" id="qt-EXPEDICAO_TUBARAO">0</span></div>
+      <div class="cm-cards" id="col-EXPEDICAO_TUBARAO"></div>
+    </div>
+    <div class="cm-col" data-setor="CD_ICARA">
+      <div class="cm-col-hd"><h3><span class="pt"></span>CD Içara</h3><span class="qt" id="qt-CD_ICARA">0</span></div>
+      <div class="cm-cards" id="col-CD_ICARA"></div>
+    </div>
+    <div class="cm-col" data-setor="TERCEIROS">
+      <div class="cm-col-hd"><h3><span class="pt"></span>Terceiros</h3><span class="qt" id="qt-TERCEIROS">0</span></div>
+      <div class="cm-cards" id="col-TERCEIROS"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal Cadastro/Edição -->
+<div id="cmModal">
+  <div class="cm-modal-box">
+    <div class="cm-modal-hd">
+      <h2 id="cmModalTit">Novo motorista</h2>
+      <button class="cm-modal-close" onclick="cmFechar()">✕</button>
+    </div>
+    <div class="cm-form">
+      <div class="full">
+        <label>Nome completo *</label>
+        <input id="m_nome" placeholder="ex.: Alceu Mazzuchetti">
+      </div>
+      <div>
+        <label>Telefone (WhatsApp)</label>
+        <input id="m_tel" placeholder="(48) 99999-9999">
+      </div>
+      <div>
+        <label>CPF</label>
+        <input id="m_cpf" placeholder="000.000.000-00">
+      </div>
+      <div class="full">
+        <label>Setor *</label>
+        <select id="m_setor">
+          <option value="LOGISTICA">Logística</option>
+          <option value="EXPEDICAO_TUBARAO">Expedição (Tubarão)</option>
+          <option value="CD_ICARA">CD Içara</option>
+          <option value="TERCEIROS">Terceiros</option>
+        </select>
+      </div>
+      <div class="full">
+        <label>Foto da CNH (JPG, PNG ou PDF)</label>
+        <input type="file" id="m_cnh" accept="image/*,application/pdf">
+        <div class="cm-cnh-preview" id="m_cnh_prev"></div>
+      </div>
+      <div class="full">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="m_ativo" checked style="width:auto;"> Motorista ativo
+        </label>
+      </div>
+    </div>
+    <div class="cm-modal-actions">
+      <button class="cm-btn ghost" id="cmExcluir" style="color:var(--danger);border-color:var(--danger);display:none;">Excluir</button>
+      <div style="display:flex;gap:8px;margin-left:auto;">
+        <button class="cm-btn ghost" onclick="cmFechar()">Cancelar</button>
+        <button class="cm-btn primary" id="cmSalvar">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="multas-app.js?v=11"></script>
+<script>
+const SCRIPT_URL_MOT = 'https://script.google.com/macros/s/AKfycbypzKdoWY99DAZxKFhAitZ4gfsaUZr0EqBs56zJWTrsy8XgF3xI4zZ1EtAr6dLTHDZPrQ/exec';
+
+montarHeader('CADASTRO DE MOTORISTAS','Base única de motoristas: logística, expedição, CD Içara e terceiros.','index.html');
+
+let motoristas=[], editId=null, cnhData=null;
+
+async function carregar(){
+  try{ const r=await fetch(SCRIPT_URL_MOT,{method:'GET'}); const j=await r.json(); motoristas=j.motoristas||[]; }
+  catch(e){ toast('Erro ao carregar: '+e.message,true); }
+  render();
+}
+
+function iniciais(nome){ return (nome||'').split(' ').filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase(); }
+function fmtFone(t){ const s=String(t||'').replace(/\D/g,''); if(s.length===11) return `(${s.slice(0,2)}) ${s.slice(2,7)}-${s.slice(7)}`; if(s.length===10) return `(${s.slice(0,2)}) ${s.slice(2,6)}-${s.slice(6)}`; return t||''; }
+
+function render(){
+  const bq=(cmBusca.value||'').toLowerCase().trim();
+  const setores=['LOGISTICA','EXPEDICAO_TUBARAO','CD_ICARA','TERCEIROS'];
+  setores.forEach(s=>{
+    const filhos=motoristas.filter(m=>{
+      const setor=(m.setor||'').toUpperCase().replace(/\s+/g,'_');
+      if(setor!==s) return false;
+      if(bq && !(m.nome+' '+m.telefone+' '+m.cpf).toLowerCase().includes(bq)) return false;
+      return true;
+    });
+    const el=document.getElementById('col-'+s);
+    document.getElementById('qt-'+s).textContent=filhos.length;
+    if(!filhos.length){ el.innerHTML='<div class="cm-vazio">Nenhum motorista aqui.</div>'; return; }
+    el.innerHTML=filhos.map(m=>`
+      <div class="cm-card ${m.ativo?'':'cm-inativo'}" data-id="${esc(m.id)}">
+        <div class="cm-avatar">${esc(iniciais(m.nome))}</div>
+        <div class="cm-info">
+          <div class="cm-nome">${esc(m.nome)}${m.foto_cnh?'<span class="cm-cnh-tag">CNH</span>':''}</div>
+          <div class="cm-meta">
+            ${m.telefone?`<span class="item">📱 ${esc(fmtFone(m.telefone))}</span>`:''}
+            ${m.cpf?`<span class="item">🪪 ${esc(m.cpf)}</span>`:''}
+          </div>
+        </div>
+        <div class="cm-acoes">
+          <button class="cm-icon-btn" data-edit="${esc(m.id)}">Editar</button>
+          ${m.telefone?`<a class="cm-icon-btn" href="https://wa.me/55${esc(String(m.telefone).replace(/\D/g,''))}" target="_blank" style="text-decoration:none;text-align:center;">WhatsApp</a>`:''}
+        </div>
+      </div>`).join('');
+    el.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>abrirEdicao(b.dataset.edit));
+  });
+}
+
+cmBusca.addEventListener('input',render);
+cmNovo.onclick=()=>abrirCadastro();
+cmImportar.onclick=()=>importarLote();
+
+function abrirCadastro(){
+  editId=null; cnhData=null;
+  cmModalTit.textContent='Novo motorista';
+  m_nome.value=''; m_tel.value=''; m_cpf.value=''; m_setor.value='LOGISTICA'; m_ativo.checked=true;
+  m_cnh.value=''; m_cnh_prev.innerHTML='';
+  cmExcluir.style.display='none';
+  cmModal.classList.add('open');
+}
+function abrirEdicao(id){
+  const m=motoristas.find(x=>String(x.id)===String(id)); if(!m) return;
+  editId=id; cnhData=null;
+  cmModalTit.textContent='Editar · '+m.nome;
+  m_nome.value=m.nome||''; m_tel.value=m.telefone||''; m_cpf.value=m.cpf||'';
+  m_setor.value=(m.setor||'LOGISTICA').toUpperCase().replace(/\s+/g,'_');
+  m_ativo.checked=m.ativo!==false;
+  m_cnh.value='';
+  m_cnh_prev.innerHTML = m.foto_cnh ? `<span>CNH atual:</span> <a href="${esc(m.foto_cnh)}" target="_blank" style="color:var(--accent)">Ver arquivo</a> <span style="color:var(--muted)">(anexe novo arquivo para substituir)</span>` : '<span>Nenhuma CNH anexada.</span>';
+  cmExcluir.style.display='inline-block';
+  cmModal.classList.add('open');
+}
+function cmFechar(){ cmModal.classList.remove('open'); }
+cmModal.addEventListener('click', e=>{ if(e.target===cmModal) cmFechar(); });
+
+m_cnh.addEventListener('change', ()=>{
+  const f=m_cnh.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    // se for imagem, comprime; se for PDF, envia direto
+    if(f.type.startsWith('image/')){
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width, h=img.height, max=1400;
+        if(w>h && w>max){ h=Math.round(h*max/w); w=max; }
+        else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
+        const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        cnhData=cv.toDataURL('image/jpeg',0.75);
+        m_cnh_prev.innerHTML=`<img src="${cnhData}"><span>Pronto para enviar</span>`;
+      };
+      img.src=e.target.result;
+    } else {
+      cnhData=e.target.result;
+      m_cnh_prev.innerHTML=`<span>📄 ${esc(f.name)} pronto para enviar</span>`;
+    }
+  };
+  rd.readAsDataURL(f);
+});
+
+cmSalvar.onclick=async()=>{
+  if(!m_nome.value.trim()){ toast('Nome é obrigatório.',true); return; }
+  if(SCRIPT_URL_MOT.indexOf('__')===0){ alert('Configure a URL do Apps Script de Motoristas no arquivo.'); return; }
+  cmSalvar.disabled=true;
+  try{
+    const body={action:'salvar_motorista', id:editId||'', nome:m_nome.value.trim(), telefone:m_tel.value, cpf:m_cpf.value, setor:m_setor.value, ativo:m_ativo.checked};
+    if(cnhData) body.foto_cnh_data=cnhData;
+    const r=await fetch(SCRIPT_URL_MOT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+    const j=await r.json(); if(!j.ok) throw new Error(j.erro||'Erro');
+    toast(editId?'Motorista atualizado.':'Motorista cadastrado.');
+    cmFechar(); await carregar();
+  }catch(e){ toast('Erro: '+e.message,true); }
+  finally{ cmSalvar.disabled=false; }
+};
+
+cmExcluir.onclick=async()=>{
+  if(!editId) return;
+  if(!confirm('Excluir este motorista definitivamente?')) return;
+  try{
+    const r=await fetch(SCRIPT_URL_MOT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'excluir_motorista', id:editId})});
+    const j=await r.json(); if(!j.ok) throw new Error(j.erro||'Erro');
+    toast('Excluído.'); cmFechar(); await carregar();
+  }catch(e){ toast('Erro: '+e.message,true); }
+};
+
+async function importarLote(){
+  const url=prompt('Cole a URL da planilha (Google Sheets) de onde importar os motoristas.\nA planilha precisa ter uma coluna "Nome" (e opcionalmente "Telefone" e "Setor").\nA aba precisa estar publicada como CSV: Arquivo → Compartilhar → Publicar na web → CSV.\n\nURL do CSV:');
+  if(!url) return;
+  try{
+    const r=await fetch(url); const txt=await r.text();
+    const linhas=txt.split(/\r?\n/).filter(Boolean);
+    const cab=linhas[0].split(',').map(x=>x.trim().toUpperCase().replace(/^"|"$/g,''));
+    const iNome=cab.findIndex(x=>x==='NOME'||x==='MOTORISTA'||x==='NOME COMPLETO');
+    const iTel=cab.findIndex(x=>x==='TELEFONE'||x==='FONE'||x==='WHATSAPP'||x==='CELULAR');
+    const iSet=cab.findIndex(x=>x==='SETOR'||x==='PERFIL'||x==='UNIDADE');
+    if(iNome<0){ alert('Coluna "Nome" não encontrada na planilha.'); return; }
+    const itens=[];
+    for(let i=1;i<linhas.length;i++){
+      const cols=linhas[i].split(',').map(x=>x.trim().replace(/^"|"$/g,''));
+      const nome=cols[iNome]; if(!nome) continue;
+      const setor=iSet>=0?(cols[iSet]||'').toUpperCase():'';
+      let setorPad='LOGISTICA';
+      if(setor.indexOf('EXPED')!==-1||setor.indexOf('TUBAR')!==-1) setorPad='EXPEDICAO_TUBARAO';
+      else if(setor.indexOf('ICAR')!==-1||setor.indexOf('CD')!==-1) setorPad='CD_ICARA';
+      else if(setor.indexOf('TERC')!==-1||setor.indexOf('GAM')!==-1) setorPad='TERCEIROS';
+      itens.push({nome:nome, telefone:iTel>=0?cols[iTel]:'', setor:setorPad});
+    }
+    if(!itens.length){ alert('Nenhum motorista encontrado na planilha.'); return; }
+    if(!confirm('Importar '+itens.length+' motoristas? Duplicados (mesmo nome) serão ignorados.')) return;
+    const res=await fetch(SCRIPT_URL_MOT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'importar_lote', itens:itens})});
+    const j=await res.json();
+    if(!j.ok) throw new Error(j.erro||'Erro');
+    toast(j.novos+' novos motoristas importados.'); await carregar();
+  }catch(e){ toast('Erro na importação: '+e.message,true); }
+}
+
+if(SCRIPT_URL_MOT.indexOf('__')===0){
+  const a=document.createElement('div'); a.className='hint';
+  a.style.cssText='background:rgba(248,113,113,.12);border:1px solid var(--danger);margin:14px 0;padding:12px;border-radius:8px;';
+  a.innerHTML='<b>Módulo não conectado.</b> Cole a URL do Apps Script de Motoristas na constante <code>SCRIPT_URL_MOT</code> deste arquivo.';
+  document.querySelector('main').prepend(a);
+}
+carregar();
+</script>
+</body>
+</html>
