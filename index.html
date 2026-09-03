@@ -693,6 +693,51 @@
   </div>
 </div>
 
+<div id="modules-view">
+  <section style="margin-bottom:14px;">
+    <h2>Escolha o módulo</h2>
+    <p class="desc">Selecione a área de trabalho.</p>
+  </section>
+  <div class="grid mod-grid">
+    <a class="card mod-card" data-modulo="logistica" href="logistica.html" onclick="return abrirModulo('logistica')">
+      <span class="kicker">Módulo</span>
+      <h3>Logística</h3>
+      <p>Controle de embarque: GAM, JadLog, Terceiros, Transferências, WOW, Devoluções e relatórios.</p>
+    </a>
+    <a class="card mod-card" data-modulo="manutencao" href="#" onclick="return abrirModulo('manutencao')">
+      <span class="kicker">Módulo</span>
+      <h3>Controle de Manutenção / Checklists</h3>
+      <p>Controle de checklists, de manutenção de veículos e gestão de veículos da frota.</p>
+    </a>
+    <a class="card mod-card" data-modulo="inventario" href="inventario-icara.html" onclick="return abrirModulo('inventario')">
+      <span class="kicker">Módulo</span>
+      <h3>CD Içara</h3>
+      <p>Controle de estoque da unidade Içara: contagem, entradas, saídas e conferência.</p>
+    </a>
+    <a class="card mod-card" data-modulo="multas" href="multas.html" onclick="return abrirModulo('multas')">
+      <span class="kicker">Módulo</span>
+      <h3>Multas</h3>
+      <p>Cadastro de multas, indicação de condutor, listagem e painel de acompanhamento.</p>
+    </a>
+    <a class="card mod-card" data-modulo="rh" href="rh.html" onclick="return abrirModulo('rh')">
+      <span class="kicker">Módulo</span>
+      <h3>RH/DP</h3>
+      <p>Recursos Humanos: controle de horas extras e demais rotinas do setor.</p>
+    </a>
+    <a class="card mod-card" data-modulo="compras" href="compras.html" onclick="return abrirModulo('compras')">
+      <span class="kicker">Módulo</span>
+      <h3>Compras</h3>
+      <p>Requisições internas, aprovação por alçada e pedidos.</p>
+    </a>
+    <a class="card mod-card disabled" data-modulo="expedicao" href="#" onclick="return false">
+      <span class="kicker">Módulo</span>
+      <h3>Expedição</h3>
+      <p>Gerenciamento e controle da expedição.</p>
+      <span class="badge-soon">Em breve</span>
+    </a>
+  </div>
+</div>
+
 <div id="home-view">
   <button class="back-link" onclick="voltarModulos()">&larr; Voltar aos módulos</button>
   <section>
