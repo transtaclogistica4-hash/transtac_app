@@ -249,18 +249,16 @@ function atualizarQtSel(){
 
 async function descartarPendente(idx){
   const p=pendentes[idx]; if(!p) return;
-  if(!confirm(`Descartar "${p.nome}"?\n\nEste nome será marcado como INATIVO na base — não aparece no kanban nem nas rotas, e não volta a aparecer nos pendentes. Use quando não é motorista real (erro de digitação, terceiro esporádico, etc.).\n\nSe um dia precisar dele, edite o registro pela planilha e reative.`)) return;
+  if(!confirm(`Descartar "${p.nome}"?\n\nEste nome NÃO será cadastrado e vai parar de aparecer nos pendentes. Ele não entra no kanban, nem nas rotas, nem em lugar nenhum.\n\nUse quando não é motorista real (erro de digitação, terceiro esporádico, etc.).\n\nSe um dia mudar de ideia, apague o nome da aba "Ignorados" na planilha.`)) return;
   try{
-    const body={action:'salvar_motorista', id:'', nome:p.nome, telefone:p.telefone||'', cpf:p.cpf||'', setor:'TERCEIROS', ativo:false};
-    const r=await fetch(SCRIPT_URL_MOT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+    const r=await fetch(SCRIPT_URL_MOT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'ignorar_pendente', nome:p.nome})});
     const j=await r.json(); if(!j.ok) throw new Error(j.erro||'Erro');
-    // remove a linha da tabela e do array pendentes (não some da tela)
+    // remove a linha da tabela
     const tr=document.querySelector(`#cmImpTbl tbody tr[data-linha="${idx}"]`);
     if(tr) tr.remove();
-    pendentes[idx]=null; // marca como descartado
+    pendentes[idx]=null;
     atualizarQtSel();
     toast(`"${p.nome}" descartado.`);
-    // atualiza contador do botão principal
     const q=document.getElementById('cmQtPend');
     const restantes=pendentes.filter(x=>x!==null).length;
     if(restantes){ q.textContent=restantes; }
