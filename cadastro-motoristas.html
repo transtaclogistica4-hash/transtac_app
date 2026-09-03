@@ -56,6 +56,15 @@
   .cm-cnh-preview{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--muted);}
   .cm-cnh-preview img{max-height:60px;border-radius:6px;border:1px solid var(--border);}
   .cm-modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);gap:10px;}
+  /* importar em lote */
+  .cm-imp-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:12.5px;color:var(--muted);}
+  .cm-imp-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .cm-imp-tbl th{text-align:left;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px;border-bottom:1px solid var(--border);background:var(--panel-2);position:sticky;top:0;}
+  .cm-imp-tbl td{padding:8px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+  .cm-imp-tbl select{padding:5px 6px;border:1px solid var(--border);border-radius:5px;background:var(--panel-2);color:var(--text);font-size:12px;font-family:inherit;}
+  .cm-imp-tbl input[type=checkbox]{width:16px;height:16px;cursor:pointer;}
+  .cm-imp-tbl .origem{font-size:10.5px;color:var(--muted);}
+  .cm-imp-vazio{color:var(--muted);font-style:italic;padding:30px 0;text-align:center;}
 </style>
 </head>
 <body>
@@ -66,7 +75,7 @@
 <main>
   <div class="cm-toolbar">
     <input class="busca" id="cmBusca" placeholder="Buscar por nome, telefone ou CPF...">
-    <button class="cm-btn ghost" id="cmImportar" title="Importar motoristas de uma planilha existente">📥 Importar</button>
+    <button class="cm-btn ghost" id="cmImportar" title="Importar motoristas encontrados em checklist e embarques">📥 Pendentes de cadastro <span id="cmQtPend" style="background:var(--accent);color:#14171A;padding:1px 8px;border-radius:10px;margin-left:4px;font-weight:700;display:none">0</span></button>
     <button class="cm-btn primary" id="cmNovo">+ Novo motorista</button>
   </div>
 
@@ -140,6 +149,46 @@
   </div>
 </div>
 
+
+<!-- Modal Importação em Lote -->
+<div id="cmModalImp" style="position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-start;justify-content:center;z-index:9999;padding:40px 20px;overflow-y:auto;">
+  <div class="cm-modal-box" style="max-width:820px;">
+    <div class="cm-modal-hd">
+      <h2>Motoristas para cadastrar</h2>
+      <button class="cm-modal-close" onclick="cmFecharImp()">✕</button>
+    </div>
+    <div class="cm-imp-hd">
+      <div>Motoristas encontrados em <b>checklists</b> e <b>embarques</b> que ainda não estão cadastrados. Classifique o setor de cada um antes de importar.</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <button class="cm-btn ghost" onclick="cmMarcarTodos(true)" style="padding:6px 12px;font-size:11px;">Marcar todos</button>
+      <button class="cm-btn ghost" onclick="cmMarcarTodos(false)" style="padding:6px 12px;font-size:11px;">Desmarcar todos</button>
+      <div style="margin-left:auto;font-size:12px;color:var(--muted);align-self:center;">Setor padrão de marcados: 
+        <select id="cmSetorPadrao" style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;background:var(--panel-2);color:var(--text);font-family:inherit;font-size:12px;">
+          <option value="LOGISTICA">Logística</option>
+          <option value="EXPEDICAO_TUBARAO">Expedição (Tubarão)</option>
+          <option value="CD_ICARA">CD Içara</option>
+          <option value="TERCEIROS">Terceiros</option>
+        </select>
+        <button class="cm-btn ghost" onclick="cmAplicarSetorPadrao()" style="padding:5px 10px;font-size:11px;margin-left:4px;">Aplicar</button>
+      </div>
+    </div>
+    <div style="max-height:50vh;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+      <table class="cm-imp-tbl" id="cmImpTbl">
+        <thead><tr><th style="width:30px;">✓</th><th>Nome</th><th>Telefone</th><th>Origem</th><th style="width:160px;">Setor</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="cm-modal-actions">
+      <div style="font-size:12px;color:var(--muted);"><span id="cmImpQtSel">0</span> selecionados</div>
+      <div style="display:flex;gap:8px;">
+        <button class="cm-btn ghost" onclick="cmFecharImp()">Cancelar</button>
+        <button class="cm-btn primary" id="cmBtnImportar">Importar selecionados</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="multas-app.js?v=11"></script>
 <script>
 const SCRIPT_URL_MOT = 'https://script.google.com/macros/s/AKfycbypzKdoWY99DAZxKFhAitZ4gfsaUZr0EqBs56zJWTrsy8XgF3xI4zZ1EtAr6dLTHDZPrQ/exec';
@@ -148,11 +197,69 @@ montarHeader('CADASTRO DE MOTORISTAS','Base única de motoristas: logística, ex
 
 let motoristas=[], editId=null, cnhData=null;
 
+let pendentes=[];
 async function carregar(){
-  try{ const r=await fetch(SCRIPT_URL_MOT,{method:'GET'}); const j=await r.json(); motoristas=j.motoristas||[]; }
+  try{ const r=await fetch(SCRIPT_URL_MOT,{method:'GET'}); const j=await r.json(); motoristas=j.motoristas||[]; pendentes=j.pendentes||[]; }
   catch(e){ toast('Erro ao carregar: '+e.message,true); }
   render();
+  const q=document.getElementById('cmQtPend');
+  if(pendentes.length){ q.textContent=pendentes.length; q.style.display='inline-block'; }
+  else q.style.display='none';
 }
+
+/* ========== IMPORTAÇÃO EM LOTE ========== */
+function abrirImportacao(){
+  if(!pendentes.length){ toast('Nenhum motorista pendente para importar. Já está tudo cadastrado.'); return; }
+  const tb=document.querySelector('#cmImpTbl tbody');
+  tb.innerHTML=pendentes.map((p,i)=>`
+    <tr>
+      <td><input type="checkbox" class="cm-imp-chk" data-i="${i}" checked></td>
+      <td><b>${esc(p.nome)}</b></td>
+      <td>${esc(fmtFone(p.telefone||''))}</td>
+      <td class="origem">${esc(p.origem||'')}</td>
+      <td>
+        <select class="cm-imp-setor" data-i="${i}">
+          <option value="LOGISTICA">Logística</option>
+          <option value="EXPEDICAO_TUBARAO">Expedição (TUB)</option>
+          <option value="CD_ICARA">CD Içara</option>
+          <option value="TERCEIROS">Terceiros</option>
+        </select>
+      </td>
+    </tr>`).join('');
+  atualizarQtSel();
+  document.querySelectorAll('.cm-imp-chk').forEach(c=>c.addEventListener('change',atualizarQtSel));
+  document.getElementById('cmModalImp').style.display='flex';
+}
+function cmFecharImp(){ document.getElementById('cmModalImp').style.display='none'; }
+function cmMarcarTodos(v){ document.querySelectorAll('.cm-imp-chk').forEach(c=>c.checked=v); atualizarQtSel(); }
+function cmAplicarSetorPadrao(){
+  const s=document.getElementById('cmSetorPadrao').value;
+  document.querySelectorAll('.cm-imp-chk').forEach(c=>{
+    if(c.checked){ const sel=document.querySelector('.cm-imp-setor[data-i="'+c.dataset.i+'"]'); if(sel) sel.value=s; }
+  });
+}
+function atualizarQtSel(){
+  const n=document.querySelectorAll('.cm-imp-chk:checked').length;
+  document.getElementById('cmImpQtSel').textContent=n;
+}
+document.getElementById('cmBtnImportar').onclick=async function(){
+  if(SCRIPT_URL_MOT.indexOf('__')===0){ alert('Configure a URL do Apps Script.'); return; }
+  const itens=[];
+  document.querySelectorAll('.cm-imp-chk:checked').forEach(c=>{
+    const i=+c.dataset.i, p=pendentes[i];
+    const setor=document.querySelector('.cm-imp-setor[data-i="'+i+'"]').value;
+    itens.push({nome:p.nome, telefone:p.telefone||'', cpf:p.cpf||'', setor:setor});
+  });
+  if(!itens.length){ toast('Nenhum selecionado.',true); return; }
+  this.disabled=true;
+  try{
+    const r=await fetch(SCRIPT_URL_MOT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'importar_lote', itens})});
+    const j=await r.json(); if(!j.ok) throw new Error(j.erro||'Erro');
+    toast(j.novos+' motoristas importados.');
+    cmFecharImp(); await carregar();
+  }catch(e){ toast('Erro: '+e.message,true); }
+  finally{ this.disabled=false; }
+};
 
 function iniciais(nome){ return (nome||'').split(' ').filter(Boolean).slice(0,2).map(p=>p[0]).join('').toUpperCase(); }
 function fmtFone(t){ const s=String(t||'').replace(/\D/g,''); if(s.length===11) return `(${s.slice(0,2)}) ${s.slice(2,7)}-${s.slice(7)}`; if(s.length===10) return `(${s.slice(0,2)}) ${s.slice(2,6)}-${s.slice(6)}`; return t||''; }
@@ -191,7 +298,7 @@ function render(){
 
 cmBusca.addEventListener('input',render);
 cmNovo.onclick=()=>abrirCadastro();
-cmImportar.onclick=()=>importarLote();
+cmImportar.onclick=()=>abrirImportacao();
 
 function abrirCadastro(){
   editId=null; cnhData=null;
@@ -265,37 +372,6 @@ cmExcluir.onclick=async()=>{
     toast('Excluído.'); cmFechar(); await carregar();
   }catch(e){ toast('Erro: '+e.message,true); }
 };
-
-async function importarLote(){
-  const url=prompt('Cole a URL da planilha (Google Sheets) de onde importar os motoristas.\nA planilha precisa ter uma coluna "Nome" (e opcionalmente "Telefone" e "Setor").\nA aba precisa estar publicada como CSV: Arquivo → Compartilhar → Publicar na web → CSV.\n\nURL do CSV:');
-  if(!url) return;
-  try{
-    const r=await fetch(url); const txt=await r.text();
-    const linhas=txt.split(/\r?\n/).filter(Boolean);
-    const cab=linhas[0].split(',').map(x=>x.trim().toUpperCase().replace(/^"|"$/g,''));
-    const iNome=cab.findIndex(x=>x==='NOME'||x==='MOTORISTA'||x==='NOME COMPLETO');
-    const iTel=cab.findIndex(x=>x==='TELEFONE'||x==='FONE'||x==='WHATSAPP'||x==='CELULAR');
-    const iSet=cab.findIndex(x=>x==='SETOR'||x==='PERFIL'||x==='UNIDADE');
-    if(iNome<0){ alert('Coluna "Nome" não encontrada na planilha.'); return; }
-    const itens=[];
-    for(let i=1;i<linhas.length;i++){
-      const cols=linhas[i].split(',').map(x=>x.trim().replace(/^"|"$/g,''));
-      const nome=cols[iNome]; if(!nome) continue;
-      const setor=iSet>=0?(cols[iSet]||'').toUpperCase():'';
-      let setorPad='LOGISTICA';
-      if(setor.indexOf('EXPED')!==-1||setor.indexOf('TUBAR')!==-1) setorPad='EXPEDICAO_TUBARAO';
-      else if(setor.indexOf('ICAR')!==-1||setor.indexOf('CD')!==-1) setorPad='CD_ICARA';
-      else if(setor.indexOf('TERC')!==-1||setor.indexOf('GAM')!==-1) setorPad='TERCEIROS';
-      itens.push({nome:nome, telefone:iTel>=0?cols[iTel]:'', setor:setorPad});
-    }
-    if(!itens.length){ alert('Nenhum motorista encontrado na planilha.'); return; }
-    if(!confirm('Importar '+itens.length+' motoristas? Duplicados (mesmo nome) serão ignorados.')) return;
-    const res=await fetch(SCRIPT_URL_MOT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'importar_lote', itens:itens})});
-    const j=await res.json();
-    if(!j.ok) throw new Error(j.erro||'Erro');
-    toast(j.novos+' novos motoristas importados.'); await carregar();
-  }catch(e){ toast('Erro na importação: '+e.message,true); }
-}
 
 if(SCRIPT_URL_MOT.indexOf('__')===0){
   const a=document.createElement('div'); a.className='hint';
