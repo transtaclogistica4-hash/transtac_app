@@ -65,6 +65,8 @@
   .cm-imp-tbl input[type=checkbox]{width:16px;height:16px;cursor:pointer;}
   .cm-imp-tbl .origem{font-size:10.5px;color:var(--muted);}
   .cm-imp-vazio{color:var(--muted);font-style:italic;padding:30px 0;text-align:center;}
+  .cm-descartar{background:none;border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:4px 8px;cursor:pointer;font-family:inherit;font-size:14px;line-height:1;}
+  .cm-descartar:hover{border-color:var(--danger);color:var(--danger);}
 </style>
 </head>
 <body>
@@ -175,7 +177,7 @@
     </div>
     <div style="max-height:50vh;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
       <table class="cm-imp-tbl" id="cmImpTbl">
-        <thead><tr><th style="width:30px;">✓</th><th>Nome</th><th>Telefone</th><th>Origem</th><th style="width:160px;">Setor</th></tr></thead>
+        <thead><tr><th style="width:30px;">✓</th><th>Nome</th><th>Telefone</th><th>Origem</th><th style="width:160px;">Setor</th><th style="width:40px;" title="Descartar (não é motorista real)">🗑️</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -212,7 +214,7 @@ function abrirImportacao(){
   if(!pendentes.length){ toast('Nenhum motorista pendente para importar. Já está tudo cadastrado.'); return; }
   const tb=document.querySelector('#cmImpTbl tbody');
   tb.innerHTML=pendentes.map((p,i)=>`
-    <tr>
+    <tr data-linha="${i}">
       <td><input type="checkbox" class="cm-imp-chk" data-i="${i}" checked></td>
       <td><b>${esc(p.nome)}</b></td>
       <td>${esc(fmtFone(p.telefone||''))}</td>
@@ -225,7 +227,9 @@ function abrirImportacao(){
           <option value="TERCEIROS">Terceiros</option>
         </select>
       </td>
+      <td><button class="cm-descartar" data-descartar="${i}" title="Descartar este nome (não é motorista real)">🗑️</button></td>
     </tr>`).join('');
+  document.querySelectorAll('.cm-descartar').forEach(b=>b.onclick=()=>descartarPendente(+b.dataset.descartar));
   atualizarQtSel();
   document.querySelectorAll('.cm-imp-chk').forEach(c=>c.addEventListener('change',atualizarQtSel));
   document.getElementById('cmModalImp').style.display='flex';
@@ -242,6 +246,28 @@ function atualizarQtSel(){
   const n=document.querySelectorAll('.cm-imp-chk:checked').length;
   document.getElementById('cmImpQtSel').textContent=n;
 }
+
+async function descartarPendente(idx){
+  const p=pendentes[idx]; if(!p) return;
+  if(!confirm(`Descartar "${p.nome}"?\n\nEste nome será marcado como INATIVO na base — não aparece no kanban nem nas rotas, e não volta a aparecer nos pendentes. Use quando não é motorista real (erro de digitação, terceiro esporádico, etc.).\n\nSe um dia precisar dele, edite o registro pela planilha e reative.`)) return;
+  try{
+    const body={action:'salvar_motorista', id:'', nome:p.nome, telefone:p.telefone||'', cpf:p.cpf||'', setor:'TERCEIROS', ativo:false};
+    const r=await fetch(SCRIPT_URL_MOT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+    const j=await r.json(); if(!j.ok) throw new Error(j.erro||'Erro');
+    // remove a linha da tabela e do array pendentes (não some da tela)
+    const tr=document.querySelector(`#cmImpTbl tbody tr[data-linha="${idx}"]`);
+    if(tr) tr.remove();
+    pendentes[idx]=null; // marca como descartado
+    atualizarQtSel();
+    toast(`"${p.nome}" descartado.`);
+    // atualiza contador do botão principal
+    const q=document.getElementById('cmQtPend');
+    const restantes=pendentes.filter(x=>x!==null).length;
+    if(restantes){ q.textContent=restantes; }
+    else { q.style.display='none'; cmFecharImp(); }
+  }catch(e){ toast('Erro ao descartar: '+e.message,true); }
+}
+
 document.getElementById('cmBtnImportar').onclick=async function(){
   if(SCRIPT_URL_MOT.indexOf('__')===0){ alert('Configure a URL do Apps Script.'); return; }
   const itens=[];
