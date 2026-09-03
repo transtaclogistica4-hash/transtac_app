@@ -473,36 +473,42 @@ body {
         return [];
       }
 
-      const DRIVERS = [
-        "ALCEU MAZZUCHETTI",
-        "ALEXANDRE LUCIO ALVES",
-        "BRENO ANTONIO DA ROSA",
-        "CASSIO FERNANDO SENA",
-        "DANIEL CLASEN MACHADO",
-        "DIKSON SOARES DE BONA",
-        "EVANDRO VIEIRA RODRIGUES",
-        "FARIDES TEIXEIRA GOMES",
-        "GERALDO JULIO AVILA",
-        "HELIO ALEX GONCALVES GRECO",
-        "HIGOR DOMINGOS RUFINO TEXEIRA",
-        "ISRAEL OLIVEIRA MARTINS ROCHA",
-        "JAIR QUERINO DA COSTA",
-        "LEANDRO FERNANDES",
-        "LEANDRO FLAVIO DE ANDRADE",
-        "LEONARDO ALVES THRONICKE",
-        "LILIAN CRISTIAN SANSONOWICZ",
-        "LUCAS DE SOUZA",
-        "LUCIANO MENDES DA LUZ",
-        "LUCINARA VARELA BORGES",
-        "LUIZ EDUARDO LEAL PEREIRA",
-        "MARCIO MACHETTI RAMBO",
-        "MARCOS CLASEN MACHADO",
-        "MESSIAS GARCIA DA SILVA",
-        "OTAVIO EUCLIDES NASCIMENTO",
-        "RICARDO NUNES MARTINS",
-        "VALDECIR VOLKMER",
-        "ERIC CARDOSO KERBER",
-      ];
+      /* ===== INTEGRAÇÃO COM CADASTRO DE MOTORISTAS =====
+         Substituímos a lista fixa por uma dinâmica, puxada do Apps Script
+         do módulo de Motoristas. Só motoristas ATIVOS, filtrados por setor
+         conforme a categoria da rota (CAT). Fallback: se a API não responder,
+         mantemos uma lista mínima local para não travar o cadastro. */
+      const SCRIPT_URL_MOT = 'https://script.google.com/macros/s/AKfycbwXpjE7DAvYFwFI-EQU4tOtM5DkfP5cE1JlmOsEUpKUeVlqCzeE-9tjIiXcXd7B0FQmMg/exec';
+      // ↑ TROQUE pela URL /exec do Apps Script de Cadastro de Motoristas se for diferente
+      let DRIVERS = []; // será preenchida ao carregar
+
+      // Mapa categoria -> setores permitidos
+      const SETORES_POR_CAT = {
+        gam:            ['LOGISTICA', 'EXPEDICAO_TUBARAO'],
+        jadlog:         ['LOGISTICA', 'EXPEDICAO_TUBARAO'],
+        terceiros:      ['TERCEIROS'],
+        transferencias: ['LOGISTICA', 'EXPEDICAO_TUBARAO', 'CD_ICARA']
+      };
+      const SETORES_ATIVOS = SETORES_POR_CAT['__PLACEHOLDER__'] || [];
+
+      async function carregarMotoristasDaBase() {
+        try {
+          const r = await fetch(SCRIPT_URL_MOT, { method: 'GET' });
+          const j = await r.json();
+          if (!j || !j.motoristas) throw new Error('Resposta inválida');
+          const permitidos = SETORES_POR_CAT[CAT] || [];
+          const lista = j.motoristas
+            .filter(m => m.ativo !== false)                        // só ativos
+            .filter(m => permitidos.length === 0 || permitidos.includes((m.setor||'').toUpperCase().replace(/\s+/g,'_')))
+            .map(m => (m.nome || '').trim().toUpperCase())
+            .filter(Boolean);
+          // remove duplicados e ordena
+          DRIVERS = [...new Set(lista)].sort();
+        } catch (err) {
+          console.warn('Falha ao carregar motoristas da base, usando lista mínima.', err);
+          DRIVERS = []; // vazio força modo "Outro (digitar)"
+        }
+      }
 
       const OUTRO = "__outro__";
 
@@ -787,8 +793,14 @@ body {
         }
       });
 
-      reloadBtn.addEventListener("click", loadData);
-      loadData();
+      reloadBtn.addEventListener("click", async () => {
+        await carregarMotoristasDaBase();
+        await loadData();
+      });
+      (async () => {
+        await carregarMotoristasDaBase();
+        await loadData();
+      })();
     </script>
   </body>
 </html>
