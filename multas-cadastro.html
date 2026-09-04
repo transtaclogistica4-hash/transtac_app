@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TRANSTAC MULTAS | build v9-2026-08-17 | pagina=cadastro -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -105,7 +104,6 @@ const fileInput = document.getElementById('fileInput');
 const prog = document.getElementById('prog');
 const progTxt = document.getElementById('progTxt');
 
-/* ---------- dropzone ---------- */
 dz.addEventListener('click', () => fileInput.click());
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
@@ -138,15 +136,14 @@ async function processar(arquivos) {
     try {
       const dataUrl = await lerArquivo(f);
       setProgresso(0.25, 'Extraindo dados de ' + rotulo + '…');
-      // A leitura do PDF/imagem roda sempre no navegador (pdf.js + OCR).
-      // O arquivo em si sobe para o Drive junto com o "Salvar na base".
+      
       const texto = await ocrLocal(dataUrl, f.name, f.type,
         p => setProgresso(0.25 + p * 0.7, 'Extraindo dados de ' + rotulo + '…'));
       document.getElementById('rawText').textContent = texto || '(sem texto)';
       const campos = completarMotorista(parseMulta(texto));
       campos.anexoNome = f.name;
       campos.anexoUrl = '';
-      campos._arquivo = dataUrl;   // base64 enviado a API no salvamento
+      campos._arquivo = dataUrl;   
       addLinha(campos);
       anexos.push({ nome: f.name, tamanho: f.size });
       toast('Dados extraídos de ' + f.name);
@@ -168,7 +165,6 @@ function renderAnexos() {
   $$('#fileList .fdel').forEach(b => b.onclick = () => { anexos.splice(+b.dataset.i, 1); renderAnexos(); });
 }
 
-/* ---------- tabela ---------- */
 function addLinha(campos) {
   const base = {
     id: '', ait: '', placa: '', motorista: '', orgao: '', dataInfracao: '', horaInfracao: '',
@@ -236,7 +232,7 @@ function render() {
             if (campo) campo.value = auto;
           }
         }
-        /* setor responsavel pela placa, conforme a base do checklist */
+        
         const setor = setorDaPlaca(m.placa);
         if (setor && !m.responsavel) {
           m.responsavel = setor;
@@ -252,7 +248,6 @@ function render() {
   $$('#tbody [data-del]').forEach(b => b.onclick = () => { fila.splice(+b.dataset.del, 1); render(); });
 }
 
-/* ---------- acoes ---------- */
 document.getElementById('btnLinha').onclick = () => addLinha({});
 document.getElementById('btnLimpar').onclick = () => {
   if (fila.length && !confirm('Descartar as ' + fila.length + ' linha(s) da fila?')) return;

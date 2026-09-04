@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TRANSTAC MULTAS | build v9-2026-08-17 | pagina=indicacao -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -9,18 +8,18 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="stylesheet" href="multas.css?v=10">
 <style>
-  /* a tabela de indicacao tem 12 colunas — o min-width padrao (860px) espremia tudo */
+  
   #tabIndicacao{min-width:1400px;}
   #tabIndicacao th.num{text-align:right;}
   #tabIndicacao td.col-infra{max-width:260px;}
   #tabIndicacao th.col-grav,#tabIndicacao td.col-grav{white-space:nowrap;}
   #tabIndicacao th.num,#tabIndicacao td.num{width:1%;white-space:nowrap;}
-  /* bloco de anexo da indicacao assinada */
+  
   .anexo-box{border:1px dashed var(--border);border-radius:8px;padding:12px;margin-top:10px;}
   .anexo-box .anexo-atual{font-size:12.5px;margin-bottom:8px;}
   .anexo-box input[type=file]{font-size:12.5px;width:100%;color:var(--muted);}
   .anexo-box .anexo-hint{font-size:11.5px;color:var(--muted);margin-top:6px;}
-  /* o CSS base usa "button.reload" — um <a> nao herda, entao repetimos aqui */
+  
   a.btn-modelo{
     display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
@@ -130,7 +129,6 @@ montarSubnav('multas-indicacao.html');
 
 let dados = [], atual = null;
 
-/* se o multas-app.js vier de cache antigo, avisa em vez de travar a tela */
 if (typeof SETORES_RESP === 'undefined') {
   document.getElementById('resumo').textContent =
     'Versão desatualizada em cache. Recarregue com Ctrl+Shift+R.';
@@ -143,7 +141,6 @@ SETORES_RESP.forEach(r => { fresp.add(new Option(r, r)); i_responsavel.add(new O
 i_responsavel.add(new Option('', ''), 0);
 i_gravidade.add(new Option('', ''), 0);
 
-/* pontuacao padrao do CTB quando o campo estiver vazio */
 const PONTOS_PADRAO = { LEVE: 3, MEDIA: 4, GRAVE: 5, GRAVISSIMA: 7 };
 i_gravidade.addEventListener('change', () => {
   if (!i_pontos.value && PONTOS_PADRAO[i_gravidade.value]) i_pontos.value = PONTOS_PADRAO[i_gravidade.value];
@@ -237,7 +234,6 @@ function abrir(id) {
 mCancelar.onclick = () => modal.classList.remove('show');
 modal.onclick = e => { if (e.target === modal) modal.classList.remove('show'); };
 
-/** Le o arquivo escolhido e devolve 'data:...;base64,...' */
 function lerArquivoIndicacao(f) {
   return new Promise((ok, err) => {
     const r = new FileReader();

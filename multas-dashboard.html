@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TRANSTAC MULTAS | build v9-2026-08-17 | pagina=dashboard -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -9,9 +8,7 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="stylesheet" href="multas.css?v=10">
 <style>
-  /* barra com duas colunas de numero: valor somado + quantidade.
-     colunas de numero em 'auto' (encolhem ao conteudo) e a barra fica com 1fr,
-     assim os numeros nunca vazam para fora do card, mesmo em coluna estreita. */
+
   .bar-row.two{
     grid-template-columns:minmax(80px,auto) minmax(40px,1fr) auto auto;
     column-gap:10px;align-items:center;
@@ -101,8 +98,6 @@ async function carregar() {
   render();
 }
 
-/* extra = mapa com o valor (R$) somado de cada item; vira uma coluna a mais na barra.
-   extraFmt = 'brl' (padrao) ou 'num' para mostrar quantidade em vez de dinheiro. */
 function barras(mapa, formato, limite, extra, extraFmt) {
   const itens = Object.entries(mapa).sort((a, b) => b[1] - a[1]).slice(0, limite || 8);
   if (!itens.length) return '<div class="empty" style="padding:14px">Sem dados no período.</div>';
@@ -125,11 +120,10 @@ function render() {
   const lista = aplicarFiltros(dados, { de: fde.value, ate: fate.value });
   const totalGeral = lista.reduce((s, m) => s + numero(m.valor), 0);
   const pagas = lista.filter(m => m.status === 'PAGA');
-  /* em aberto = tudo que ainda nao foi quitado nem cancelado.
-     Multa em RECEBIDA / INDICACAO / RECURSO segue sendo valor devido. */
+  
   const aPagar = lista.filter(m => m.status !== 'PAGA' && m.status !== 'CANCELADA');
   const vencidas = aPagar.filter(m => { const d = diasAte(m.vencimento); return d !== null && d < 0; });
-  /* quantas ja tem o valor preenchido — sem isso o total fica subestimado */
+  
   const semValor = lista.filter(m => !numero(m.valor)).length;
   const pontos = lista.filter(m => m.statusIndicacao !== 'ACEITA').reduce((s, m) => s + numero(m.pontos), 0);
   const ticket = lista.length ? totalGeral / lista.length : 0;
@@ -149,7 +143,7 @@ function render() {
   ).join('');
 
   const porMes = {}, porStatus = {}, porMot = {}, porPlaca = {}, porOrgao = {}, porInfr = {};
-  /* mesmos agrupamentos, somando o valor (R$) em vez da quantidade */
+  
   const vlrMes = {}, vlrStatus = {}, vlrPlaca = {}, vlrOrgao = {}, vlrInfr = {}, qtdMot = {};
   const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   lista.forEach(m => {
@@ -178,7 +172,6 @@ function render() {
     vlrInfr[inf] = (vlrInfr[inf] || 0) + vl;
   });
 
-  // mes em ordem cronologica
   const mesOrd = {};
   Object.keys(porMes).sort((a, b) => {
     const pa = a.split('/'), pb = b.split('/');
@@ -187,7 +180,7 @@ function render() {
 
   chMes.innerHTML = barras(mesOrd, null, 12, vlrMes);
   chStatus.innerHTML = barras(porStatus, null, 8, vlrStatus);
-  /* aqui a barra ja e o valor — a coluna extra mostra a quantidade */
+  
   chMotorista.innerHTML = barras(porMot, 'brl', 8, qtdMot, 'num');
   chPlaca.innerHTML = barras(porPlaca, null, 8, vlrPlaca);
   chOrgao.innerHTML = barras(porOrgao, null, 8, vlrOrgao);
