@@ -469,26 +469,31 @@ function dynamicRoutesFromAssignments(assignments) {
   return [];
 }
 
-const PLATES = [
-"RYF4J27",
-"RDS7B12",
-"RYF5E77",
-"GDD4J40",
-"MMB6D44",
-"QJV4E36",
-"QRM9C65",
-"RAA2E77",
-"RAJ7B50",
-"RLB6E83",
-"RLD2B13",
-"RXU3I20",
-"RXU6H46",
-"RXV6D60",
-"TPW6J49",
-"RBD9A22",
-"PLU4G47",
-"MMB7I20",
-];
+/* ===== INTEGRAÇÃO COM CADASTRO DE VEÍCULOS =====
+   Substitui a lista fixa por uma dinâmica, puxada do Apps Script do cadastro
+   de veículos (Cadastro de Veículos, aba Manutenção). TODAS as placas ativas
+   aparecem em qualquer categoria de rota (GAM, JadLog, Terceiros, Transferências).
+   Fallback: se a API não responder, a lista fica vazia e o usuário escolhe
+   "Outra (digitar placa)" para não travar o cadastro. */
+const SCRIPT_URL_FROTA = 'https://script.google.com/macros/s/AKfycbw-3Of_sl4_L_jCHQEbXY-XxPEjMqUd3nh9JHOQmLPM_qGNJPF8FJvU88VinA9DFlwQZA/exec';
+let PLATES = []; // será preenchida ao carregar
+
+async function carregarPlacasDaBase() {
+try {
+const r = await fetch(SCRIPT_URL_FROTA, { method: 'GET' });
+const j = await r.json();
+if (!j || !j.veiculos) throw new Error('Resposta inválida');
+const lista = j.veiculos
+.filter(v => v.ativo !== false)                    // só ativos (se o backend usar esse flag)
+.map(v => String(v.placa || '').trim().toUpperCase())
+.filter(Boolean);
+// remove duplicados e ordena
+PLATES = [...new Set(lista)].sort();
+} catch (err) {
+console.warn('Falha ao carregar placas da base.', err);
+PLATES = []; // vazio força modo "Outra (digitar placa)"
+}
+}
 
 const OUTRA = "__outra__";
 
@@ -714,8 +719,14 @@ grid.appendChild(renderCard(route, null));
 }
 }
 
-reloadBtn.addEventListener("click", loadData);
-loadData();
+reloadBtn.addEventListener("click", async () => {
+await carregarPlacasDaBase();
+await loadData();
+});
+(async () => {
+await carregarPlacasDaBase();
+await loadData();
+})();
 </script>
 </body>
 </html>
