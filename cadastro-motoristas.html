@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TRANSTAC CADASTRO DE MOTORISTAS | build v1 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -101,7 +100,6 @@
   </div>
 </main>
 
-<!-- Modal Cadastro/Edição -->
 <div id="cmModal">
   <div class="cm-modal-box">
     <div class="cm-modal-hd">
@@ -152,7 +150,6 @@
 </div>
 
 
-<!-- Modal Importação em Lote -->
 <div id="cmModalImp" style="position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-start;justify-content:center;z-index:9999;padding:40px 20px;overflow-y:auto;">
   <div class="cm-modal-box" style="max-width:820px;">
     <div class="cm-modal-hd">
@@ -209,7 +206,6 @@ async function carregar(){
   else q.style.display='none';
 }
 
-/* ========== IMPORTAÇÃO EM LOTE ========== */
 function abrirImportacao(){
   if(!pendentes.length){ toast('Nenhum motorista pendente para importar. Já está tudo cadastrado.'); return; }
   const tb=document.querySelector('#cmImpTbl tbody');
