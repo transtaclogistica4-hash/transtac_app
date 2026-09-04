@@ -51,7 +51,6 @@ body::before {   /* brilho laranja discreto no topo */
 }
 main, header { position: relative; z-index: 1; }
 
-/* ---------------- Barra superior ---------------- */
 header {
   background: rgba(13,13,15,.88);
   backdrop-filter: blur(10px);
@@ -108,7 +107,6 @@ header a.home-link:hover { color: #fff; border-color: var(--accent); background:
 main { max-width: 1180px; margin: 0 auto; padding: 0 20px 70px; }
 .narrow { max-width: 960px; }
 
-/* ---------------- Navegacao ---------------- */
 .subnav { display: flex; gap: 8px; flex-wrap: wrap; margin: 20px 0 4px; }
 .subnav a {
   background: var(--panel-2);
@@ -143,7 +141,6 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 20px 70px; }
   background: linear-gradient(90deg, var(--border), transparent);
 }
 
-/* ---------------- Cartoes ---------------- */
 .grid { display: grid; gap: 14px; }
 .card {
   background: var(--panel);
@@ -179,7 +176,6 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 20px 70px; }
 .hub-card h2 { font-size: 18px; margin: 0 0 6px; color: #fff; }
 .hub-card p { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.5; }
 
-/* ---------------- Formularios ---------------- */
 .toolbar { display: flex; justify-content: space-between; align-items: center; margin: 18px 0; gap: 12px; flex-wrap: wrap; }
 .toolbar .status { font-size: 13px; color: var(--muted); }
 
@@ -235,7 +231,6 @@ input[type=date] { color-scheme: dark; }
 }
 .toast.show { opacity: 1; }
 
-/* ---------------- Upload ---------------- */
 .dropzone {
   border: 2px dashed #3a3e46;
   border-radius: 12px;
@@ -269,7 +264,6 @@ input[type=date] { color-scheme: dark; }
   transition: width .3s ease;
 }
 
-/* ---------------- Tabelas ---------------- */
 .table-wrap {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -307,7 +301,6 @@ table.data .fdel:hover { color: var(--danger); }
 
 .empty { padding: 36px 20px; text-align: center; color: var(--muted); font-size: 13.5px; }
 
-/* ---------------- Badges ---------------- */
 .badge {
   display: inline-block; padding: 3px 10px; border-radius: 999px;
   font-size: 10.5px; font-weight: 800; letter-spacing: .04em; white-space: nowrap;
@@ -330,7 +323,6 @@ table.data .fdel:hover { color: var(--danger); }
 .pill-prazo.warn { color: var(--warn); }
 .pill-prazo.late { color: var(--danger); }
 
-/* ---------------- KPIs e graficos ---------------- */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 8px; }
 .kpi {
   background: linear-gradient(160deg, var(--panel-2) 0%, var(--panel) 100%);
@@ -360,7 +352,6 @@ table.data .fdel:hover { color: var(--danger); }
 .bar-row .bar-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
 .bar-row .bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 
-/* ---------------- Modal ---------------- */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,.72);
   backdrop-filter: blur(3px);
@@ -379,7 +370,6 @@ table.data .fdel:hover { color: var(--danger); }
 .modal .modal-sub { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 
-/* ---------------- Diversos ---------------- */
 .hint {
   background: rgba(245,130,31,.08);
   border: 1px solid rgba(245,130,31,.35);
