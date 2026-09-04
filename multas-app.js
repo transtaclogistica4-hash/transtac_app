@@ -1,22 +1,11 @@
-/* ==========================================================
-   TRANSTAC - Controle de Multas
-   app.js - configuracao, cliente de API, parser e helpers
-   ========================================================== */
-
-/* ---------- 1. CONFIGURACAO ----------
-   Cole abaixo a URL /exec do Web App do Apps Script.
-   Enquanto estiver vazia, o app roda em MODO DEMO (localStorage),
-   com OCR feito no proprio navegador (Tesseract.js).            */
 const TOKEN_PADRAO = 'transtac-multas';   // nao deixe esta linha em branco
 
 window.MULTAS_CONFIG = {
   // URL /exec do Web App do Apps Script (planilha base_multas):
   API_URL: 'https://script.google.com/macros/s/AKfycbzb_GTyA8d804LVO6ybebDrGwcyEJ-4EKm1g4dISyNMfIQffKh6ejaROyLeV7fifJmP/exec',
-  // Deve ser igual ao TOKEN do Codigo.gs. Se ficar vazio, usa o TOKEN_PADRAO acima.
   TOKEN: TOKEN_PADRAO
 };
 
-/* Confira a configuracao ativa digitando  multasInfo()  no console do navegador */
 window.multasInfo = function () {
   const c = window.MULTAS_CONFIG;
   const info = {
@@ -29,7 +18,6 @@ window.multasInfo = function () {
   return info;
 };
 
-/* ---------- 2. DOMINIOS ---------- */
 const STATUS = [
   { v: 'RECEBIDA',   label: 'Recebida',              cls: 'recebida'  },
   { v: 'INDICACAO',  label: 'Indicação de condutor', cls: 'indicacao' },
@@ -61,9 +49,7 @@ const CAMPOS = [
   'indicacaoUrl', 'indicacaoNome', 'criadoEm', 'atualizadoEm'
 ];
 
-/* ---------- 2b. SETOR RESPONSAVEL PELA PLACA ----------
-   Mesma base de placas do checklist da frota (index.html).
-   Serve para pre-preencher o responsavel na multa e para o filtro. */
+
 const SETORES_RESP = ['PASSEIO', 'FROTA', 'EXPEDIÇÃO', 'LOGISTICA', 'CD IÇARA', 'CD RS'];
 
 const PLACA_SETOR = {
