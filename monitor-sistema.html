@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!-- TRANSTAC MONITOR DO SISTEMA | build v1 | apenas DESENVOLVIMENTO -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0c">
+<title>Monitor do Sistema · TRANSTAC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="multas.css?v=11">
+<style>
+  .ms-topo{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0 18px;padding:14px;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;}
+  .ms-btn{padding:9px 16px;border-radius:7px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text);}
+  .ms-btn.primary{background:var(--accent);color:#14171A;border-color:var(--accent);}
+  .ms-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .ms-btn.primary:hover{filter:brightness(1.05);color:#14171A;}
+  .ms-btn.rodando{opacity:.6;cursor:wait;}
+  .ms-auto{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-left:auto;}
+  .ms-auto input{width:16px;height:16px;cursor:pointer;}
+  .ms-resumo{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+  @media(max-width:800px){ .ms-resumo{grid-template-columns:1fr 1fr;} }
+  .ms-kpi{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .ms-kpi .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700;}
+  .ms-kpi .val{font-size:24px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums;}
+  .ms-kpi .sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .val.ok{color:var(--ok);} .val.warn{color:var(--warn);} .val.bad{color:var(--danger);}
+  .ms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+  .ms-card{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s ease;}
+  .ms-card.st-ok{border-left:4px solid var(--ok);} .ms-card.st-warn{border-left:4px solid var(--warn);} .ms-card.st-bad{border-left:4px solid var(--danger);}
+  .ms-card.st-idle{border-left:4px solid var(--border);}
+  .ms-card-hd{display:flex;justify-content:space-between;align-items:start;gap:6px;}
+  .ms-card-nome{font-size:13px;font-weight:700;color:var(--text);line-height:1.2;}
+  .ms-card-arq{font-size:11px;color:var(--muted);margin-top:2px;font-family:ui-monospace,monospace;}
+  .ms-tempo{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;}
+  .ms-tempo.ok{color:var(--ok);} .ms-tempo.warn{color:var(--warn);} .ms-tempo.bad{color:var(--danger);}
+  .ms-meta{font-size:11px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;}
+  .ms-mini-graf{height:36px;display:flex;align-items:end;gap:2px;margin-top:4px;}
+  .ms-mini-graf .barra{flex:1;background:var(--accent);opacity:.7;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s;}
+  .ms-mini-graf .barra.ok{background:var(--ok);} .ms-mini-graf .barra.warn{background:var(--warn);} .ms-mini-graf .barra.bad{background:var(--danger);}
+  .ms-erro{font-size:11px;color:var(--danger);margin-top:2px;font-family:ui-monospace,monospace;word-break:break-all;}
+  .ms-progresso{position:sticky;top:0;background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:8px 12px;margin-bottom:12px;display:none;color:var(--accent);font-size:12.5px;}
+  .ms-progresso.on{display:block;}
+</style>
+</head>
+<body>
+<div id="splash"><img class="splash-logo" src="logo-transtac.png" alt="TRANSTAC"><div class="splash-bar"><i></i></div><div class="splash-txt">Carregando</div></div>
+<script>setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove();},4000);</script>
+<header></header>
+
+<main>
+  <div class="ms-topo">
+    <button class="ms-btn primary" id="btnRodar">🔄 Testar todos</button>
+    <button class="ms-btn" id="btnLimpar">🧹 Limpar histórico</button>
+    <div class="ms-auto">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="autoRef"> Auto-refresh a cada
+      </label>
+      <select id="autoInt" style="padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:var(--panel);color:var(--text);font-family:inherit;font-size:12px;">
+        <option value="60">60s</option><option value="120">2min</option><option value="300">5min</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="ms-progresso" id="progresso">Testando endpoints... <span id="progtxt">0/0</span></div>
+
+  <div class="ms-resumo">
+    <div class="ms-kpi"><div class="lbl">Endpoints</div><div class="val" id="k_total">—</div><div class="sub">total monitorados</div></div>
+    <div class="ms-kpi"><div class="lbl">Rápidos (<1s)</div><div class="val ok" id="k_ok">—</div><div class="sub">respondendo bem</div></div>
+    <div class="ms-kpi"><div class="lbl">Lentos (1-3s)</div><div class="val warn" id="k_warn">—</div><div class="sub">atenção</div></div>
+    <div class="ms-kpi"><div class="lbl">Ruins (>3s ou erro)</div><div class="val bad" id="k_bad">—</div><div class="sub">problema</div></div>
+  </div>
+
+  <div class="ms-grid" id="grid"></div>
+</main>
+
+<script src="multas-app.js?v=11"></script>
+<script>
+montarHeader('MONITOR DO SISTEMA','Diagnóstico dos Apps Scripts. Só visível para perfil DESENVOLVIMENTO.','index.html');
+
+/* ===== catálogo de endpoints monitorados ===== */
+const ENDPOINTS = [
+  {nome:'Login / Senhas',       arquivo:'index.html', url:'https://script.google.com/macros/s/AKfycbw-3Of_sl4_L_jCHQEbXY-XxPEjMqUd3nh9JHOQmLPM_qGNJPF8FJvU88VinA9DFlwQZA/exec'},
+  {nome:'Dashboard Logística',  arquivo:'dashboard.html', url:'https://script.google.com/macros/s/AKfycbwJdAE53zoBxym1kVDZOpWpka2aQKruHe9Y8krz-aQZYyzAybnpRw-bSV5jH_k2GIGa9w/exec'},
+  {nome:'Rotas / Motoristas',   arquivo:'motorista.html', url:'https://script.google.com/macros/s/AKfycbwXpjE7DAvYFwFI-EQU4tOtM5DkfP5cE1JlmOsEUpKUeVlqCzeE-9tjIiXcXd7B0FQmMg/exec'},
+  {nome:'Checklist (gravador)', arquivo:'index.html', url:'https://script.google.com/macros/s/AKfycbwnuP3hkxERcoWTP9yhEDwfZlWRcJuas7wY9EDV81wmBqtVrsds5pi-S-RfWIwb0kcX/exec'},
+  {nome:'Inventário Içara',     arquivo:'inventario-icara.html', url:'https://script.google.com/macros/s/AKfycbx4pXx9YTtSl1HsknimYTdQTsWDhiXBr1p2Lc-18qlTkMWpUlvg79d6pET4dPrgamdtPg/exec'},
+  {nome:'Manutenção Geral / Painel', arquivo:'manutencao-geral.html', url:'https://script.google.com/macros/s/AKfycbxEnHMJoKDItvFZw6ppOcexC8kFvKO9G_-TrI4hB6r2qkZKNE7C5TrrSM2LC8JNczJmeQ/exec'},
+  {nome:'Autorizações',         arquivo:'autorizacoes.html', url:'https://script.google.com/macros/s/AKfycbxhgxZzIv4IzQI_XUt9rDiPwtSYb48gr6bwR9aHA8MeOggfwTxSNLQX6AMY79BWfeLX/exec'},
+  {nome:'Multas',               arquivo:'index.html', url:'https://script.google.com/macros/s/AKfycby2OEjRzAu6U41i4oOyFb8oWbxFPhenL6rxvIo49WV4VKyrlCTgAVg0RARMsw1LkBS81Q/exec'},
+  {nome:'Compras (OC)',         arquivo:'compras.html', url:'https://script.google.com/macros/s/AKfycbyj_3cXQsSP0hbjtNUWieenSvmU2DqlUchtmiwwGqAq2mUCaJcykiv-gBEx7Rz1wYsU/exec'},
+  {nome:'Dados / Checklist',    arquivo:'index.html', url:'https://script.google.com/macros/s/AKfycbylcEGwEqjTDn3Qin0IkIegzrwzFJ2HbUP000znjcv1sqSbIvIRkkJ_080iKxLYe9L4/exec'},
+  {nome:'Cadastro de Motoristas', arquivo:'cadastro-motoristas.html', url:'https://script.google.com/macros/s/AKfycbypzKdoWY99DAZxKFhAitZ4gfsaUZr0EqBs56zJWTrsy8XgF3xI4zZ1EtAr6dLTHDZPrQ/exec'},
+  {nome:'Manutenção Preventiva',arquivo:'preventiva.html', url:'https://script.google.com/macros/s/AKfycbyvzBHNOfDE0fLOcRWPLit_uwmp_sA_g9vNsxLLg6MnqoAxJ9Mtd3rZKo7-lFOajcUr/exec'},
+  {nome:'Ponto Motoristas',     arquivo:'index.html', url:'https://script.google.com/macros/s/AKfycbzAfk74fdSU-JQ5Jyvw0UIq_6Wz3mViwnlWcgq33ErtWr5qmSqBfZui_Bt2FUyjqQiMpQ/exec'},
+  {nome:'Extra (index)',        arquivo:'index.html', url:'https://script.google.com/macros/s/AKfycbzQKMDLSGP9-uC4SLohNI61SeKQ_43uOT8sWSFB86pZy5RPymR-HKdqpgaaDYIZdX0/exec'}
+];
+
+const HIST_KEY = 'transtac_monitor_hist_v1';
+const MAX_HIST = 20;
+
+function carregarHist(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'{}'); }catch(e){ return {}; } }
+function salvarHist(h){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(h)); }catch(e){} }
+let historico = carregarHist();
+
+function classe(ms){
+  if(ms===null||ms===undefined) return 'idle';
+  if(ms<0) return 'bad';   // erro
+  if(ms<1000) return 'ok';
+  if(ms<3000) return 'warn';
+  return 'bad';
+}
+function textoTempo(ms){
+  if(ms===null||ms===undefined) return '—';
+  if(ms<0) return 'ERRO';
+  if(ms<1000) return ms+' ms';
+  return (ms/1000).toFixed(2)+' s';
+}
+
+function renderCards(){
+  const grid=document.getElementById('grid');
+  grid.innerHTML=ENDPOINTS.map((e,i)=>{
+    const h=historico[e.url]||[];
+    const ultimo=h.length?h[h.length-1]:null;
+    const ms=ultimo?ultimo.ms:null;
+    const cls=classe(ms);
+    const kb=ultimo&&ultimo.kb?ultimo.kb+' KB':'';
+    const erro=ultimo&&ultimo.erro?ultimo.erro:'';
+    const barras=h.slice(-15).map(x=>{
+      const c=classe(x.ms);
+      const h=x.ms<0?100:Math.min(100, Math.max(4, (x.ms||0)/50));
+      return `<div class="barra ${c}" style="height:${h}%" title="${textoTempo(x.ms)} — ${new Date(x.t).toLocaleTimeString('pt-BR')}"></div>`;
+    }).join('');
+    return `<div class="ms-card st-${cls}" data-i="${i}">
+      <div class="ms-card-hd">
+        <div>
+          <div class="ms-card-nome">${esc(e.nome)}</div>
+          <div class="ms-card-arq">${esc(e.arquivo)}</div>
+        </div>
+        <div class="ms-tempo ${cls}">${textoTempo(ms)}</div>
+      </div>
+      <div class="ms-meta">${kb?`<span>${kb}</span>`:''} ${h.length?`<span>${h.length} testes</span>`:''}</div>
+      ${erro?`<div class="ms-erro" title="${esc(erro)}">${esc(erro.slice(0,80))}</div>`:''}
+      <div class="ms-mini-graf">${barras||'<div style="width:100%;color:var(--muted);font-size:11px;text-align:center;">sem histórico</div>'}</div>
+    </div>`;
+  }).join('');
+  atualizarKpis();
+}
+
+function atualizarKpis(){
+  document.getElementById('k_total').textContent=ENDPOINTS.length;
+  let ok=0, warn=0, bad=0, testados=0;
+  ENDPOINTS.forEach(e=>{
+    const h=historico[e.url]||[]; if(!h.length) return;
+    testados++;
+    const ms=h[h.length-1].ms;
+    if(ms<0||ms>=3000) bad++;
+    else if(ms>=1000) warn++;
+    else ok++;
+  });
+  document.getElementById('k_ok').textContent=ok;
+  document.getElementById('k_warn').textContent=warn;
+  document.getElementById('k_bad').textContent=bad;
+}
+
+async function testarUm(ep){
+  const t0=performance.now();
+  try{
+    const r=await fetch(ep.url, {method:'GET', cache:'no-store'});
+    const txt=await r.text();
+    const dt=Math.round(performance.now()-t0);
+    const kb=Math.round(txt.length/1024*10)/10;
+    if(!r.ok) return {ms:-1, kb:kb, erro:'HTTP '+r.status, t:Date.now()};
+    return {ms:dt, kb:kb, erro:'', t:Date.now()};
+  }catch(err){
+    return {ms:-1, kb:0, erro:String(err.message||err), t:Date.now()};
+  }
+}
+
+let rodando=false;
+async function testarTodos(){
+  if(rodando) return; rodando=true;
+  const btn=document.getElementById('btnRodar'); btn.classList.add('rodando'); btn.disabled=true;
+  const prog=document.getElementById('progresso'); const ptxt=document.getElementById('progtxt');
+  prog.classList.add('on');
+  for(let i=0;i<ENDPOINTS.length;i++){
+    ptxt.textContent=(i+1)+'/'+ENDPOINTS.length+' — '+ENDPOINTS[i].nome;
+    const res=await testarUm(ENDPOINTS[i]);
+    if(!historico[ENDPOINTS[i].url]) historico[ENDPOINTS[i].url]=[];
+    historico[ENDPOINTS[i].url].push(res);
+    if(historico[ENDPOINTS[i].url].length>MAX_HIST) historico[ENDPOINTS[i].url].shift();
+    salvarHist(historico);
+    renderCards();
+  }
+  prog.classList.remove('on');
+  btn.classList.remove('rodando'); btn.disabled=false;
+  rodando=false;
+}
+
+document.getElementById('btnRodar').onclick=testarTodos;
+document.getElementById('btnLimpar').onclick=()=>{
+  if(!confirm('Limpar todo o histórico de medições?')) return;
+  historico={}; salvarHist(historico); renderCards();
+};
+
+let autoTimer=null;
+function ligarAuto(){
+  if(autoTimer) clearInterval(autoTimer);
+  if(!document.getElementById('autoRef').checked) return;
+  const intv=parseInt(document.getElementById('autoInt').value)*1000;
+  autoTimer=setInterval(testarTodos, intv);
+}
+document.getElementById('autoRef').addEventListener('change',ligarAuto);
+document.getElementById('autoInt').addEventListener('change',ligarAuto);
+
+renderCards();
+</script>
+</body>
+</html>
