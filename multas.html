@@ -73,7 +73,6 @@ if (modoDemo()) document.getElementById('avisoDemo').style.display = 'block';
   let lista = [];
   try { lista = await api('listar'); } catch (e) { toast('Falha ao carregar: ' + e.message); }
 
-  // Mesmo criterio do dashboard: em aberto = tudo que nao foi pago nem cancelado.
   const aPagar  = lista.filter(m => m.status !== 'PAGA' && m.status !== 'CANCELADA');
   const vencidas = aPagar.filter(m => diasAte(m.vencimento) !== null && diasAte(m.vencimento) < 0);
   const indPend = lista.filter(m => m.statusIndicacao === 'PENDENTE');
