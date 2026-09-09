@@ -39,7 +39,6 @@ body {
   min-height: 100vh;
 }
 
-/* ---------- Topo ---------- */
 header {
   display: flex;
   align-items: center;
@@ -83,7 +82,6 @@ a.home-link:hover { color: var(--text); }
 
 #progressBar { height: 2px; background: var(--accent); width: 0%; transition: width 0.9s linear; }
 
-/* ---------- Layout ---------- */
 main { padding: 16px 22px 30px; }
 .filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
 .filters .lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; margin-right: 2px; }
@@ -125,7 +123,6 @@ main { padding: 16px 22px 30px; }
 .chart-wrap { position: relative; height: 250px; }
 .chart-wrap.short { height: 195px; }
 
-/* ---------- Top rotas ---------- */
 .rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
 .rank li { position: relative; }
 .rank button {
@@ -140,7 +137,6 @@ main { padding: 16px 22px 30px; }
 .rank .qt { position: relative; z-index: 1; font-size: 13px; font-weight: 800; color: var(--accent-soft); }
 .rank .pc { position: relative; z-index: 1; font-size: 11px; color: var(--muted); width: 42px; text-align: right; }
 
-/* ---------- Pendentes ---------- */
 .pend { display: grid; gap: 7px; max-height: 430px; overflow-y: auto; padding-right: 3px; }
 .pend-item {
   display: flex; align-items: center; gap: 10px; background: var(--card-alt);
@@ -160,7 +156,6 @@ main { padding: 16px 22px 30px; }
 .bar { flex: 1; height: 7px; background: var(--field); border-radius: 4px; overflow: hidden; }
 .bar i { display: block; height: 100%; background: var(--ok); transition: width 0.5s ease; }
 
-/* ---------- Modal ---------- */
 .overlay { position: fixed; inset: 0; background: rgba(8,10,12,0.72); display: none; align-items: center; justify-content: center; z-index: 80; padding: 20px; }
 .overlay.on { display: flex; }
 .modal { background: var(--card); border: 1px solid var(--border-2); border-radius: 14px; width: min(760px, 96vw); max-height: 82vh; display: flex; flex-direction: column; }
@@ -186,7 +181,7 @@ table.det tr:nth-child(even) td { background: var(--card-alt); }
 </style>
 </head>
 <body>
-<!-- TRANSTAC | efeito de carregamento (padrao do app) -->
+
 <style>
 #tt-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:26px;background-color:#14171a;
@@ -292,7 +287,6 @@ const COR_OP = { "GAM": "#f5821f", "JadLog": "#0ea5e9", "Cargas Terceiros": "#05
 const ORDEM_OP = ["GAM", "JadLog", "Cargas Terceiros", "Transferências"];
 function corOp(nome, i) { return COR_OP[nome] || ["#e11d48", "#ca8a04", "#0891b2", "#7c3aed"][i % 4]; }
 
-/* Catálogo de rotas fixas — mesmo cadastro das telas de operação */
 const ROTAS_GAM_UTIL = [
   "TUB X BIGUAÇU", "TUB X BLUMENAU X TROMBUDO", "TUB X BOM JARDIM X LAGES X ERVAL",
   "TUB X CHAPECÓ", "TUB X IÇARA", "TUB X JOINVILLE", "TUB X TIJUCAS X ITAJAÍ",
@@ -327,15 +321,14 @@ let ASSIGN = {};
 let ERRO_ASSIGN = false;
 let FILTRO_OP = "";
 let PERIODO = 14;
-let REF_DIA = "";   // dia de referência dos indicadores (vazio = hoje)
-let DE = "";        // início do intervalo (vazio = sem intervalo)
-let ATE = "";       // fim do intervalo
+let REF_DIA = "";   
+let DE = "";        
+let ATE = "";       
 let PAUSADO = false;
 let SEGUNDOS = REFRESH_MS / 1000;
 let CARREGANDO = false;
 const graficos = [];
 
-/* ---------- utilidades ---------- */
 function hojeISO() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
@@ -372,7 +365,6 @@ function esc(s) {
 function op(r) { return r["Categoria"] || "GAM"; }
 function dia(r) { return r["Data do Embarque"] || ""; }
 
-/* ---------- busca de dados ---------- */
 async function comTimeout(p, ms) {
   return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("Tempo esgotado ao carregar dados.")), ms))]);
 }
@@ -395,7 +387,6 @@ async function buscarAssignments() {
   }
 }
 
-/* ---------- cálculos ---------- */
 function linhasFiltradas() {
   return FILTRO_OP ? LINHAS.filter((r) => op(r) === FILTRO_OP) : LINHAS;
 }
@@ -409,7 +400,7 @@ function linhasNoIntervalo() {
   });
 }
 function temIntervalo() { return !!(DE || ATE); }
-/* eixo de dias: o intervalo escolhido ou os últimos N dias até o dia de referência */
+
 function eixoDias() {
   const fim = ATE || diaRef();
   let inicio;
@@ -473,7 +464,6 @@ function situacaoRotas(refDia) {
   });
 }
 
-/* ---------- render ---------- */
 function destruirGraficos() { graficos.forEach((g) => g.destroy()); graficos.length = 0; }
 
 function render() {
@@ -594,7 +584,6 @@ function render() {
   `;
   document.getElementById("conteudo").innerHTML = html;
 
-  /* gráfico diário */
   const media = serieDia.reduce((s, d) => s + d.qtd, 0) / (serieDia.length || 1);
   graficos.push(new Chart(document.getElementById("gDia"), {
     type: "bar",
@@ -636,7 +625,6 @@ function render() {
     },
   }));
 
-  /* gráfico mensal */
   graficos.push(new Chart(document.getElementById("gMes"), {
     type: "bar",
     data: {
@@ -667,7 +655,6 @@ function render() {
   });
 }
 
-/* ---------- modal ---------- */
 function tabela(linhas, titulo) {
   document.getElementById("mdTitle").textContent = titulo + " — " + linhas.length + " embarque(s)";
   document.getElementById("mdBody").innerHTML = linhas.length
@@ -700,7 +687,6 @@ document.getElementById("mdClose").addEventListener("click", fecharModal);
 document.getElementById("overlay").addEventListener("click", (e) => { if (e.target.id === "overlay") fecharModal(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") fecharModal(); });
 
-/* ---------- filtros ---------- */
 function montarChipsOp() {
   const cats = Array.from(new Set(LINHAS.map(op)));
   cats.sort((a, b) => ORDEM_OP.indexOf(a) - ORDEM_OP.indexOf(b));
@@ -726,7 +712,6 @@ document.querySelectorAll("#chipsPer .chip").forEach((b) => {
   });
 });
 
-/* ---------- filtro de data ---------- */
 const inDia = document.getElementById("fDia");
 const inDe = document.getElementById("fDe");
 const inAte = document.getElementById("fAte");
@@ -748,7 +733,6 @@ document.getElementById("btnLimpar").addEventListener("click", () => {
   aplicarDatas();
 });
 
-/* ---------- ciclo de atualização ---------- */
 async function carregar(primeira) {
   if (CARREGANDO) return;
   CARREGANDO = true;
