@@ -102,8 +102,8 @@
         <button type="button" id="fLimparData" title="Limpar filtro de data" style="padding:8px 12px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;">Limpar</button>
   </div>
   <div class="table-wrap"><table class="data">
-    <thead><tr><th>Placa / Modelo</th><th>Prestador</th><th>Ocorrência</th><th>Descrição</th><th>Entrada</th><th>Previsão</th><th>Saída</th><th class="num">Dias</th><th>Status Ocor.</th><th class="num">Total R$</th><th></th></tr></thead>
-    <tbody id="tb"></tbody></table><div class="empty" id="vazio" style="display:none">Nenhuma ocorrência.</div></div>
+  <thead><tr><th>Placa / Modelo</th><th>Prestador</th><th>Ocorrência</th><th>Descrição</th><th>Entrada</th><th>Previsão</th><th>Saída</th><th class="num">Dias</th><th>Status Ocor.</th><th>Nº OC</th><th class="num">Total R$</th><th></th></tr></thead>    
+  <tbody id="tb"></tbody></table><div class="empty" id="vazio" style="display:none">Nenhuma ocorrência.</div></div>
 </main>
 
 <datalist id="dlPlacas"></datalist>
@@ -235,6 +235,7 @@ function render(){
     <td class="data-cel">${esc(d.data_saida||'')}</td>
     <td class="num">${dias.html}</td>
     <td>${sto}</td>
+    <td class="col-oc-num">${esc(d.oc||'—')}</td>
     <td class="col-total">${brlNum(d.total)}</td>
     <td><button class="btn-edit" data-ed="${esc(d.id)}">Editar</button></td>
   </tr>`;}).join('');
