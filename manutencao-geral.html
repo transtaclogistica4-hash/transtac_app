@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- TRANSTAC MANUTENÇÃO GERAL | build v3-layout -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -16,7 +15,6 @@
   .mg-field input,.mg-field select,.mg-field textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13.5px;font-family:inherit;}
   .mg-field textarea{min-height:54px;resize:vertical;}
   .filtro-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
-  /* ----- listagem mais organizada ----- */
   #tb td{ padding:9px 10px; vertical-align:middle; border-bottom:1px solid var(--border-soft); }
   #tb tr:hover{ background:var(--panel-2); }
   .col-placa{ font-weight:700; white-space:nowrap; }
@@ -157,7 +155,6 @@ function moedaParaNumero(t){
   if(n>1000000) return 0;
   return n;
 }
-// converte dd/mm/aaaa ou aaaa-mm-dd em Date (meia-noite local)
 function parseDataBR(v){
   var s=String(v||'').trim(); if(!s) return null;
   var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
