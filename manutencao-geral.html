@@ -138,7 +138,6 @@ async function carregar(){
   try{ const r=await fetch(SCRIPT_URL_MG,{method:'GET'}); const j=await r.json(); dados=j.registros||[]; }
   catch(e){ toast('Erro ao carregar: '+e.message,true); }
   dlForn.innerHTML=[...new Set(dados.map(d=>d.fornecedor).filter(Boolean))].map(f=>'<option value="'+esc(f)+'">').join('');
-  // filtro de ocorrencias
   const ocs=[...new Set(dados.map(d=>d.ocorrencia).filter(Boolean))].sort();
   render();
 }
@@ -163,7 +162,6 @@ function parseDataBR(v){
   if(m){ return new Date(+m[1],+m[2]-1,+m[3]); }
   return null;
 }
-// dias: adiantado = +, atraso = - (saída vs previsão)
 function diasAtraso(previsao, saida){
   var p=parseDataBR(previsao), s=parseDataBR(saida);
   if(!p||!s) return {n:null, html:'<span class="dias-neutro">—</span>'};
@@ -183,7 +181,6 @@ function statusOcorHtml(d){
   return '<span class="sto-badge '+cls+'">'+esc(st)+'</span>';
 }
 function render(){
-  // Realizadas = status_ocorrencia REALIZADO ou tem data de saída (mesma regra do backend)
   const realizadas=dados.filter(d=>{
     const st=(d.status_ocorrencia||'').toUpperCase();
     return st==='REALIZADO' || String(d.data_saida||'').trim()!=='';
@@ -200,7 +197,6 @@ function render(){
  const bq=(fBusca.value||'').toLowerCase();
   const fDe=fDataDe.value;   // AAAA-MM-DD (data inicial) ou ''
   const fAte=fDataAte.value; // AAAA-MM-DD (data final) ou ''
-  // converte data_entrada da planilha (dd/mm/aaaa ou ISO) para ISO AAAA-MM-DD para comparar
   const toIso=v=>{ const s=String(v||'').trim();
     const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
     if(m){ let a=+m[3]; if(a<100)a+=2000; return a+'-'+('0'+(+m[2])).slice(-2)+'-'+('0'+(+m[1])).slice(-2); }
