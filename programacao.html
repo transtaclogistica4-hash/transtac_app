@@ -214,6 +214,13 @@ table.manifest tbody tr:hover { background: #24282d; }
 }
 .del-btn:hover { background: #7f1d1d; color: #fff; }
 .del-btn:disabled { opacity: 0.5; cursor: default; }
+.actions-cell { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.wa-btn { display: inline-flex; align-items: center; gap: 6px; background: #25d366; color: #0b1f14; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
+.wa-btn:hover { background: #1ebd5a; }
+.wa-btn:disabled { opacity: 0.6; cursor: default; }
+.ae-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.ae-badge.done { background: #d1fae5; color: #065f46; }
+.ae-badge.pending { background: #3a3f45; color: #9ca3af; }
 .toast {
   position: fixed;
   left: 50%;
@@ -321,6 +328,34 @@ body {
 <script>
 const DATA_URL = "https://script.google.com/macros/s/AKfycbwJdAE53zoBxym1kVDZOpWpka2aQKruHe9Y8krz-aQZYyzAybnpRw-bSV5jH_k2GIGa9w/exec?data=all";
 
+// Numero da Autorizacao de Embarque (AE) da GAM: vem do mesmo Apps Script da
+// tela de Autorizacoes. Casamos por Data do Embarque + Rota. Se falhar, a tela
+// continua normal e so mostra "Nao emitida".
+const AE_DATA_URL = "https://script.google.com/macros/s/AKfycbxhgxZzIv4IzQI_XUt9rDiPwtSYb48gr6bwR9aHA8MeOggfwTxSNLQX6AMY79BWfeLX/exec";
+let AE_MAP = {};
+function aeMapKey(dateKey, routeName) {
+  return (dateKey || "") + "|" + (routeName || "").trim().toUpperCase();
+}
+async function fetchAeMap() {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    const res = await fetch(AE_DATA_URL + "?t=" + Date.now(), { signal: ctrl.signal, cache: "no-store" });
+    clearTimeout(timer);
+    if (!res.ok) return {};
+    const data = await res.json();
+    if (!data.ok || !Array.isArray(data.rows)) return {};
+    const map = {};
+    data.rows.forEach((r) => {
+      const ae = r["Autorizacao de Embarque"] || r["Autorização de Embarque"];
+      if (ae) map[aeMapKey(r["Data do Embarque"], r["Rota"])] = ae;
+    });
+    return map;
+  } catch (err) {
+    return {};
+  }
+}
+
 const CATEGORY_COLORS = {
   "GAM": "#f5821f",
   "JadLog": "#0ea5e9",
@@ -426,6 +461,15 @@ function render() {
       const delBtn = canDelete
         ? `<button type="button" class="del-btn" data-date="${dataEmbarque}" data-route="${routeId}" data-cat="${catKey}" data-label="${(r["Rota"] || "embarque").replace(/"/g, "&quot;")}">Excluir</button>`
         : `<button type="button" class="del-btn" disabled title="Sem ID da rota">Excluir</button>`;
+      const ae = catName === "GAM" ? AE_MAP[aeMapKey(dataEmbarque, r["Rota"])] : null;
+      const aeCell = catName === "GAM"
+        ? (ae ? `<span class="ae-badge done">${ae}</span>` : `<span class="ae-badge pending">Não emitida</span>`)
+        : "-";
+      const esc = (v) => String(v || "").replace(/"/g, "&quot;");
+      const driverName = r["Nome do Motorista"] || "";
+      const waBtn = driverName
+        ? `<button type="button" class="wa-btn" data-driver="${esc(driverName)}" data-rota="${esc(r["Rota"])}" data-placa="${esc(r["Placa"])}" data-tipo="${esc(r["Tipo do Veiculo"])}" data-paletes="${esc(r["Quantidade de Paletes"])}" data-data="${esc(dataEmbarque)}" data-ae="${esc(ae)}">WhatsApp</button>`
+        : "";
       return `
         <tr>
           <td class="col-num">${idx + 1}</td>
@@ -435,7 +479,8 @@ function render() {
           <td>${r["Placa"] || "-"}</td>
           <td>${r["Tipo do Veiculo"] || "-"}</td>
           <td>${r["Quantidade de Paletes"] || "-"}</td>
-          <td>${delBtn}</td>
+          <td>${aeCell}</td>
+          <td><div class="actions-cell">${waBtn}${delBtn}</div></td>
         </tr>
       `;
     }).join("");
@@ -479,6 +524,7 @@ function render() {
           <th>Placa</th>
           <th>Tipo</th>
           <th>Paletes</th>
+          <th>Autorização de Embarque</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -490,6 +536,9 @@ function render() {
 
   main.querySelectorAll(".del-btn[data-route]").forEach((btn) => {
     btn.addEventListener("click", () => handleDelete(btn));
+  });
+  main.querySelectorAll(".wa-btn").forEach((btn) => {
+    btn.addEventListener("click", () => handleSendWhatsApp(btn));
   });
 
   document.getElementById("prevDay").addEventListener("click", () => {
@@ -509,6 +558,38 @@ function render() {
   document.getElementById("filterCat").addEventListener("change", render);
 
   setUpdatedAt();
+}
+
+async function handleSendWhatsApp(btn) {
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Abrindo...";
+  try {
+    const res = await fetch("/api/whatsapp-link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        driver: btn.dataset.driver,
+        routeName: btn.dataset.rota,
+        plate: btn.dataset.placa,
+        vehicleType: btn.dataset.tipo,
+        pallets: btn.dataset.paletes,
+        date: btn.dataset.data,
+        aeNumber: btn.dataset.ae,
+      }),
+    });
+    const data = await res.json();
+    if (data && data.ok && data.url) {
+      window.open(data.url, "_blank");
+    } else {
+      showToast((data && data.error) || "Número de WhatsApp não cadastrado para este motorista.");
+    }
+  } catch (err) {
+    showToast("Erro ao gerar link do WhatsApp: " + (err && err.message ? err.message : "erro desconhecido"));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 }
 
 async function handleDelete(btn) {
@@ -563,7 +644,9 @@ function setUpdatedAt() {
 
 async function init() {
   try {
-    ALL_ROWS = await withRetry(fetchRows);
+    const [rows, aeMap] = await Promise.all([withRetry(fetchRows), fetchAeMap()]);
+    ALL_ROWS = rows;
+    AE_MAP = aeMap;
     const datas = Array.from(new Set(ALL_ROWS.map((r) => r["Data do Embarque"]).filter(Boolean))).sort();
     selectedDate = datas.length ? datas[datas.length - 1] : new Date().toISOString().slice(0, 10);
     render();
