@@ -58,6 +58,45 @@ function formatDateBR(dateKey?: string) {
   return `${d}/${m}/${y}`;
 }
 
+
+const SCRIPT_URL_MOT = "https://script.google.com/macros/s/AKfycbypzKdoWY99DAZxKFhAitZ4gfsaUZr0EqBs56zJWTrsy8XgF3xI4zZ1EtAr6dLTHDZPrQ/exec";
+
+function normNome(n?: string) {
+  return String(n || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+function buscarNaListaFixa(driver: string): string {
+  const alvo = normNome(driver);
+  for (const nome of Object.keys(DRIVER_WHATSAPP)) {
+    if (normNome(nome) === alvo) return DRIVER_WHATSAPP[nome];
+  }
+  return "";
+}
+
+async function buscarNoCadastro(driver: string): Promise<string> {
+  const alvo = normNome(driver);
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10000);
+    const res = await fetch(SCRIPT_URL_MOT, { signal: ctrl.signal, redirect: "follow" });
+    clearTimeout(timer);
+    if (!res.ok) return "";
+    const data = await res.json();
+    const lista: any[] = (data && data.motoristas) || [];
+    const achado = lista.find((m) => normNome(m && m.nome) === alvo && String((m && m.telefone) || "").replace(/\D/g, "").length >= 10);
+    if (!achado) return "";
+    const digitos = String(achado.telefone).replace(/\D/g, "");
+    return digitos.startsWith("55") ? digitos : "55" + digitos;
+  } catch {
+    return "";
+  }
+}
+
 export default async (req: Request, context: Context) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -90,7 +129,11 @@ aeNumber?: string | number;
     });
   }
 
-  const raw = DRIVER_WHATSAPP[driver];
+  // 1) lista fixa acima; 2) se nao achar, busca no Cadastro de Motoristas
+  // (mesma base da tela cadastro-motoristas.html), comparando o nome sem
+  // acento e sem diferenca de maiusculas.
+  let raw = DRIVER_WHATSAPP[driver] || buscarNaListaFixa(driver);
+  if (!raw) raw = await buscarNoCadastro(driver);
   if (!raw) {
     return new Response(JSON.stringify({ ok: false, error: "Numero nao cadastrado para este motorista" }), {
       headers: { "Content-Type": "application/json" },
