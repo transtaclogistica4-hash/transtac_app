@@ -428,7 +428,9 @@ async function init() {
 document.getElementById("main").innerHTML = '<div class="status-msg">Carregando dados da planilha... (pode levar até 1 minuto)</div>';
 try {
 ALL_ROWS = await fetchRows();
-const datas = Array.from(new Set(ALL_ROWS.map(function (r) { return r["Data do Embarque"]; }).filter(Boolean))).sort();
+const datas = Array.from(new Set(ALL_ROWS.map(function (r) { return r["Data do Embarque"]; }).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d || ""); }))).sort();
+var hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+if (datas.indexOf(hoje) !== -1) datas.push(hoje);
 selectedDate = datas.length ? datas[datas.length - 1] : new Date().toISOString().slice(0, 10);
 render();
 } catch (err) {
