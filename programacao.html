@@ -348,7 +348,7 @@ async function fetchAeMap() {
     const map = {};
     data.rows.forEach((r) => {
       const ae = r["Autorizacao de Embarque"] || r["Autorização de Embarque"];
-      if (ae) map[aeMapKey(r["Data do Embarque"], r["Rota"])] = ae;
+      if (ae) map[aeMapKey(r["Data do Embarque"] || r["A2"], r["Rota"])] = ae;
     });
     return map;
   } catch (err) {

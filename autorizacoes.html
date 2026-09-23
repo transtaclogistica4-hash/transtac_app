@@ -262,7 +262,12 @@ clearTimeout(timer);
 if (!res.ok) throw new Error("Falha ao contatar a planilha (" + res.status + ").");
 const data = await res.json();
 if (!data.ok) throw new Error(data.error || "Falha ao carregar dados.");
-return data.rows || [];
+// A coluna de data na aba CARGAS DA GAM esta com o cabecalho "A2" em vez de
+// "Data do Embarque". Aceitamos os dois nomes para a tela nao ficar vazia.
+return (data.rows || []).map(function (r) {
+if (!r["Data do Embarque"] && r["A2"]) r["Data do Embarque"] = r["A2"];
+return r;
+});
 } catch (e) {
 clearTimeout(timer);
 lastErr = e;
