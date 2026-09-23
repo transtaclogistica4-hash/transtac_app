@@ -222,7 +222,7 @@ body {
 <a class="home-link" href="menu.html?cat=gam">&larr; Voltar ao menu</a>
 </header>
 <div id="main">
-<div class="status-msg">Carregando dados da planilha...</div>
+<div class="status-msg">Carregando dados da planilha... (pode levar até 1 minuto)</div>
 </div>
 </div>
 <script>
@@ -252,9 +252,9 @@ let ALL_ROWS = [];
 let selectedDate = "";
 async function fetchRows() {
 let lastErr;
-for (let attempt = 1; attempt <= 3; attempt++) {
+for (let attempt = 1; attempt <= 2; attempt++) {
 const ctrl = new AbortController();
-const timer = setTimeout(function () { ctrl.abort(); }, 12000);
+const timer = setTimeout(function () { ctrl.abort(); }, 45000);
 try {
 const sep = DATA_URL.indexOf("?") === -1 ? "?" : "&";
 const res = await fetch(DATA_URL + sep + "t=" + Date.now(), { signal: ctrl.signal, cache: "no-store" });
@@ -271,8 +271,8 @@ return r;
 } catch (e) {
 clearTimeout(timer);
 lastErr = e;
-if (e && e.name === "AbortError") lastErr = new Error("A planilha demorou demais para responder (mais de 12s).");
-if (attempt < 3) await new Promise(function (r) { setTimeout(r, 1200 * attempt); });
+if (e && e.name === "AbortError") lastErr = new Error("A planilha demorou demais para responder (mais de 45s).");
+if (attempt < 2) await new Promise(function (r) { setTimeout(r, 3000); });
 }
 }
 throw lastErr || new Error("Falha ao carregar dados apos varias tentativas.");
@@ -425,7 +425,7 @@ init();
 }
 
 async function init() {
-document.getElementById("main").innerHTML = '<div class="status-msg">Carregando dados da planilha...</div>';
+document.getElementById("main").innerHTML = '<div class="status-msg">Carregando dados da planilha... (pode levar até 1 minuto)</div>';
 try {
 ALL_ROWS = await fetchRows();
 const datas = Array.from(new Set(ALL_ROWS.map(function (r) { return r["Data do Embarque"]; }).filter(Boolean))).sort();
