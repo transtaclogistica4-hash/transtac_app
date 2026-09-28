@@ -721,6 +721,11 @@
       <h3>Compras</h3>
       <p>Requisições internas, aprovação por alçada e pedidos.</p>
     </a>
+    <a class="card mod-card" data-modulo="cargas" href="https://transtac-cargas.netlify.app/" target="_blank" rel="noopener" onclick="return abrirModulo('cargas')">
+      <span class="kicker">Módulo</span>
+      <h3>Controle de Cargas</h3>
+      <p>Cargas de terceiros: cliente, rota, motorista, placas, CT-e, CIOT, Opentech, fretes e ordem de carregamento.</p>
+    </a>
     <a class="card mod-card disabled" data-modulo="rh" href="#" onclick="return false">
       <span class="kicker">Módulo</span>
       <h3>RH/DP</h3>
@@ -1470,18 +1475,18 @@
      aprovado o e-mail, o acesso segue a matriz abaixo. */
   var TELAS_MANUTENCAO = ['checklist','preenchidos','validacao','preventiva','manutencao-geral', 'painel-manutencao','frota','ponto','dashboard'];
   var PERMISSOES = {
-    LOGISTICA:      {modulos:['logistica','manutencao','multas','inventario'], telas:'*'},
+    LOGISTICA:      {modulos:['logistica','manutencao','multas','inventario','cargas'], telas:'*'},
     MANUTENCAO:     {modulos:['manutencao'],                                   telas:TELAS_MANUTENCAO},
     RH:             {modulos:['rh','manutencao','multas'],                     telas:TELAS_MANUTENCAO},
     FINANCEIRO:     {modulos:['compras'],                                      telas:[]},
     EXPEDICAO:      {modulos:['expedicao','multas'],                          telas:[]},
     MOTORISTA:      {modulos:[],                                               telas:[]},
-    DESENVOLVIMENTO:{modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
+    DESENVOLVIMENTO:{modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao','cargas'], telas:'*'},
     CD_ICARA:       {modulos:['inventario','multas','manutencao'],             telas:TELAS_MANUTENCAO},
     TERCEIRO_GAM:   {modulos:['logistica'],                                    telas:[]},
     /* perfis antigos mantidos por compatibilidade com cadastros ja existentes */
-    ADMIN:          {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
-    GESTOR:         {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao'], telas:'*'},
+    ADMIN:          {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao','cargas'], telas:'*'},
+    GESTOR:         {modulos:['logistica','manutencao','inventario','multas','rh','compras','expedicao','cargas'], telas:'*'},
     OPERACAO:       {modulos:['manutencao','inventario','multas'],             telas:TELAS_MANUTENCAO}
   };
   var SETOR_LABEL = {
