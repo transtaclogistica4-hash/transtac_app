@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<!-- TRANSTAC BASES | pagina=bases -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0c">
+<title>Bases · TRANSTAC</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="multas.css?v=10">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  [hidden]{display:none !important;}
+  .bs-top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 12px;}
+  .bs-top input,.bs-top select{padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);color:var(--text);font-size:13.5px;font-family:inherit;}
+  .bs-top input{flex:1;min-width:220px;}
+  .bs-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start;}
+  @media(max-width:900px){.bs-layout{grid-template-columns:1fr;}}
+  #mapa{height:520px;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-2);position:sticky;top:12px;z-index:1;}
+  @media(max-width:900px){#mapa{height:340px;position:relative;top:0;}}
+  .bs-lista{display:flex;flex-direction:column;gap:10px;}
+  .bs-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:border-color .15s;}
+  .bs-card:hover,.bs-card.sel{border-color:var(--accent);}
+  .bs-card.inativa{opacity:.6;}
+  .bs-card .bs-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .bs-card h3{margin:0;font-size:15px;}
+  .bs-tipo{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);}
+  .bs-end{color:var(--muted);font-size:12.5px;margin-top:6px;line-height:1.45;}
+  .bs-info{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px;}
+  .bs-info b{color:var(--text);font-weight:600;}
+  .bs-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .bs-acoes a,.bs-acoes button{font-size:12px;padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);text-decoration:none;cursor:pointer;font-family:inherit;}
+  .bs-acoes a:hover,.bs-acoes button:hover{border-color:var(--accent);color:var(--accent);}
+  .bs-acoes .del:hover{border-color:var(--danger);color:var(--danger);}
+  .bs-sem-gps{font-size:11px;color:var(--warn);}
+  .st-pill{font-size:11px;padding:2px 9px;border-radius:10px;font-weight:700;white-space:nowrap;}
+  .st-pill.ativa{background:rgba(34,197,94,.15);color:var(--ok);}
+  .st-pill.inativa{background:var(--panel-3);color:var(--muted);}
+  .modal{max-width:760px;width:calc(100% - 32px);max-height:92vh;overflow:auto;}
+  .fm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 12px;}
+  @media(max-width:640px){.fm-grid{grid-template-columns:1fr 1fr;}}
+  .fm-grid .s2{grid-column:span 2;} .fm-grid .s3{grid-column:span 3;} .fm-grid .s4{grid-column:span 4;}
+  @media(max-width:640px){.fm-grid .s3,.fm-grid .s4{grid-column:span 2;}}
+  .fm label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;}
+  .fm input,.fm select,.fm textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);color:var(--text);font-size:13.5px;font-family:inherit;}
+  .fm textarea{min-height:60px;resize:vertical;}
+  .fm .req::after{content:" *";color:var(--danger);}
+  .fm-sec{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent);margin:16px 0 8px;}
+  #mapaForm{height:240px;border-radius:10px;border:1px solid var(--border);margin-top:8px;z-index:1;}
+  .fm-gps{display:flex;gap:8px;flex-wrap:wrap;align-items:end;}
+  .fm-gps .fm{flex:1;min-width:130px;}
+  .fm-msg{font-size:12px;margin-top:6px;color:var(--muted);}
+  .fm-msg.err{color:var(--danger);} .fm-msg.ok{color:var(--ok);}
+  .leaflet-popup-content{font-family:inherit;font-size:12.5px;}
+  .aviso-login{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);border-radius:10px;padding:14px 16px;margin-top:20px;}
+</style>
+</head>
+<body>
+<div id="splash">
+  <img class="splash-logo" src="logo-transtac.png" alt="TRANSTAC TRANSPORTES">
+  <div class="splash-bar"><i></i></div>
+  <div class="splash-txt">Carregando</div>
+</div>
+<script>setTimeout(function(){var s=document.getElementById('splash');if(s)s.remove();},6000);</script>
+<header></header>
+
+<main>
+  <div id="semLogin" class="aviso-login" hidden>Para ver as bases, entre no portal com seu usuário. <a class="linkish" href="index.html">Ir para o login</a></div>
+
+  <div id="app" hidden>
+    <div class="kpi-grid" id="kpis" style="margin-top:20px"></div>
+
+    <div class="bs-top">
+      <input type="search" id="busca" placeholder="Buscar por nome, cidade, bairro ou responsável" aria-label="Buscar base">
+      <select id="fTipo" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option></select>
+      <select id="fStatus" aria-label="Filtrar por situação"><option value="">Ativas e inativas</option><option value="ativa">Só ativas</option><option value="inativa">Só inativas</option></select>
+      <button class="save-btn" id="btnNova" hidden>+ Nova base</button>
+    </div>
+
+    <div class="bs-layout">
+      <div id="mapa" role="region" aria-label="Mapa das bases"></div>
+      <div class="bs-lista" id="lista"></div>
+    </div>
+  </div>
+</main>
+
+<!-- formulário -->
+<div class="modal-backdrop" id="mdForm">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="fmTitulo">
+    <h3 id="fmTitulo">Nova base</h3>
+    <div class="modal-sub">Preencha o CEP para completar o endereço e marque a posição exata no mapa.</div>
+
+    <div class="fm-sec">Identificação</div>
+    <div class="fm-grid">
+      <div class="fm s2"><label for="b_nome" class="req">Nome da base</label><input id="b_nome" placeholder="Ex.: Base Pinhais"></div>
+      <div class="fm"><label for="b_tipo" class="req">Tipo</label><select id="b_tipo"></select></div>
+      <div class="fm"><label for="b_status">Situação</label><select id="b_status"><option value="ativa">Ativa</option><option value="inativa">Inativa</option></select></div>
+      <div class="fm s2"><label for="b_cnpj">CNPJ da unidade</label><input id="b_cnpj" inputmode="numeric" placeholder="00.000.000/0000-00"></div>
+      <div class="fm s2"><label for="b_horario">Horário de funcionamento</label><input id="b_horario" placeholder="Ex.: Seg a Sex 7h–18h, Sáb 7h–12h"></div>
+    </div>
+
+    <div class="fm-sec">Endereço</div>
+    <div class="fm-grid">
+      <div class="fm"><label for="b_cep">CEP</label><input id="b_cep" inputmode="numeric" placeholder="00000-000"></div>
+      <div class="fm s2"><label for="b_logradouro">Logradouro</label><input id="b_logradouro" placeholder="Rua, avenida, rodovia"></div>
+      <div class="fm"><label for="b_numero">Número</label><input id="b_numero" placeholder="S/N"></div>
+      <div class="fm s2"><label for="b_complemento">Complemento</label><input id="b_complemento" placeholder="Galpão, km, sala"></div>
+      <div class="fm s2"><label for="b_bairro">Bairro</label><input id="b_bairro"></div>
+      <div class="fm s3"><label for="b_cidade" class="req">Cidade</label><input id="b_cidade"></div>
+      <div class="fm"><label for="b_uf" class="req">UF</label><select id="b_uf"><option value="">--</option></select></div>
+    </div>
+
+    <div class="fm-sec">Localização</div>
+    <div class="fm-gps">
+      <div class="fm"><label for="b_lat">Latitude</label><input id="b_lat" inputmode="decimal" placeholder="-25.5308"></div>
+      <div class="fm"><label for="b_lng">Longitude</label><input id="b_lng" inputmode="decimal" placeholder="-49.2034"></div>
+      <button type="button" class="ghost-btn" id="btnGeo">Localizar pelo endereço</button>
+    </div>
+    <div class="fm-msg" id="geoMsg">Clique no mapa ou arraste o marcador para ajustar o ponto exato da entrada.</div>
+    <div id="mapaForm"></div>
+
+    <div class="fm-sec">Contato</div>
+    <div class="fm-grid">
+      <div class="fm s2"><label for="b_responsavel">Responsável</label><input id="b_responsavel"></div>
+      <div class="fm"><label for="b_telefone">Telefone</label><input id="b_telefone" inputmode="numeric" placeholder="(41) 3000-0000"></div>
+      <div class="fm"><label for="b_email">E-mail</label><input id="b_email" type="email"></div>
+      <div class="fm s4"><label for="b_observacoes">Observações</label><textarea id="b_observacoes" placeholder="Acesso de caminhões, portaria, vagas, restrições de horário"></textarea></div>
+    </div>
+
+    <div class="fm-msg err" id="fmErro" hidden></div>
+    <div class="modal-actions">
+      <button class="ghost-btn" id="fmCancelar">Cancelar</button>
+      <button class="save-btn" id="fmSalvar">Salvar base</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="multas-app.js?v=10"></script>
+<script>
+const API = '/api/bases';
+const SESSAO_KEY = 'transtac_sessao_homolog_v1', PERFIL_KEY = 'transtac_perfil_homolog_v1';
+const PODE_EDITAR = ['LOGISTICA','DESENVOLVIMENTO','ADMIN','GESTOR'];
+const TIPOS = ['Matriz','Filial','Centro de distribuição','Ponto de apoio','Garagem','Outro'];
+const UFS = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
+const CAMPOS_BASE = ['nome','tipo','status','cnpj','cep','logradouro','numero','complemento','bairro','cidade','uf','responsavel','telefone','email','horario','observacoes'];
+
+const g = id => document.getElementById(id);
+const escH = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dig = s => String(s || '').replace(/\D/g, '');
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const sess = k => { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } };
+const usuario = sess(SESSAO_KEY);
+const perfil = (() => { let v = sess(PERFIL_KEY).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\s\/\-.]+/g,'_').replace(/^_|_$/g,'');
+  return ({ DEV:'DESENVOLVIMENTO', TI:'DESENVOLVIMENTO' })[v] || v; })();
+const podeEditar = PODE_EDITAR.includes(perfil);
+
+function avisar(msg, erro){ const t = g('toast'); t.textContent = msg; t.style.borderColor = erro ? 'var(--danger)' : ''; t.classList.add('show'); clearTimeout(avisar.t); avisar.t = setTimeout(() => t.classList.remove('show'), 3500); }
+const fmtCEP = v => dig(v).slice(0,8).replace(/(\d{5})(\d)/,'$1-$2');
+const fmtTel = v => { const d = dig(v).slice(0,11); return d.length <= 10 ? d.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3') : d.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3'); };
+const fmtCNPJ = v => dig(v).slice(0,14).replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\d{4})(\d)/,'$1-$2');
+const endereco = b => [[b.logradouro, b.numero].filter(Boolean).join(', '), b.complemento, b.bairro, [b.cidade, b.uf].filter(Boolean).join('/'), b.cep ? 'CEP ' + b.cep : ''].filter(Boolean).join(' · ');
+const temGps = b => typeof b.lat === 'number' && typeof b.lng === 'number';
+const linkMaps = b => temGps(b) ? `https://www.google.com/maps/search/?api=1&query=${b.lat},${b.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco(b))}`;
+const linkRota = b => `https://www.google.com/maps/dir/?api=1&destination=${temGps(b) ? b.lat + ',' + b.lng : encodeURIComponent(endereco(b))}`;
+const linkWaze = b => temGps(b) ? `https://waze.com/ul?ll=${b.lat},${b.lng}&navigate=yes` : `https://waze.com/ul?q=${encodeURIComponent(endereco(b))}&navigate=yes`;
+
+let bases = [], selecionada = null, editando = null;
+
+/* ---------- mapa principal ---------- */
+let mapa = null, camada = null;
+const icone = (ativa) => L.divIcon({ className:'', iconSize:[26,34], iconAnchor:[13,34], popupAnchor:[0,-30],
+  html:`<svg width="26" height="34" viewBox="0 0 26 34"><path d="M13 1C6.4 1 1 6.3 1 12.9 1 22 13 33 13 33s12-11 12-20.1C25 6.3 19.6 1 13 1z" fill="${ativa ? '#f5821f' : '#6b7280'}" stroke="#0b0b0c" stroke-width="1.5"/><circle cx="13" cy="13" r="4.6" fill="#0b0b0c"/></svg>` });
+function iniciarMapa(){
+  if (!window.L){ g('mapa').innerHTML = '<div class="empty" style="padding:24px">O mapa não carregou. Verifique a conexão e recarregue a página.</div>'; return; }
+  mapa = L.map('mapa', { scrollWheelZoom: false }).setView([-25.4, -50.5], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(mapa);
+  camada = L.layerGroup().addTo(mapa);
+}
+
+/* ---------- dados ---------- */
+async function carregar(){
+  try {
+    const r = await fetch(API, { cache: 'no-store' });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.erro || 'falha');
+    bases = j.bases || [];
+  } catch (e) { avisar('Não foi possível carregar as bases. Tente de novo.', true); }
+  render();
+}
+async function enviar(corpo){
+  const r = await fetch(API, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ ...corpo, usuario }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.ok) throw new Error(j.erro || 'Não foi possível salvar agora.');
+  return j;
+}
+
+/* ---------- tela ---------- */
+function filtradas(){
+  const q = norm(g('busca').value), t = g('fTipo').value, s = g('fStatus').value;
+  return bases.filter(b => (!t || b.tipo === t) && (!s || b.status === s) &&
+    (!q || norm([b.nome, b.cidade, b.uf, b.bairro, b.logradouro, b.responsavel, b.tipo].join(' ')).includes(q)));
+}
+function render(){
+  const ativas = bases.filter(b => b.status !== 'inativa');
+  const ufs = new Set(ativas.map(b => b.uf).filter(Boolean));
+  g('kpis').innerHTML = [
+    ['accent','Bases ativas', ativas.length, bases.length - ativas.length ? (bases.length - ativas.length) + ' inativa(s)' : 'todas em operação'],
+    ['info','Estados', ufs.size, [...ufs].sort().join(', ') || '—'],
+    ['ok','Com localização', bases.filter(temGps).length, 'marcadas no mapa'],
+    ['warn','Sem localização', bases.filter(b => !temGps(b)).length, 'falta marcar o ponto']
+  ].map(([c,l,v,s]) => `<div class="kpi ${c}"><div class="kpi-label">${l}</div><div class="kpi-value">${v}</div><div class="kpi-sub">${escH(s)}</div></div>`).join('');
+
+  const lista = filtradas();
+  g('lista').innerHTML = lista.length ? lista.map(b => `
+    <div class="bs-card ${b.status === 'inativa' ? 'inativa' : ''} ${selecionada === b.id ? 'sel' : ''}" data-id="${escH(b.id)}" tabindex="0">
+      <div class="bs-h">
+        <div><div class="bs-tipo">${escH(b.tipo)}</div><h3>${escH(b.nome)}</h3></div>
+        <span class="st-pill ${b.status === 'inativa' ? 'inativa' : 'ativa'}">${b.status === 'inativa' ? 'Inativa' : 'Ativa'}</span>
+      </div>
+      <div class="bs-end">${escH(endereco(b)) || '—'}</div>
+      <div class="bs-info">
+        ${b.responsavel ? `<span>Responsável <b>${escH(b.responsavel)}</b></span>` : ''}
+        ${b.telefone ? `<span>Tel. <b>${escH(b.telefone)}</b></span>` : ''}
+        ${b.horario ? `<span>${escH(b.horario)}</span>` : ''}
+        ${temGps(b) ? '' : '<span class="bs-sem-gps">Sem ponto no mapa</span>'}
+      </div>
+      ${b.observacoes ? `<div class="bs-end">${escH(b.observacoes)}</div>` : ''}
+      <div class="bs-acoes">
+        <a href="${linkRota(b)}" target="_blank" rel="noopener">Rota (Google Maps)</a>
+        <a href="${linkWaze(b)}" target="_blank" rel="noopener">Waze</a>
+        <button type="button" data-copiar="${escH(b.id)}">Copiar endereço</button>
+        ${podeEditar ? `<button type="button" data-editar="${escH(b.id)}">Editar</button><button type="button" class="del" data-excluir="${escH(b.id)}">Excluir</button>` : ''}
+      </div>
+    </div>`).join('')
+    : `<div class="empty">${bases.length ? 'Nenhuma base com esses filtros.' : (podeEditar ? 'Nenhuma base cadastrada ainda. Use “+ Nova base” para incluir a primeira.' : 'Nenhuma base cadastrada ainda.')}</div>`;
+
+  if (camada){
+    camada.clearLayers();
+    const pts = [];
+    lista.filter(temGps).forEach(b => {
+      const m = L.marker([b.lat, b.lng], { icon: icone(b.status !== 'inativa'), title: b.nome }).addTo(camada);
+      m.bindPopup(`<b>${escH(b.nome)}</b><br>${escH(b.tipo)}<br>${escH(endereco(b))}<br><a href="${linkRota(b)}" target="_blank" rel="noopener">Traçar rota</a>`);
+      m.on('click', () => selecionar(b.id, false));
+      m._baseId = b.id; pts.push([b.lat, b.lng]);
+    });
+    if (pts.length === 1) mapa.setView(pts[0], 13);
+    else if (pts.length > 1 && !render.ajustou){ mapa.fitBounds(pts, { padding: [40, 40] }); }
+    render.ajustou = pts.length > 1;
+  }
+}
+function selecionar(id, voar){
+  selecionada = id;
+  document.querySelectorAll('.bs-card').forEach(c => c.classList.toggle('sel', c.dataset.id === id));
+  const b = bases.find(x => x.id === id);
+  if (voar && b && temGps(b) && mapa){
+    mapa.setView([b.lat, b.lng], 15);
+    camada.eachLayer(l => { if (l._baseId === id) l.openPopup(); });
+  }
+  const card = document.querySelector(`.bs-card[data-id="${CSS.escape(id)}"]`);
+  if (card && !voar) card.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+g('lista').addEventListener('click', async e => {
+  const ed = e.target.closest('[data-editar]'), ex = e.target.closest('[data-excluir]'), cp = e.target.closest('[data-copiar]');
+  if (ed) return abrirForm(ed.dataset.editar);
+  if (cp){
+    const b = bases.find(x => x.id === cp.dataset.copiar);
+    try { await navigator.clipboard.writeText(`${b.nome} — ${endereco(b)}`); avisar('Endereço copiado.'); } catch (_) { avisar('Não foi possível copiar.', true); }
+    return;
+  }
+  if (ex){
+    if (!ex.classList.contains('arm')){ ex.classList.add('arm'); ex.textContent = 'Confirmar exclusão'; setTimeout(() => { if (ex.isConnected){ ex.classList.remove('arm'); ex.textContent = 'Excluir'; } }, 4000); return; }
+    try { await enviar({ acao:'excluir', id: ex.dataset.excluir }); bases = bases.filter(b => b.id !== ex.dataset.excluir); render(); avisar('Base excluída.'); }
+    catch (err) { avisar(err.message, true); }
+    return;
+  }
+  if (e.target.closest('a,button')) return;
+  const card = e.target.closest('.bs-card'); if (card) selecionar(card.dataset.id, true);
+});
+['busca','fTipo','fStatus'].forEach(id => g(id).addEventListener('input', () => { render.ajustou = false; render(); }));
+
+/* ---------- formulário ---------- */
+let mapaForm = null, marcador = null;
+function posicionar(lat, lng, zoom){
+  g('b_lat').value = lat.toFixed(6); g('b_lng').value = lng.toFixed(6);
+  if (!mapaForm) return;
+  if (!marcador){ marcador = L.marker([lat, lng], { draggable: true, icon: icone(true) }).addTo(mapaForm); marcador.on('dragend', () => { const p = marcador.getLatLng(); posicionar(p.lat, p.lng); }); }
+  else marcador.setLatLng([lat, lng]);
+  if (zoom) mapaForm.setView([lat, lng], zoom);
+}
+function abrirForm(id){
+  editando = id ? bases.find(b => b.id === id) : null;
+  g('fmTitulo').textContent = editando ? `Editar: ${editando.nome}` : 'Nova base';
+  CAMPOS_BASE.forEach(k => g('b_' + k).value = editando?.[k] ?? '');
+  if (!editando){ g('b_tipo').value = 'Filial'; g('b_status').value = 'ativa'; }
+  g('b_lat').value = editando && temGps(editando) ? editando.lat : '';
+  g('b_lng').value = editando && temGps(editando) ? editando.lng : '';
+  g('fmErro').hidden = true; g('geoMsg').className = 'fm-msg'; g('geoMsg').textContent = 'Clique no mapa ou arraste o marcador para ajustar o ponto exato da entrada.';
+  g('mdForm').classList.add('show');
+  setTimeout(() => {
+    if (window.L && !mapaForm){
+      mapaForm = L.map('mapaForm').setView([-25.4, -50.5], 6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(mapaForm);
+      mapaForm.on('click', ev => { posicionar(ev.latlng.lat, ev.latlng.lng); g('geoMsg').textContent = 'Ponto marcado. Arraste o marcador para ajustar.'; });
+    }
+    if (mapaForm){
+      mapaForm.invalidateSize();
+      if (marcador){ marcador.remove(); marcador = null; }
+      if (editando && temGps(editando)) posicionar(editando.lat, editando.lng, 16);
+      else mapaForm.setView([-25.4, -50.5], 6);
+    }
+    g('b_nome').focus();
+  }, 60);
+}
+function fecharForm(){ g('mdForm').classList.remove('show'); editando = null; }
+g('fmCancelar').addEventListener('click', fecharForm);
+g('mdForm').addEventListener('click', e => { if (e.target === g('mdForm')) fecharForm(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && g('mdForm').classList.contains('show')) fecharForm(); });
+g('btnNova').addEventListener('click', () => abrirForm());
+
+g('b_cep').addEventListener('input', async e => {
+  e.target.value = fmtCEP(e.target.value);
+  if (dig(e.target.value).length !== 8) return;
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${dig(e.target.value)}/json/`); const x = await r.json();
+    if (x.erro) return;
+    if (!g('b_logradouro').value) g('b_logradouro').value = x.logradouro || '';
+    if (!g('b_bairro').value) g('b_bairro').value = x.bairro || '';
+    if (!g('b_cidade').value) g('b_cidade').value = x.localidade || '';
+    if (!g('b_uf').value) g('b_uf').value = x.uf || '';
+  } catch (_) {}
+});
+g('b_telefone').addEventListener('input', e => e.target.value = fmtTel(e.target.value));
+g('b_cnpj').addEventListener('input', e => e.target.value = fmtCNPJ(e.target.value));
+['b_lat','b_lng'].forEach(id => g(id).addEventListener('change', () => {
+  const la = parseFloat(String(g('b_lat').value).replace(',', '.')), lo = parseFloat(String(g('b_lng').value).replace(',', '.'));
+  if (Number.isFinite(la) && Number.isFinite(lo)) posicionar(la, lo, 16);
+}));
+
+g('btnGeo').addEventListener('click', async () => {
+  const m = g('geoMsg');
+  const cidade = g('b_cidade').value.trim(), uf = g('b_uf').value;
+  if (!cidade){ m.className = 'fm-msg err'; m.textContent = 'Preencha ao menos a cidade e a UF para localizar.'; return; }
+  m.className = 'fm-msg'; m.textContent = 'Procurando o endereço no mapa...';
+  const tentativas = [
+    { street: [g('b_numero').value, g('b_logradouro').value].filter(Boolean).join(' '), city: cidade, state: uf, postalcode: dig(g('b_cep').value), country: 'Brasil' },
+    { street: g('b_logradouro').value, city: cidade, state: uf, country: 'Brasil' },
+    { city: cidade, state: uf, country: 'Brasil' }
+  ];
+  for (const [i, t] of tentativas.entries()){
+    const p = new URLSearchParams({ format:'json', limit:'1', countrycodes:'br' });
+    Object.entries(t).forEach(([k, v]) => { if (v) p.set(k, v); });
+    try {
+      const r = await fetch('https://nominatim.openstreetmap.org/search?' + p.toString(), { headers: { 'Accept-Language': 'pt-BR' } });
+      const res = await r.json();
+      if (res && res[0]){
+        posicionar(parseFloat(res[0].lat), parseFloat(res[0].lon), i === 2 ? 13 : 17);
+        m.className = 'fm-msg ' + (i === 0 ? 'ok' : '');
+        m.textContent = i === 0 ? 'Endereço encontrado. Confira o ponto e ajuste arrastando o marcador, se precisar.'
+          : i === 1 ? 'Encontrei a rua, mas não o número. Arraste o marcador até a entrada da base.'
+          : 'Encontrei só a cidade. Clique no mapa no local exato da base.';
+        return;
+      }
+    } catch (_) { break; }
+  }
+  m.className = 'fm-msg err'; m.textContent = 'Não encontrei esse endereço. Clique no mapa no local da base.';
+});
+
+g('fmSalvar').addEventListener('click', async () => {
+  const base = {}; CAMPOS_BASE.forEach(k => base[k] = g('b_' + k).value.trim());
+  const la = parseFloat(String(g('b_lat').value).replace(',', '.')), lo = parseFloat(String(g('b_lng').value).replace(',', '.'));
+  base.lat = Number.isFinite(la) ? la : null; base.lng = Number.isFinite(lo) ? lo : null;
+  const faltam = [!base.nome && 'nome da base', !base.cidade && 'cidade', !base.uf && 'UF'].filter(Boolean);
+  if (faltam.length){ const e = g('fmErro'); e.textContent = 'Falta preencher: ' + faltam.join(', ') + '.'; e.hidden = false; return; }
+  const btn = g('fmSalvar'); btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    const j = await enviar({ acao:'salvar', id: editando?.id, base });
+    bases = bases.filter(b => b.id !== j.base.id).concat([j.base]).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    selecionada = j.base.id; render.ajustou = false;
+    fecharForm(); render(); avisar(`${j.base.nome} salva.`);
+    if (temGps(j.base)) selecionar(j.base.id, true);
+  } catch (err) { const e = g('fmErro'); e.textContent = err.message; e.hidden = false; }
+  finally { btn.disabled = false; btn.textContent = 'Salvar base'; }
+});
+
+/* ---------- início ---------- */
+montarHeader('BASES TRANSTAC', 'Bases da TRANSTAC e a localização de cada uma.', 'index.html');
+TIPOS.forEach(t => { g('b_tipo').add(new Option(t, t)); g('fTipo').add(new Option(t, t)); });
+UFS.forEach(u => g('b_uf').add(new Option(u, u)));
+if (!usuario){ g('semLogin').hidden = false; }
+else {
+  g('app').hidden = false;
+  g('btnNova').hidden = !podeEditar;
+  iniciarMapa();
+  carregar();
+}
+</script>
+</body>
+</html>

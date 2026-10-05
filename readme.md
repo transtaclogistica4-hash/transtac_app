@@ -16,6 +16,8 @@ Estrutura achatada: tudo na mesma pasta, sem subpastas.
 | Multas | `multas.html` |
 | RH | `rh.html` |
 | Compras / Expedição | `compras.html` |
+| Controle de Cargas | `https://transtac-cargas.netlify.app` (app separado) |
+| Bases TRANSTAC | `bases.html` |
 
 Telas do módulo de Multas: `multas.html`, `multas-cadastro.html`,
 `multas-lista.html`, `multas-indicacao.html`, `multas-dashboard.html`,
@@ -171,3 +173,17 @@ variável de ambiente.
   o `montarSubnav()` no fim da página e a lista de itens dentro de
   `multas-app.js`.
 - CSS é embutido em cada página. Mudou o visual? Replicar nas telas afetadas.
+
+
+## Bases TRANSTAC
+
+`bases.html` + função `netlify/functions/bases.mts` (rota `/api/bases`).
+Cadastro das bases (matriz, filiais, CDs, pontos de apoio, garagens) com endereço,
+contato, horário e localização no mapa (Leaflet + OpenStreetMap).
+
+- Dados no Netlify Blobs, store `transtac-bases`, uma chave por base (`base:<id>`;
+  em homologação `hml:base:<id>`, lendo produção enquanto a homologação estiver vazia).
+- CEP completa o endereço (ViaCEP); "Localizar pelo endereço" usa o Nominatim
+  (OpenStreetMap). O ponto pode ser ajustado clicando no mapa ou arrastando o marcador.
+- Todos os perfis logados, menos Motorista e Terceiro GAM, veem o módulo.
+  Só Logística, Desenvolvimento, Admin e Gestor cadastram, editam e excluem.
