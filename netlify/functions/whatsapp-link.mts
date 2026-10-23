@@ -33,6 +33,7 @@ const DRIVER_WHATSAPP: Record<string, string> = {
 "JOSÉ LUIZ DELFINO MARCIANO": "+55 48 9148-9412",
   "HELIO ALEX GONCALVES GRECO": "+55 55 99632-6880",
   "DIKSON SOARES DE BONA": "+55 48 99634-8140",
+  "JOSUÉ DE SOUSA CANDIDO": "+55 48 98809-0684",
 };
 
 function montarMensagem(b: any): string {

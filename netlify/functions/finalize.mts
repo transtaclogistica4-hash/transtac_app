@@ -33,6 +33,7 @@ const DRIVER_CPF: Record<string, string> = {
 "VALDECIR VOLKMER": "055.170.539-63",
 "ERIC CARDOSO KERBER": "113.801.559-83",
 "DIEGO FORTUNATO FARIAS": "079.066.129-22",
+"JOSUÉ DE SOUSA CANDIDO": "",
 };
 
 const FLEET: Record<string, { model: string; capacity: number }> = {
