@@ -2,8 +2,11 @@ import type { Context, Config } from "@netlify/functions";
 import { getTodayKey } from "./lib/dateKey.mts";
 import { getAssignmentsStore, keyForDate, updateAssignments } from "./lib/assignmentsStore.mts";
 import { isHomolog, sheetWebhook } from "./lib/env.mts";
+import { cpfDoMotorista } from "./lib/cpfMotoristas.mts";
 
-// CPF dos motoristas (nao exposto ao frontend)
+// CPF dos motoristas (nao exposto ao frontend).
+// A fonte principal agora e o Cadastro de Motoristas (lib/cpfMotoristas.mts).
+// Esta lista so e usada se o cadastro estiver fora do ar.
 const DRIVER_CPF: Record<string, string> = {
 "DIKSON SOARES DE BONA": "057.064.309-00",
 "HELIO ALEX GONCALVES GRECO": "012.126.550-10",
@@ -33,7 +36,10 @@ const DRIVER_CPF: Record<string, string> = {
 "VALDECIR VOLKMER": "055.170.539-63",
 "ERIC CARDOSO KERBER": "113.801.559-83",
 "DIEGO FORTUNATO FARIAS": "079.066.129-22",
-"JOSUÉ DE SOUSA CANDIDO": "",
+"JOSUÉ DE SOUSA CANDIDO": "122.878.629-19",
+"JOSÉ LUIZ DELFINO MARCIANO": "089.975.999-84",
+"LUCAS DE SOUZA": "077.479.339-24",
+"CARLOS ANTONIO FERREIRA PINHEIRO": "076.067.715-88",
 };
 
 const FLEET: Record<string, { model: string; capacity: number }> = {
@@ -105,7 +111,7 @@ JSON.stringify({ error: "routeId, driver e plate sao obrigatorios" }),
 const dateKey = getTodayKey();
 const KEY = keyForDate(dateKey);
 
-const cpf = DRIVER_CPF[driver] || "";
+const cpf = await cpfDoMotorista(driver, DRIVER_CPF);
 const fleetInfo = FLEET[plate];
 const finalVehicleType = vehicleType || fleetInfo?.model || "";
 const finalPallets = pallets !== undefined && pallets !== "" ? pallets : fleetInfo?.capacity ?? "";
