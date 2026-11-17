@@ -93,7 +93,9 @@ async function buscarNoCadastro(driver: string): Promise<string> {
     const achado = lista.find((m) => normNome(m && m.nome) === alvo && String((m && m.telefone) || "").replace(/\D/g, "").length >= 10);
     if (!achado) return "";
     const digitos = String(achado.telefone).replace(/\D/g, "");
-    return digitos.startsWith("55") ? digitos : "55" + digitos;
+    // 10/11 digitos = DDD + numero (sem o 55). Nao basta olhar se comeca com
+    // "55": DDD 55 (RS) seria confundido com o codigo do pais.
+    return digitos.length <= 11 ? "55" + digitos : digitos;
   } catch {
     return "";
   }
@@ -131,11 +133,12 @@ aeNumber?: string | number;
     });
   }
 
-  // 1) lista fixa acima; 2) se nao achar, busca no Cadastro de Motoristas
-  // (mesma base da tela cadastro-motoristas.html), comparando o nome sem
-  // acento e sem diferenca de maiusculas.
-  let raw = DRIVER_WHATSAPP[driver] || buscarNaListaFixa(driver);
-  if (!raw) raw = await buscarNoCadastro(driver);
+  // 1) Cadastro de Motoristas (tela cadastro-motoristas.html) e a fonte
+  //    principal, comparando o nome sem acento e sem diferenca de maiusculas;
+  // 2) a lista fixa acima so entra se o cadastro nao tiver telefone ou
+  //    estiver fora do ar.
+  let raw = await buscarNoCadastro(driver);
+  if (!raw) raw = DRIVER_WHATSAPP[driver] || buscarNaListaFixa(driver);
   if (!raw) {
     return new Response(JSON.stringify({ ok: false, error: "Numero nao cadastrado para este motorista" }), {
       headers: { "Content-Type": "application/json" },
